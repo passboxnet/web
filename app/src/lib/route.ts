@@ -10,16 +10,20 @@ export type ItemFilter =
 export type Route =
   | { view: "items"; filter: ItemFilter; itemId?: string; edit?: boolean; create?: ItemCategory }
   | { view: "watchtower" }
+  | { view: "trash" }
+  | { view: "getting-started" }
   | { view: "generator" }
-  | { view: "settings" };
+  | { view: "settings"; section?: string };
 
 export function parseRoute(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#\/?/, "").split("?");
   const params = new URLSearchParams(query);
   const parts = path.split("/").filter(Boolean);
-  if (parts[0] === "watchtower") return { view: "watchtower" };
+  if (parts[0] === "watchtower" || parts[0] === "security") return { view: "watchtower" };
+  if (parts[0] === "trash") return { view: "trash" };
+  if (parts[0] === "getting-started") return { view: "getting-started" };
   if (parts[0] === "generator") return { view: "generator" };
-  if (parts[0] === "settings") return { view: "settings" };
+  if (parts[0] === "settings") return parts[1] ? { view: "settings", section: parts[1] } : { view: "settings" };
 
   let filter: ItemFilter = { kind: "all" };
   if (parts[0] === "favorites") filter = { kind: "favorites" };
@@ -36,6 +40,7 @@ export function parseRoute(hash: string): Route {
 }
 
 export function formatRoute(route: Route): string {
+  if (route.view === "settings" && route.section) return `#/settings/${route.section}`;
   if (route.view !== "items") return `#/${route.view}`;
   const { filter } = route;
   const path =

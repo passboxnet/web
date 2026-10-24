@@ -1,13 +1,18 @@
-import { Button, Logo } from "@passbox/ui";
-import { Menu as MenuIcon, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Logo, toast } from "@passbox/ui";
+import { KeyRound, Menu as MenuIcon, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { InsecurePageBanner } from "../auth/AuthLayout";
+import { useKit } from "../auth/KitProvider";
 import { onCommandPaletteRequest } from "../desktop";
-import { usePreferences } from "../lib/preferences";
+import { useI18n } from "../lib/i18n";
+import { setChecklist, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
 import { GeneratorView } from "../views/GeneratorView";
+import { GettingStartedView } from "../views/GettingStarted";
 import { ItemsView } from "../views/ItemsView";
 import { SettingsView } from "../views/SettingsView";
+import { TrashView } from "../views/TrashView";
 import { WatchtowerView } from "../views/WatchtowerView";
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar } from "./Sidebar";
@@ -18,6 +23,7 @@ export function AppShell() {
   const client = useClient();
   const snapshot = useSnapshot();
   const preferences = usePreferences();
+  const { t } = useI18n();
   const [route, navigate] = useRoute();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -47,6 +53,16 @@ export function AppShell() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the route changes
   useEffect(() => setDrawerOpen(false), [window.location.hash]);
 
+  // Toasts belong to the screen they were shown on; switching screens clears
+  // them so they never cover the next screen's controls.
+  const view = useRef(route.view);
+  useEffect(() => {
+    if (view.current === route.view) return;
+    view.current = route.view;
+    toast.dismiss();
+    if (route.view === "watchtower") setChecklist({ securityCheck: true });
+  }, [route.view]);
+
   const sidebar = (
     <Sidebar
       route={route}
@@ -59,38 +75,70 @@ export function AppShell() {
   );
 
   return (
-    <div className="flex h-full bg-canvas">
-      <div className="hidden w-64 shrink-0 lg:block">{sidebar}</div>
+    <div className="flex h-full flex-col bg-canvas">
+      <InsecurePageBanner />
+      <KitReminder />
+      <div className="flex min-h-0 flex-1">
+        <div className="hidden w-64 shrink-0 lg:block">{sidebar}</div>
 
-      {drawerOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close navigation"
-            className="absolute inset-0 animate-fade-in bg-black/40"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <div className="absolute inset-y-0 left-0 w-72 animate-scale-in shadow-overlay">{sidebar}</div>
+        {drawerOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <button
+              type="button"
+              aria-label={t("shell.closeNavigation")}
+              className="absolute inset-0 animate-fade-in bg-black/40"
+              onClick={() => setDrawerOpen(false)}
+            />
+            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] animate-scale-in shadow-overlay">{sidebar}</div>
+          </div>
+        )}
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-surface px-3 lg:hidden coarse:h-14">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("shell.openNavigation")}
+              onClick={() => setDrawerOpen(true)}
+            >
+              {drawerOpen ? <X /> : <MenuIcon />}
+            </Button>
+            <Logo className="text-text" />
+            <span className="size-9" />
+          </header>
+          <main className="flex min-h-0 flex-1">
+            {route.view === "items" && <ItemsView route={route} navigate={navigate} health={health} />}
+            {route.view === "watchtower" && <WatchtowerView health={health} navigate={navigate} />}
+            {route.view === "trash" && <TrashView />}
+            {route.view === "getting-started" && <GettingStartedView navigate={navigate} />}
+            {route.view === "generator" && <GeneratorView />}
+            {route.view === "settings" && <SettingsView />}
+          </main>
         </div>
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-surface px-3 lg:hidden">
-          <Button variant="ghost" size="icon" aria-label="Open navigation" onClick={() => setDrawerOpen(true)}>
-            {drawerOpen ? <X /> : <MenuIcon />}
-          </Button>
-          <Logo className="text-text" />
-          <span className="size-9" />
-        </header>
-        <main className="flex min-h-0 flex-1">
-          {route.view === "items" && <ItemsView route={route} navigate={navigate} />}
-          {route.view === "watchtower" && <WatchtowerView health={health} navigate={navigate} />}
-          {route.view === "generator" && <GeneratorView />}
-          {route.view === "settings" && <SettingsView />}
-        </main>
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} navigate={navigate} />
+    </div>
+  );
+}
+
+/** Stays until the Emergency Kit is confirmed (S2, business P0-1). */
+function KitReminder() {
+  const kit = useKit();
+  const { t } = useI18n();
+  if (!kit.pending) return null;
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-warning/30 bg-warning-soft px-4 py-2.5 text-[0.8125rem]"
+    >
+      <KeyRound className="size-4 shrink-0 text-warning" aria-hidden="true" />
+      <p className="min-w-0 flex-1">
+        <strong className="font-semibold">{t("kit.reminder.title")}</strong> – {t("kit.reminder.body")}
+      </p>
+      <Button size="sm" onClick={kit.requestKit}>
+        {t("kit.reminder.action")}
+      </Button>
     </div>
   );
 }

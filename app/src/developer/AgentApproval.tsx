@@ -88,6 +88,15 @@ export function AgentApprovalDialog({
     return () => clearInterval(timer);
   }, []);
 
+  // An item the agent saved a moment ago is not on this device yet: sync once.
+  const missing = unknown.length > 0;
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    if (!missing || synced) return;
+    setSynced(true);
+    client.sync().catch((e: unknown) => console.warn("Could not sync before showing the agent request", e));
+  }, [client, missing, synced]);
+
   async function decide(approved: boolean) {
     setBusy(approved ? "approve" : "deny");
     setError(undefined);

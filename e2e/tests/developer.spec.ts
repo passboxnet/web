@@ -161,7 +161,7 @@ test("service accounts and AI agent approvals", async ({ page }) => {
     await expect(dialog).toBeHidden();
 
     const checked = await mcp.tool("passbox_check_access", { grant_id: grant.grantId, wait_seconds: 20 });
-    expect((checked.value.grant as { status: string }).status).toBe("approved");
+    expect((checked.value.grant as { status: string } | undefined)?.status, checked.text).toBe("approved");
     const ran = await mcp.tool("passbox_run", { command: 'echo "password=$DB"', env: { DB: reference } });
     expect(ran.isError).toBe(false);
     expect(ran.value.stdout).toBe("password=[redacted DB]\n");

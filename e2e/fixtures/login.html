@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Acme · Sign in</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f6f7f9;
+        color: #1c2024;
+        margin: 0;
+      }
+      main {
+        max-width: 360px;
+        margin: 72px auto;
+        padding: 28px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 20px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      input {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        height: 38px;
+        margin-bottom: 16px;
+        padding: 0 10px;
+        font-size: 14px;
+        border: 1px solid #c9ced6;
+        border-radius: 8px;
+      }
+      button {
+        width: 100%;
+        height: 38px;
+        border: 0;
+        border-radius: 8px;
+        background: #1f2937;
+        color: #fff;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sign in to Acme</h1>
+      <form method="post" action="/welcome">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" />
+        <button type="submit">Sign in</button>
+      </form>
+    </main>
+    <script>
+      // Like React and Vue, record what the input events report.
+      for (const input of document.querySelectorAll("input")) {
+        input.addEventListener("input", (event) => {
+          document.body.dataset[`${event.target.id}Input`] = event.target.value;
+        });
+      }
+    </script>
+  </body>
+</html>

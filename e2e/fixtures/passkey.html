@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Acme · Passkeys</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f6f7f9;
+        color: #1c2024;
+        margin: 0;
+      }
+      main {
+        max-width: 420px;
+        margin: 72px auto;
+        padding: 28px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+      }
+      button {
+        display: block;
+        width: 100%;
+        height: 38px;
+        margin-top: 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #1f2937;
+        color: #fff;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Acme passkeys</h1>
+      <p>A relying party that verifies the signature with WebCrypto.</p>
+      <button id="register" type="button">Create a passkey</button>
+      <button id="login" type="button">Sign in with a passkey</button>
+      <p id="status" role="status">Ready</p>
+    </main>
+    <script>
+      const status = document.getElementById("status");
+      const encoder = new TextEncoder();
+      const b64url = (bytes) =>
+        btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const fromB64url = (value) => {
+        const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+        return Uint8Array.from(atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4)), (c) => c.charCodeAt(0));
+      };
+      const derToRaw = (der) => {
+        let offset = 2;
+        const read = () => {
+          const length = der[offset + 1];
+          let value = der.slice(offset + 2, offset + 2 + length);
+          offset += 2 + length;
+          while (value.length > 32 && value[0] === 0) value = value.slice(1);
+          const out = new Uint8Array(32);
+          out.set(value, 32 - value.length);
+          return out;
+        };
+        const raw = new Uint8Array(64);
+        raw.set(read(), 0);
+        raw.set(read(), 32);
+        return raw;
+      };
+      let stored;
+
+      document.getElementById("register").addEventListener("click", async () => {
+        try {
+          const challenge = crypto.getRandomValues(new Uint8Array(32));
+          const credential = await navigator.credentials.create({
+            publicKey: {
+              rp: { name: "Acme", id: location.hostname },
+              user: { id: encoder.encode("user-1"), name: "alice@example.com", displayName: "Alice" },
+              challenge,
+              pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+              authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
+            },
+          });
+          const clientData = JSON.parse(new TextDecoder().decode(credential.response.clientDataJSON));
+          stored = { id: credential.id, publicKey: credential.response.getPublicKey() };
+          const ok =
+            credential instanceof PublicKeyCredential &&
+            clientData.type === "webauthn.create" &&
+            clientData.origin === location.origin &&
+            clientData.challenge === b64url(challenge) &&
+            credential.response.getPublicKeyAlgorithm() === -7;
+          status.textContent = ok ? `Registered ${credential.id}` : "Registration data invalid";
+        } catch (error) {
+          status.textContent = `Error: ${error.name}`;
+        }
+      });
+
+      document.getElementById("login").addEventListener("click", async () => {
+        try {
+          const challenge = crypto.getRandomValues(new Uint8Array(32));
+          const credential = await navigator.credentials.get({
+            publicKey: {
+              challenge,
+              rpId: location.hostname,
+              allowCredentials: [{ type: "public-key", id: fromB64url(stored.id) }],
+            },
+          });
+          const key = await crypto.subtle.importKey(
+            "spki",
+            stored.publicKey,
+            { name: "ECDSA", namedCurve: "P-256" },
+            false,
+            ["verify"],
+          );
+          const authData = new Uint8Array(credential.response.authenticatorData);
+          const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", credential.response.clientDataJSON));
+          const signed = new Uint8Array(authData.length + hash.length);
+          signed.set(authData);
+          signed.set(hash, authData.length);
+          const signature = derToRaw(new Uint8Array(credential.response.signature));
+          const valid = await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, signature, signed);
+          const rpIdHash = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(location.hostname)));
+          const clientData = JSON.parse(new TextDecoder().decode(credential.response.clientDataJSON));
+          const ok =
+            valid &&
+            b64url(authData.slice(0, 32)) === b64url(rpIdHash) &&
+            (authData[32] & 0x01) === 0x01 &&
+            clientData.type === "webauthn.get" &&
+            clientData.challenge === b64url(challenge) &&
+            new TextDecoder().decode(credential.response.userHandle) === "user-1";
+          status.textContent = ok ? "Signed in: signature verified" : "Signature invalid";
+        } catch (error) {
+          status.textContent = `Error: ${error.name}`;
+        }
+      });
+    </script>
+  </body>
+</html>

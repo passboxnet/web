@@ -48,7 +48,7 @@ export function SettingsView() {
           </Row>
         </Panel>
 
-        <Panel title="Security" description="Applies to this browser only.">
+        <Panel title="Security" description="Applies to this device only.">
           <Row label="Auto-lock" description="Lock the vault after a period without activity.">
             <select
               value={preferences.autoLockMinutes}
@@ -126,7 +126,7 @@ export function SettingsView() {
           <div>
             <h2 className="text-sm font-semibold">Sign out of this device</h2>
             <p className="mt-0.5 text-[13px] text-text-muted">
-              Removes your account and Secret Key from this browser. Your data stays safe on the server.
+              Removes your account and Secret Key from this device. Your data stays safe on the server.
             </p>
           </div>
           <Button variant="danger" size="sm" onClick={() => setConfirmSignOut(true)}>

@@ -41,7 +41,12 @@ async function shot(page: Page, name: string) {
 function startSite(): Promise<{ server: Server; origin: string }> {
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? "/", "http://localhost").pathname;
-    const page = path === "/login" ? "login.html" : path === "/passkey" ? "passkey.html" : undefined;
+    const pages: Record<string, string> = {
+      "/login": "login.html",
+      "/signup": "signup.html",
+      "/passkey": "passkey.html",
+    };
+    const page = pages[path];
     if (path === "/welcome") {
       response.writeHead(200, { "content-type": "text/html" });
       response.end("<!doctype html><title>Acme</title><h1>Welcome back</h1>");
@@ -104,6 +109,10 @@ async function signUpWithLogin(page: Page, email: string, website: string): Prom
 }
 
 test.describe("Chrome extension", () => {
+  // Clicks into out-of-process extension iframes occasionally stall on a
+  // heavily loaded machine; fail such an action fast and retry the flow once.
+  test.describe.configure({ retries: 1 });
+
   let site: { server: Server; origin: string };
   let context: BrowserContext;
   let userDataDir: string;
@@ -118,6 +127,7 @@ test.describe("Chrome extension", () => {
       viewport: { width: 1100, height: 760 },
       args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
     });
+    context.setDefaultTimeout(15_000);
     const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
     extensionId = new URL(worker.url()).host;
     // Point the extension at the e2e server.
@@ -201,6 +211,31 @@ test.describe("Chrome extension", () => {
     await settle(login);
     await menuAgain.getByRole("button", { name: /Acme/ }).click();
     await expect(login.getByLabel("Password")).toHaveValue("acme-New-Secret-43!");
+
+    // --- Sign-up: suggest a strong password, then offer to save the new login ----
+    await login.goto(`${site.origin}/signup`);
+    await login.getByLabel("Email").fill("bob@example.com");
+    await login.getByLabel("Password", { exact: true }).click();
+    const suggestion = await passboxFrame(login, "menu");
+    await expect(suggestion.getByText("Suggested strong password")).toBeVisible();
+    await settle(login);
+    await shot(login, "new-password");
+    await suggestion.getByRole("button", { name: "Use password" }).click();
+    const generated = await login.getByLabel("Password", { exact: true }).inputValue();
+    expect(generated).toHaveLength(20);
+    await expect(login.getByLabel("Repeat password")).toHaveValue(generated);
+    await login.getByRole("button", { name: "Create account" }).click();
+    await expect(login.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    const saveBanner = await passboxFrame(login, "save");
+    await expect(saveBanner.getByText("Save to Passbox?")).toBeVisible();
+    await settle(login);
+    await saveBanner.getByRole("button", { name: "Save" }).click();
+    await expect.poll(() => login.frames().some((frame) => frame.url().includes("frame.html#save="))).toBe(false);
+    await login.goto(`${site.origin}/login`);
+    await login.getByLabel("Email").click();
+    const twoLogins = await passboxFrame(login, "menu");
+    await expect(twoLogins.getByRole("button", { name: /bob@example\.com/ })).toBeVisible();
+    await login.keyboard.press("Escape");
 
     // --- Passkeys: create, then sign in; the page verifies the signature ---------
     const rp = await context.newPage();

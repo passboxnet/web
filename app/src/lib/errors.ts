@@ -25,6 +25,9 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
     return context === "unlock" ? t("error.wrongMasterPassword") : t("error.invalidCredentials");
   }
   if (error instanceof Error && error.name === "ConflictError") return t("error.conflict");
+  if (error instanceof Error && error.name === "InvalidTwoFactorCodeError") return t("error.invalidTwoFactorCode");
+  if (error instanceof Error && error.name === "TwoFactorExpiredError") return t("error.twoFactorExpired");
+  if (error instanceof Error && error.name === "ReauthenticationRequiredError") return t("errors.reauthenticate");
   if (error instanceof ApiError) {
     switch (error.code) {
       case "invalid_credentials":
@@ -40,6 +43,10 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("errors.sessionExpired");
       case "reauthentication_required":
         return t("errors.reauthenticate");
+      case "invalid_two_factor_code":
+        return t("error.invalidTwoFactorCode");
+      case "two_factor_expired":
+        return t("error.twoFactorExpired");
       case "not_found":
         return t("errors.notFound");
       case "bad_request":

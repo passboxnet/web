@@ -1,3 +1,4 @@
+import { TwoFactorRequiredError } from "@passbox/client";
 import { Button, Monogram, PasswordInput } from "@passbox/ui";
 import { KeyRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
@@ -8,6 +9,7 @@ import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
 import { linkClass } from "./ServerForm";
 import { ForgotPasswordDialog, SignOutDialog } from "./SignOutDialog";
+import { TwoFactorStep } from "./TwoFactorStep";
 
 export function UnlockScreen() {
   const client = useClient();
@@ -18,6 +20,7 @@ export function UnlockScreen() {
   const [error, setError] = useState<string>();
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [twoFactor, setTwoFactor] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,10 +31,27 @@ export function UnlockScreen() {
     try {
       await client.unlock(password);
     } catch (e) {
+      setBusy(false);
+      if (e instanceof TwoFactorRequiredError) {
+        setTwoFactor(true);
+        return;
+      }
       // Only the master password is typed here, so only it can be wrong.
       setError(errorMessage(e, "unlock"));
-      setBusy(false);
     }
+  }
+
+  if (twoFactor) {
+    return (
+      <AuthLayout>
+        <TwoFactorStep
+          onCancel={(message) => {
+            setTwoFactor(false);
+            setError(message);
+          }}
+        />
+      </AuthLayout>
+    );
   }
 
   return (

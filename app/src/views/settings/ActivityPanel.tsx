@@ -15,6 +15,14 @@ const KNOWN = new Set([
   "session_revoked",
   "other_sessions_revoked",
   "password_changed",
+  "login_two_factor",
+  "two_factor_failed",
+  "two_factor_enabled",
+  "two_factor_disabled",
+  "two_factor_method_added",
+  "two_factor_method_removed",
+  "recovery_code_used",
+  "recovery_codes_regenerated",
 ]);
 const COLLAPSED = 8;
 
@@ -66,7 +74,7 @@ export function ActivityPanel() {
                   <div className="min-w-0">
                     <p
                       className={
-                        event.kind === "login_failed"
+                        event.kind === "login_failed" || event.kind === "two_factor_failed"
                           ? "text-[0.8125rem] font-medium text-danger"
                           : "text-[0.8125rem] font-medium"
                       }

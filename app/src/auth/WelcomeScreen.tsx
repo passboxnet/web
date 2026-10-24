@@ -1,3 +1,4 @@
+import { TwoFactorRequiredError } from "@passbox/client";
 import { Button, Input, PasswordInput, SegmentedControl } from "@passbox/ui";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { type FormEvent, useState } from "react";
@@ -12,6 +13,7 @@ import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
 import { linkClass, ServerForm } from "./ServerForm";
 import { ForgotPasswordDialog } from "./SignOutDialog";
+import { TwoFactorStep } from "./TwoFactorStep";
 
 /** Characters of a Secret Key without dashes: "P1" plus 26. */
 const SECRET_KEY_LENGTH = 28;
@@ -83,6 +85,7 @@ function SignInForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [twoFactor, setTwoFactor] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -103,9 +106,25 @@ function SignInForm() {
     try {
       await client.signIn(String(form.get("email")), String(form.get("password")), String(form.get("secretKey")));
     } catch (e) {
-      setError(errorMessage(e, "signIn"));
       setBusy(false);
+      if (e instanceof TwoFactorRequiredError) {
+        setTwoFactor(true);
+        return;
+      }
+      setError(errorMessage(e, "signIn"));
     }
+  }
+
+  if (twoFactor) {
+    return (
+      <TwoFactorStep
+        heading="h2"
+        onCancel={(message) => {
+          setTwoFactor(false);
+          setError(message);
+        }}
+      />
+    );
   }
 
   return (

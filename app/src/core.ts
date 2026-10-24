@@ -27,6 +27,8 @@ export function loadClient(): Promise<PassboxClient> {
       api,
       storage: window.localStorage,
       device: deviceInfo(isDesktop, navigator.userAgent),
+      // Sign-ins offer the security keys registered for this site.
+      origin: window.location.origin,
     });
     return instance;
   });
@@ -40,7 +42,16 @@ export function nextFrame(): Promise<void> {
 
 /** A localized message that says what happened and what to do. */
 export function errorMessage(error: unknown, context: ErrorContext = "general"): string {
-  const known = ["ApiError", "InvalidCredentialsError", "ConflictError", "SecretKeyFormatError", "TypeError"];
+  const known = [
+    "ApiError",
+    "InvalidCredentialsError",
+    "ConflictError",
+    "SecretKeyFormatError",
+    "TypeError",
+    "InvalidTwoFactorCodeError",
+    "TwoFactorExpiredError",
+    "ReauthenticationRequiredError",
+  ];
   if (!(error instanceof Error && known.includes(error.name))) console.error(error);
   return describeError(error, i18n().t, context);
 }

@@ -16,6 +16,7 @@ import { Page, Panel } from "./PageHeader";
 import { ActivityPanel } from "./settings/ActivityPanel";
 import { ChangeMasterPasswordDialog } from "./settings/ChangeMasterPasswordDialog";
 import { DevicesPanel } from "./settings/DevicesPanel";
+import { TwoFactorPanel } from "./settings/TwoFactorPanel";
 
 /** A masked Secret Key that reveals nothing but the format (S19). */
 export const MASKED_SECRET_KEY = "P1-•••••-•••••-•••••-•••••-••••••";
@@ -85,6 +86,7 @@ export function SettingsView() {
           </Row>
         </Panel>
 
+        <TwoFactorPanel />
         <DevicesPanel />
         <ActivityPanel />
 

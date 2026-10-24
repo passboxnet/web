@@ -1,7 +1,9 @@
+import { TwoFactorRequiredError } from "@passbox/client";
 import { Button, Dialog, PasswordInput, toast } from "@passbox/ui";
 import { Info } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { FormError } from "../../auth/AuthLayout";
+import { TwoFactorStep } from "../../auth/TwoFactorStep";
 import { errorMessage, nextFrame } from "../../core";
 import { PasswordStrength } from "../../items/PasswordStrength";
 import { useI18n } from "../../lib/i18n";
@@ -23,12 +25,22 @@ export function ChangeMasterPasswordDialog({
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // Without a recent login the change needs a fresh one, which may ask for the second factor.
+  const [twoFactor, setTwoFactor] = useState(false);
 
   function reset() {
     setCurrent("");
     setNext("");
     setConfirm("");
     setError(undefined);
+    setTwoFactor(false);
+  }
+
+  async function change() {
+    await client.changeMasterPassword(current, next);
+    toast.success(t("changeMaster.done"), { description: t("changeMaster.doneHint") });
+    reset();
+    onOpenChange(false);
   }
 
   async function submit(event: FormEvent) {
@@ -54,12 +66,10 @@ export function ChangeMasterPasswordDialog({
         setError(t("error.wrongMasterPassword"));
         return;
       }
-      await client.changeMasterPassword(current, next);
-      toast.success(t("changeMaster.done"), { description: t("changeMaster.doneHint") });
-      reset();
-      onOpenChange(false);
+      await change();
     } catch (e) {
-      setError(errorMessage(e, "unlock"));
+      if (e instanceof TwoFactorRequiredError) setTwoFactor(true);
+      else setError(errorMessage(e, "unlock"));
     } finally {
       setBusy(false);
     }
@@ -75,46 +85,63 @@ export function ChangeMasterPasswordDialog({
       title={t("changeMaster.title")}
       description={t("changeMaster.description")}
     >
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <PasswordInput
-          label={t("changeMaster.current")}
-          autoComplete="current-password"
-          value={current}
-          onChange={(e) => setCurrent(e.target.value)}
-          required
-          autoFocus
+      {twoFactor ? (
+        <TwoFactorStep
+          heading="none"
+          onDone={() => {
+            setTwoFactor(false);
+            setBusy(true);
+            change()
+              .catch((e: unknown) => setError(errorMessage(e, "unlock")))
+              .finally(() => setBusy(false));
+          }}
+          onCancel={(message) => {
+            setTwoFactor(false);
+            setError(message);
+          }}
         />
-        <div className="flex flex-col gap-2">
+      ) : (
+        <form onSubmit={submit} className="flex flex-col gap-4">
           <PasswordInput
-            label={t("changeMaster.new")}
+            label={t("changeMaster.current")}
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            required
+            autoFocus
+          />
+          <div className="flex flex-col gap-2">
+            <PasswordInput
+              label={t("changeMaster.new")}
+              autoComplete="new-password"
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+              required
+            />
+            {next && <PasswordStrength password={next} context={[email]} master />}
+          </div>
+          <PasswordInput
+            label={t("changeMaster.confirm")}
             autoComplete="new-password"
-            value={next}
-            onChange={(e) => setNext(e.target.value)}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
             required
           />
-          {next && <PasswordStrength password={next} context={[email]} master />}
-        </div>
-        <PasswordInput
-          label={t("changeMaster.confirm")}
-          autoComplete="new-password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          required
-        />
-        <p className="flex items-start gap-2 rounded-lg bg-surface-sunken px-3 py-2.5 text-[0.8125rem]">
-          <Info className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
-          {t("changeMaster.note")}
-        </p>
-        <FormError message={error} />
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            {t("action.cancel")}
-          </Button>
-          <Button type="submit" loading={busy}>
-            {t("changeMaster.submit")}
-          </Button>
-        </div>
-      </form>
+          <p className="flex items-start gap-2 rounded-lg bg-surface-sunken px-3 py-2.5 text-[0.8125rem]">
+            <Info className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
+            {t("changeMaster.note")}
+          </p>
+          <FormError message={error} />
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="secondary" onClick={() => onOpenChange(false)}>
+              {t("action.cancel")}
+            </Button>
+            <Button type="submit" loading={busy}>
+              {t("changeMaster.submit")}
+            </Button>
+          </div>
+        </form>
+      )}
     </Dialog>
   );
 }

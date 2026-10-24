@@ -32,6 +32,8 @@ describe("error messages", () => {
       "conflict",
       "unauthorized",
       "reauthentication_required",
+      "invalid_two_factor_code",
+      "two_factor_expired",
       "not_found",
       "bad_request",
       "internal",
@@ -42,6 +44,7 @@ describe("error messages", () => {
       expect(message, code).not.toMatch(/^[a-z_.]+$/);
     }
     expect(describeError(api(409, "conflict"), en, "signUp")).toContain("already exists");
+    expect(describeError(api(401, "invalid_two_factor_code"), de)).toContain("30 Sekunden");
   });
 
   it("explains network failures and Secret Key typos", () => {

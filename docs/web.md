@@ -48,6 +48,21 @@ The former Watchtower. It shows "X of Y logins are secure" with a bar instead of
 
 Account (Emergency Kit, masked Secret Key `P1-•••••-…`, change master password, forgot password), **Devices** (`client.sessions()`, this device marked, sign out one or all others, with confirmations), **Activity** (last 50 events; failed attempts are called sign-in attempts, with the note that wrong master passwords are detected on the device and may not appear), security on this device, language and theme, About (audit status, server, license) and **Technical details** (account ID, algorithms, KDF parameters, server version). The web app names its device "Chrome on Windows" and so on from the user agent; the desktop app reports "Passbox Desktop on …".
 
+## Two-factor sign-in
+
+Settings → **Two-factor sign-in** (`views/settings/TwoFactorPanel.tsx`) shows the status and offers:
+
+| Topic | Behavior |
+| --- | --- |
+| Authenticator app | "Set up" shows a QR code (encoded on the device with [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 2.0.4, MIT, no dependencies, rendered as SVG) and the setup key in groups of four with a copy button, then asks for a first code. A wrong code says so and the dialog stays open. |
+| Security keys and passkeys | "Add security key" asks for a name and lets the browser create a credential (`client.addSecurityKey`). Keys are bound to the host the web app is served from; the button is disabled without a secure context or on an IP address. Keys are listed with date added and last use and can be removed while another method remains. |
+| Recovery codes | Shown once after the first method is added and after "Create new codes": a list with **Download** (.txt), **Print** (a hidden frame with only the codes) and **Copy**; "Done" stays disabled until "I have saved these codes" is switched on. The panel shows how many are unused (warning badge at 2 or fewer). |
+| Turning it off | Asks for a current code, a recovery code or the security key. |
+| Recent login | The server only accepts changes from a login in the last 10 minutes. When it refuses one, a dialog asks for the master password (and the second factor) and the action runs again. |
+| Sign-in and unlock | After the master password, `TwoFactorStep` asks for the code from the app ("Use a recovery code instead" switches the field; a pasted recovery code is recognized either way) or offers "Use security key". "Remember this device for 30 days" is off by default. After a recovery code a toast says how many are left. The same step appears inside "Change master password" when the change needs a fresh login. |
+
+The activity log names all two-factor events (turned on/off, method added/removed, recovery code used, new codes, wrong second factor, sign-in with a second factor).
+
 ## First steps
 
 An empty vault shows a checklist instead of a bare empty state, also reachable as "Getting started" in the sidebar until it is complete or hidden: account created, Emergency Kit, browser extension, import (links to `#/import`), phone, security check. Manual steps are ticked off by the user and stored in the preferences.
@@ -62,4 +77,4 @@ An empty vault shows a checklist instead of a bare empty state, also reachable a
 ## Tests
 
 - Unit tests: `pnpm --filter @passbox/web test` (search, PDF writer, kit check, errors, QR text, server addresses, device names, translations, clipboard, auto-lock).
-- End-to-end: `pnpm --filter @passbox/web build && pnpm e2e` (`e2e/tests/vault.spec.ts`), in English by default plus a German smoke test; covers the kit check after a reload, trash and undo, sign-out confirmation, the 2FA check and server address rules.
+- End-to-end: `pnpm --filter @passbox/web build && pnpm e2e` (`e2e/tests/vault.spec.ts`; two-factor sign-in with TOTP, recovery codes and a virtual security key in `e2e/tests/two-factor.spec.ts`), in English by default plus a German smoke test; covers the kit check after a reload, trash and undo, sign-out confirmation, the 2FA check and server address rules.

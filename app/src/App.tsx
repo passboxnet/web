@@ -2,16 +2,21 @@ import type { PassboxClient } from "@passbox/client";
 import { Logo, Spinner } from "@passbox/ui";
 import { useEffect, useState } from "react";
 import { EmergencyKitScreen } from "./auth/EmergencyKitScreen";
+import { KitProvider, useKit } from "./auth/KitProvider";
 import { UnlockScreen } from "./auth/UnlockScreen";
 import { WelcomeScreen } from "./auth/WelcomeScreen";
 import { errorMessage, loadClient } from "./core";
 import { onLockRequest, setDesktopLockSettings } from "./desktop";
+import { clearPasswordDrafts } from "./items/ChangePasswordDialog";
 import { clearClipboardNow } from "./lib/clipboard";
+import { markUsedBefore } from "./lib/firstRun";
+import { useI18n } from "./lib/i18n";
 import { usePreferences } from "./lib/preferences";
 import { AppShell } from "./shell/AppShell";
 import { ClientContext, useSnapshot } from "./useClient";
 
 export function App() {
+  const { t } = useI18n();
   const [client, setClient] = useState<PassboxClient>();
   const [error, setError] = useState<string>();
 
@@ -25,13 +30,21 @@ export function App() {
   // when the computer locks or sleeps.
   useEffect(() => (client ? onLockRequest(() => client.lock()) : undefined), [client]);
 
-  // However the vault locks, a copied secret leaves the clipboard.
+  // However the vault locks, a copied secret leaves the clipboard. After an
+  // unlock, items that have been in the trash for 30 days are deleted.
   useEffect(() => {
     if (!client) return;
     let status = client.getSnapshot().status;
     return client.subscribe(() => {
       const next = client.getSnapshot().status;
-      if (status === "unlocked" && next !== "unlocked") void clearClipboardNow();
+      if (status === "unlocked" && next !== "unlocked") {
+        void clearClipboardNow();
+        clearPasswordDrafts();
+      }
+      if (status !== "unlocked" && next === "unlocked") {
+        markUsedBefore();
+        client.purgeTrash().catch((e: unknown) => console.warn("Could not empty the trash", e));
+      }
       status = next;
     });
   }, [client]);
@@ -47,7 +60,7 @@ export function App() {
   if (error) {
     return (
       <div className="flex h-full items-center justify-center p-8 text-sm text-danger" role="alert">
-        Passbox could not start: {error}
+        {t("app.startFailed", { error })}
       </div>
     );
   }
@@ -55,28 +68,27 @@ export function App() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 text-text-muted">
         <Logo className="text-text" />
-        <Spinner label="Loading" />
+        <Spinner label={t("app.loading")} />
       </div>
     );
   }
   return (
     <ClientContext.Provider value={client}>
-      <Router />
+      <KitProvider>
+        <Router />
+      </KitProvider>
     </ClientContext.Provider>
   );
 }
 
 function Router() {
   const { status } = useSnapshot();
-  // Shown once after sign-up, before the vault opens.
-  const [newSecretKey, setNewSecretKey] = useState<string>();
+  const kit = useKit();
 
-  if (newSecretKey) {
-    return <EmergencyKitScreen secretKey={newSecretKey} onDone={() => setNewSecretKey(undefined)} />;
-  }
+  if (kit.open) return <EmergencyKitScreen />;
   switch (status) {
     case "signed-out":
-      return <WelcomeScreen onSignedUp={setNewSecretKey} />;
+      return <WelcomeScreen />;
     case "locked":
       return <UnlockScreen />;
     case "unlocked":

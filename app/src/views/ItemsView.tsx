@@ -1,5 +1,5 @@
 import type { Item, VaultHealth } from "@passbox/client";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { ItemDetail } from "../items/ItemDetail";
 import { ItemEditor } from "../items/ItemEditor";
 import { ItemList, type SortOrder } from "../items/ItemList";
@@ -84,6 +84,14 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
     navigate(itemId ? { view: "items", filter: route.filter, itemId } : { view: "items", filter: route.filter });
   const edit = (id: string) => navigate({ view: "items", filter: route.filter, itemId: id, edit: true });
   const showDetailOnMobile = Boolean(route.itemId || route.create);
+
+  // A shared vault this account lost access to (removed, left, deleted) falls back to all items.
+  // (Before the first sync after unlocking there are no vaults at all yet.)
+  const vaultGone =
+    filterVault !== undefined && snapshot.vaults.length > 0 && !snapshot.vaults.some((v) => v.id === filterVault);
+  useEffect(() => {
+    if (vaultGone) navigate({ view: "items", filter: { kind: "all" } });
+  }, [vaultGone, navigate]);
 
   let pane: ReactNode;
   if (route.create && defaultVaultId) {

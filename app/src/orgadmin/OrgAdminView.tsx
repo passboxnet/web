@@ -116,6 +116,7 @@ function Console({
   const go = (next: AdminSection) => navigate({ view: "org-admin", orgId: org.id, section: next });
   const report = useOrgReport(org);
   const name = orgName(org, t);
+  const adminOrgs = useSnapshot().orgs.filter(isOrgAdmin);
 
   return (
     <section aria-label={t("orgAdmin.titleFor", { name })} className="flex min-w-0 flex-1 overflow-hidden bg-canvas">
@@ -123,6 +124,22 @@ function Console({
         aria-label={t("orgAdmin.sections")}
         className="hidden w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-surface px-3 py-6 md:flex"
       >
+        {adminOrgs.length > 1 && (
+          <label className="mb-3 flex flex-col gap-1 px-2 text-xs text-text-muted">
+            {t("orgAdmin.switchOrg")}
+            <select
+              className={cn(fieldClassName, "h-9 px-2 text-[0.8125rem] text-text coarse:h-11")}
+              value={org.id}
+              onChange={(e) => navigate({ view: "org-admin", orgId: e.target.value, section: current })}
+            >
+              {adminOrgs.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {orgName(o, t)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="mb-4 flex items-start gap-2.5 px-2">
           <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
             <OrgIcon kind={org.kind} />

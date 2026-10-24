@@ -115,7 +115,6 @@ export function MembersSection({
           t("orgAdmin.members.col.role"),
           t("orgAdmin.members.col.twoFactor"),
           t("orgAdmin.members.col.recovery"),
-          t("orgAdmin.members.col.lastSignIn"),
           t("orgAdmin.members.col.score"),
           <span key="actions" className="sr-only">
             {t("orgAdmin.members.col.actions")}
@@ -124,7 +123,7 @@ export function MembersSection({
       >
         {members.length === 0 && (
           <tr>
-            <Cell colSpan={7} className="text-text-muted">
+            <Cell colSpan={6} className="text-text-muted">
               {t("orgAdmin.members.none")}
             </Cell>
           </tr>
@@ -135,6 +134,7 @@ export function MembersSection({
             org={org}
             member={member}
             report={reports.get(member.accountId)}
+            recoverySetUp={data.report?.recoverySetUp ?? false}
             self={member.accountId === me}
             onConfirm={() => setConfirming(member)}
             onRole={() => setRoleFor(member)}
@@ -196,6 +196,7 @@ function MemberRow({
   org,
   member,
   report,
+  recoverySetUp,
   self,
   onConfirm,
   onRole,
@@ -205,6 +206,7 @@ function MemberRow({
   org: Org;
   member: OrgMember;
   report: MemberReport | undefined;
+  recoverySetUp: boolean;
   self: boolean;
   onConfirm: () => void;
   onRole: () => void;
@@ -221,20 +223,25 @@ function MemberRow({
 
   return (
     <tr data-testid="admin-member">
-      <Cell>
+      <Cell className="max-w-[17rem]">
         <span className="flex min-w-0 items-center gap-3">
           <Monogram name={label} size="sm" />
-          <span className="min-w-0">
+          <span className="block min-w-0 max-w-[12rem]">
             <span className="block truncate font-medium" title={label}>
               {self ? t("sharing.you", { name: label }) : label}
             </span>
             <span className="flex flex-wrap items-center gap-1.5">
               <MemberStatusBadge member={member} />
-              {report?.joinedAt ? (
-                <span className="text-xs text-text-muted">
-                  {t("orgAdmin.members.joined", { date: i18n.date(report.joinedAt) })}
+              {report && (
+                <span
+                  className="text-xs text-text-muted"
+                  title={report.lastSignInAt ? i18n.dateTime(report.lastSignInAt) : undefined}
+                >
+                  {t("orgAdmin.members.lastSignIn", {
+                    time: report.lastSignInAt ? i18n.relativeTime(report.lastSignInAt) : t("orgAdmin.members.never"),
+                  })}
                 </span>
-              ) : null}
+              )}
             </span>
           </span>
         </span>
@@ -250,18 +257,11 @@ function MemberRow({
       <Cell>
         {confirmed ? (
           <YesNo
-            value={report?.recoveryEnrolled}
+            value={recoverySetUp ? report?.recoveryEnrolled : undefined}
             yes={t("orgAdmin.members.enrolled")}
             no={t("orgAdmin.members.notEnrolled")}
           />
         ) : null}
-      </Cell>
-      <Cell className="whitespace-nowrap text-text-muted">
-        {report?.lastSignInAt ? (
-          <span title={i18n.dateTime(report.lastSignInAt)}>{i18n.relativeTime(report.lastSignInAt)}</span>
-        ) : (
-          t("orgAdmin.members.never")
-        )}
       </Cell>
       <Cell className="tabular-nums">
         {report?.security ? (
@@ -272,7 +272,7 @@ function MemberRow({
           <span className="text-text-subtle">–</span>
         )}
       </Cell>
-      <Cell className="text-right">
+      <Cell className="sticky right-0 bg-surface text-right">
         <span className="flex items-center justify-end gap-1">
           {canConfirm && (
             <Button size="sm" onClick={onConfirm}>

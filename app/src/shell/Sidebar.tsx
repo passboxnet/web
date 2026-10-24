@@ -86,6 +86,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   // Admins see how many people wait for them; everyone sees sharing problems.
   const waiting = orgs.reduce((sum, org) => sum + (isOrgAdmin(org) ? awaitingConfirmation(org).length : 0), 0);
   const sharingActive = route.view === "sharing" || route.view === "org";
+  const adminOrgs = orgs.filter(isOrgAdmin);
 
   return (
     <nav
@@ -310,15 +311,18 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               onClick={() => navigate({ view: "admin" })}
             />
           )}
-          {orgs.filter(isOrgAdmin).map((org) => (
+          {adminOrgs.length > 0 && (
             <NavItem
-              key={`admin-${org.id}`}
               icon={Building2}
-              label={t("orgAdmin.nav", { name: orgName(org, t) })}
-              active={route.view === "org-admin" && route.orgId === org.id}
-              onClick={() => navigate({ view: "org-admin", orgId: org.id })}
+              label={t("orgAdmin.title")}
+              active={route.view === "org-admin"}
+              onClick={() => {
+                // The organization on screen, else the first one this account administers.
+                const current = route.view === "org" ? adminOrgs.find((o) => o.id === route.orgId) : undefined;
+                navigate({ view: "org-admin", orgId: (current ?? adminOrgs[0])?.id ?? "" });
+              }}
             />
-          ))}
+          )}
         </NavGroup>
       </div>
 

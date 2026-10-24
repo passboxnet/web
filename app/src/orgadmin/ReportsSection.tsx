@@ -138,7 +138,7 @@ function SecurityReport({ report }: { report: OrgReport }) {
               )}
             </Cell>
             <Cell className="tabular-nums">{m.security?.score ?? "–"}</Cell>
-            <Cell className="text-xs">
+            <Cell className="text-xs whitespace-nowrap">
               {m.security
                 ? t("orgAdmin.reports.findings", {
                     weak: m.security.weak,

@@ -25,6 +25,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  ShieldEllipsis,
   Star,
   Trash2,
   Vault as VaultIcon,
@@ -33,6 +34,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { SignOutDialog } from "../auth/SignOutDialog";
 import { shortcut, useI18n } from "../lib/i18n";
+import { useIsInstanceAdmin } from "../lib/instance";
 import { CATEGORY_META, CREATABLE } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
@@ -69,6 +71,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   const { t } = i18n;
   const { email = "", items, vaults, trash } = useSnapshot();
   const checklist = useChecklist();
+  const isAdmin = useIsInstanceAdmin(client);
   const [newVaultOpen, setNewVaultOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const affected = affectedLogins(health);
@@ -254,6 +257,14 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             active={route.view === "settings"}
             onClick={() => navigate({ view: "settings" })}
           />
+          {isAdmin && (
+            <NavItem
+              icon={ShieldEllipsis}
+              label={t("admin.title")}
+              active={route.view === "admin"}
+              onClick={() => navigate({ view: "admin" })}
+            />
+          )}
         </NavGroup>
       </div>
 

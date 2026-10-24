@@ -27,6 +27,11 @@ describe("error messages", () => {
 
   it("maps every server error code and never shows raw server text", () => {
     for (const code of [
+      "account_disabled",
+      "registration_closed",
+      "domain_not_allowed",
+      "invitation_invalid",
+      "forbidden",
       "invalid_credentials",
       "rate_limited",
       "conflict",

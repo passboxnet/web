@@ -92,7 +92,9 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
     setFieldErrors(errors);
     const first = Object.keys(errors)[0];
     if (first) {
-      document.getElementById(`field-${first}`)?.focus();
+      const field = document.getElementById(`field-${first}`);
+      field?.focus({ preventScroll: true });
+      field?.scrollIntoView({ block: "nearest" });
       return false;
     }
     return true;

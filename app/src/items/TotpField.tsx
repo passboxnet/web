@@ -104,7 +104,7 @@ export function TotpField({ id, label, labelAction, value, error, onChange, trai
           trailing={trailing}
         />
       )}
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="relative flex flex-wrap items-center gap-1">
         <input
           ref={fileRef}
           type="file"

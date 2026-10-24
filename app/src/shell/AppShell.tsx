@@ -75,7 +75,9 @@ export function AppShell() {
   );
 
   return (
-    <div className="flex h-full flex-col bg-canvas">
+    // relative + overflow-hidden: screen-reader-only text deep in a scrolled pane must not
+    // stretch the document, which would let the whole window scroll.
+    <div className="relative flex h-full flex-col overflow-hidden bg-canvas">
       <InsecurePageBanner />
       <KitReminder />
       <div className="flex min-h-0 flex-1">
@@ -134,7 +136,8 @@ function KitReminder() {
     >
       <KeyRound className="size-4 shrink-0 text-warning" aria-hidden="true" />
       <p className="min-w-0 flex-1">
-        <strong className="font-semibold">{t("kit.reminder.title")}</strong> – {t("kit.reminder.body")}
+        <strong className="font-semibold">{t("kit.reminder.title")}</strong>
+        <span className="hidden sm:inline"> – {t("kit.reminder.body")}</span>
       </p>
       <Button size="sm" onClick={kit.requestKit}>
         {t("kit.reminder.action")}

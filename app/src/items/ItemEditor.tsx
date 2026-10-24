@@ -24,11 +24,13 @@ import {
   Tooltip,
   toast,
 } from "@passbox/ui";
-import { AtSign, Hash, Link2, Lock, Plus, Star, Timer, Trash2, Type, Wand2, X } from "lucide-react";
+import { AtSign, Hash, Link2, Lock, Plus, Star, Timer, Trash2, Type, Users, Wand2, X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { errorMessage, loadCore } from "../core";
 import { shortcut, useI18n } from "../lib/i18n";
 import { CATEGORY_META, fieldLabel, findDuplicateLogin, hostname, itemTitle, mergeInto } from "../lib/items";
+import { writableVaults } from "../lib/sharing";
+import { orgName, useAudience } from "../sharing/common";
 import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
 import { PasswordStrength } from "./PasswordStrength";
@@ -54,10 +56,19 @@ const CUSTOM_FIELD_TYPES: Array<{ type: FieldType; label: string; icon: typeof T
 export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEditorProps) {
   const client = useClient();
   const { t } = useI18n();
-  const { vaults, items } = useSnapshot();
+  const { vaults: allVaults, items, orgs } = useSnapshot();
+  // Only vaults this account may write to; shared ones carry their organization's name.
+  const vaults = writableVaults(allVaults);
+  const optionLabel = (vault: (typeof vaults)[number]) => {
+    const org = orgs.find((o) => o.id === vault.orgId);
+    return org
+      ? t("sharing.editor.vaultOption", { vault: vaultName(vault.name, t), org: orgName(org, t) })
+      : vaultName(vault.name, t);
+  };
   const initial = useMemo(() => (item ? structuredClone(item.data) : newItemData(category)), [item, category]);
   const [data, setData] = useState<ItemData>(initial);
   const [vaultId, setVaultId] = useState(item?.vaultId ?? defaultVaultId);
+  const audience = useAudience(vaultId);
   const [tagInput, setTagInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -233,7 +244,7 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
                 />
                 <div className="mt-1 flex flex-wrap items-center gap-3 px-1 text-[0.8125rem] text-text-muted">
                   {item ? (
-                    <span>{vaultName(vaults.find((v) => v.id === vaultId)?.name ?? "", t)}</span>
+                    <span>{vaultName(allVaults.find((v) => v.id === vaultId)?.name ?? "", t)}</span>
                   ) : (
                     // With a single vault there is nothing to choose.
                     vaults.length > 1 && (
@@ -246,12 +257,18 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
                         >
                           {vaults.map((vault) => (
                             <option key={vault.id} value={vault.id}>
-                              {vaultName(vault.name, t)}
+                              {optionLabel(vault)}
                             </option>
                           ))}
                         </select>
                       </label>
                     )
+                  )}
+                  {!item && audience.shared && (
+                    <span className="flex items-center gap-1 text-xs" data-testid="editor-audience">
+                      <Users className="size-3.5 text-accent" aria-hidden="true" />
+                      {t("sharing.audience.visibleFor", { audience: audience.label })}
+                    </span>
                   )}
                   <button
                     type="button"

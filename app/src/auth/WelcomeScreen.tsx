@@ -1,7 +1,7 @@
-import type { ServerMeta } from "@passbox/api-client";
+import type { InvitationPreview, ServerMeta } from "@passbox/api-client";
 import { TwoFactorRequiredError } from "@passbox/client";
 import { Button, Input, PasswordInput, SegmentedControl } from "@passbox/ui";
-import { ChevronRight, Info, LifeBuoy, Sparkles } from "lucide-react";
+import { ChevronRight, House, Info, LifeBuoy, Sparkles } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { errorMessage, loadCore, nextFrame } from "../core";
 import { PasswordStrength } from "../items/PasswordStrength";
@@ -10,6 +10,7 @@ import { wasUsedBefore } from "../lib/firstRun";
 import { useI18n } from "../lib/i18n";
 import { type InviteLink, inviteFromHash, meetsPasswordPolicy, useServerMeta } from "../lib/instance";
 import { serverUrl } from "../lib/server";
+import { type OrgInviteLink, useOrgInvite } from "../lib/sharing";
 import { useClient } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
@@ -22,13 +23,30 @@ const SECRET_KEY_LENGTH = 28;
 
 export function WelcomeScreen() {
   const { t } = useI18n();
+  const client = useClient();
   const [invite] = useState<InviteLink | undefined>(() => inviteFromHash());
+  // An invitation to a family or team (`/invite/…`), kept for this tab.
+  const orgInvite = useOrgInvite();
+  const [orgPreview, setOrgPreview] = useState<InvitationPreview | null>();
+  const orgLink = orgInvite?.link;
+  useEffect(() => {
+    setOrgPreview(undefined);
+    if (!orgLink) return;
+    let cancelled = false;
+    client
+      .previewInvitation(orgLink)
+      .then((preview) => !cancelled && setOrgPreview(preview))
+      .catch(() => !cancelled && setOrgPreview(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [client, orgLink]);
   // First visit on this device or an invitation: most people are here to create an account.
   const [mode, setMode] = useState<"sign-in" | "sign-up">(() => (invite || !wasUsedBefore() ? "sign-up" : "sign-in"));
   const [choosingServer, setChoosingServer] = useState(false);
   const meta = useServerMeta();
   // Servers that only accept invited accounts hide "Create account" without an invitation.
-  const signUpClosed = meta?.registration === "invite_only" && !invite;
+  const signUpClosed = meta?.registration === "invite_only" && !invite && !orgPreview;
   useEffect(() => {
     if (signUpClosed) setMode("sign-in");
   }, [signUpClosed]);
@@ -49,6 +67,7 @@ export function WelcomeScreen() {
       <p className="mt-1.5 text-sm text-text-muted">
         {mode === "sign-in" ? t("signIn.description") : t("signUp.description")}
       </p>
+      {orgInvite && orgPreview !== undefined && <OrgInviteNotice preview={orgPreview} />}
       {signUpClosed ? (
         <p
           role="note"
@@ -70,7 +89,16 @@ export function WelcomeScreen() {
         />
       )}
       <div className="mt-6">
-        {mode === "sign-in" || signUpClosed ? <SignInForm /> : <SignUpForm invite={invite} meta={meta} />}
+        {mode === "sign-in" || signUpClosed ? (
+          <SignInForm />
+        ) : (
+          <SignUpForm
+            key={orgPreview?.email ?? ""}
+            invite={invite}
+            orgInvite={orgInvite && orgPreview ? { link: orgInvite, email: orgPreview.email } : undefined}
+            meta={meta}
+          />
+        )}
       </div>
       {meta?.supportUrl && (
         <a
@@ -199,11 +227,54 @@ function SignInForm() {
   );
 }
 
-function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: ServerMeta | undefined }) {
+/** "Anna invited you to a family": shown above sign-in and sign-up while an invitation waits. */
+function OrgInviteNotice({ preview }: { preview: InvitationPreview | null }) {
+  const { t } = useI18n();
+  if (!preview) {
+    return (
+      <p role="note" className="mt-5 flex gap-2 rounded-lg border border-border bg-surface-sunken p-3 text-[0.8125rem]">
+        <Info className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
+        {t("sharing.accept.invalid")}
+      </p>
+    );
+  }
+  const family = preview.orgKind !== "team";
+  return (
+    <div
+      role="note"
+      className="mt-5 flex gap-3 rounded-lg border border-accent/25 bg-accent-soft p-3 text-[0.8125rem]"
+      data-testid="org-invite-notice"
+    >
+      <House className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+      <div>
+        <p className="font-semibold">
+          {preview.inviterEmail
+            ? family
+              ? t("sharing.accept.titleFamily", { name: preview.inviterEmail })
+              : t("sharing.accept.titleTeam", { name: preview.inviterEmail })
+            : family
+              ? t("sharing.accept.titleFamilyAnon")
+              : t("sharing.accept.titleTeamAnon")}
+        </p>
+        <p className="mt-0.5 text-text-muted">{t("sharing.accept.signInFirst", { email: preview.email })}</p>
+      </div>
+    </div>
+  );
+}
+
+function SignUpForm({
+  invite,
+  orgInvite,
+  meta,
+}: {
+  invite: InviteLink | undefined;
+  orgInvite: { link: OrgInviteLink; email: string } | undefined;
+  meta: ServerMeta | undefined;
+}) {
   const client = useClient();
   const kit = useKit();
   const { t, locale } = useI18n();
-  const [email, setEmail] = useState(invite?.email ?? "");
+  const [email, setEmail] = useState(invite?.email || orgInvite?.email || "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [suggestion, setSuggestion] = useState<string>();
@@ -237,9 +308,13 @@ function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: Se
     setError(undefined);
     await nextFrame();
     try {
+      // An invitation to a family or team also opens invite-only servers, for its own address.
+      const orgToken =
+        orgInvite && email.trim().toLowerCase() === orgInvite.email.toLowerCase() ? orgInvite.link.token : undefined;
+      const inviteToken = invite?.token ?? orgToken;
       const { accountId } = await client.signUp(email, password, {
         locale,
-        ...(invite ? { inviteToken: invite.token } : {}),
+        ...(inviteToken ? { inviteToken } : {}),
       });
       // The invitation is used up; keep it out of the address bar.
       if (invite) window.history.replaceState(null, "", "#/");
@@ -262,7 +337,7 @@ function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: Se
         onChange={(e) => setEmail(e.target.value)}
         required
         hint={
-          invite
+          invite || orgInvite
             ? t("signUp.invited")
             : meta?.registration === "domains" && meta.allowedDomains?.length
               ? t("signUp.domainsHint", { domains: meta.allowedDomains.join(", ") })

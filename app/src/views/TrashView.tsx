@@ -5,13 +5,16 @@ import { useState } from "react";
 import { errorMessage } from "../core";
 import { useI18n } from "../lib/i18n";
 import { CATEGORY_META, itemSubtitle, itemTitle } from "../lib/items";
+import { writableVaults } from "../lib/sharing";
+import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
 import { Page } from "./PageHeader";
 
 /** Items moved to the trash, restorable for 30 days. Only "Delete permanently" is final. */
 export function TrashView() {
   const client = useClient();
-  const { trash } = useSnapshot();
+  const { trash, vaults } = useSnapshot();
+  const writable = new Set(writableVaults(vaults).map((v) => v.id));
   const i18n = useI18n();
   const { t } = i18n;
   const [deleting, setDeleting] = useState<Item>();
@@ -65,6 +68,7 @@ export function TrashView() {
             {trash.map((item) => {
               const Icon = CATEGORY_META[item.data.category].icon;
               const purgeAt = (item.data.trashedAt ?? Date.now()) + TRASH_RETENTION_MS;
+              const vault = vaults.find((v) => v.id === item.vaultId);
               return (
                 <li key={item.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
                   <Monogram
@@ -75,24 +79,29 @@ export function TrashView() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[0.8125rem] font-medium">{itemTitle(item, t)}</p>
                     <p className="truncate text-xs text-text-muted">
+                      {vault?.orgId ? `${vaultName(vault.name, t)} · ` : ""}
                       {itemSubtitle(item, t)} ·{" "}
                       <span title={i18n.dateTime(purgeAt)}>{t("trash.purgeOn", { date: i18n.date(purgeAt) })}</span>
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => void restore(item)}>
-                      <RotateCcw />
-                      {t("action.restore")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-danger hover:text-danger"
-                      onClick={() => setDeleting(item)}
-                    >
-                      {t("action.deletePermanently")}
-                    </Button>
-                  </div>
+                  {!writable.has(item.vaultId) ? (
+                    <span className="text-xs text-text-muted">{t("sharing.viewOnly.short")}</span>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => void restore(item)}>
+                        <RotateCcw />
+                        {t("action.restore")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-danger hover:text-danger"
+                        onClick={() => setDeleting(item)}
+                      >
+                        {t("action.deletePermanently")}
+                      </Button>
+                    </div>
+                  )}
                 </li>
               );
             })}

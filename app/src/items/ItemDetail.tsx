@@ -1,4 +1,12 @@
-import { estimateStrength, FIELD, fieldValue, type Item, type ItemField, type VaultHealth } from "@passbox/client";
+import {
+  estimateStrength,
+  FIELD,
+  fieldValue,
+  type Item,
+  type ItemField,
+  type Passkey,
+  type VaultHealth,
+} from "@passbox/client";
 import {
   Badge,
   Button,
@@ -22,6 +30,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Fingerprint,
   KeyRound,
   Maximize2,
   MoreHorizontal,
@@ -209,6 +218,14 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
             </Card>
           )}
 
+          {data.passkeys && data.passkeys.length > 0 && (
+            <Card className="mt-4">
+              {data.passkeys.map((passkey) => (
+                <PasskeyRow key={passkey.credentialId} passkey={passkey} />
+              ))}
+            </Card>
+          )}
+
           {data.notes && (
             <Card className="mt-4">
               <div className="px-4 py-3">
@@ -283,6 +300,34 @@ function Meta({ label, value, title }: { label: string; value: string; title?: s
       <dd className="mt-0.5 font-medium text-text-muted" title={title}>
         {value}
       </dd>
+    </div>
+  );
+}
+
+/** Read-only passkey summary. The private key is never shown or copied. */
+function PasskeyRow({ passkey }: { passkey: Passkey }) {
+  const created = passkey.createdAt ? new Date(passkey.createdAt) : undefined;
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+        <Fingerprint className="size-4" aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-2xs font-medium text-text-subtle">
+          Passkey
+          {created && (
+            <>
+              {" · "}
+              <span title={created.toLocaleString()}>created {relativeTime(passkey.createdAt)}</span>
+            </>
+          )}
+        </p>
+        <p className="mt-0.5 truncate text-sm">
+          {passkey.userName || passkey.userDisplayName || "Passkey"}
+          <span className="text-text-muted"> · {passkey.rpId}</span>
+        </p>
+      </div>
+      <Badge tone="accent">Passkey</Badge>
     </div>
   );
 }

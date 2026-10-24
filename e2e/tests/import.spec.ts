@@ -22,9 +22,10 @@ async function signUp(page: Page) {
   await page.getByLabel("Master password", { exact: true }).fill(PASSWORD);
   await page.getByLabel("Confirm master password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.getByTestId("secret-key").waitFor({ timeout: 30_000 });
-  await page.getByRole("checkbox").first().check();
-  await page.getByRole("button", { name: /Open my vault/ }).click();
+  const secretKey = (await page.getByTestId("secret-key").textContent({ timeout: 30_000 }))?.trim() ?? "";
+  await page.getByLabel(/last 4 characters of your Secret Key/).fill(secretKey.slice(-4));
+  await page.getByRole("button", { name: "Continue to my vault" }).click();
+  await expect(page.getByText("No passwords saved yet")).toBeVisible();
 }
 
 async function importChrome(page: Page) {

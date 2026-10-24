@@ -103,6 +103,15 @@ Settings → **Two-factor sign-in** (`views/settings/TwoFactorPanel.tsx`) shows 
 
 The activity log names all two-factor events (turned on/off, method added/removed, recovery code used, new codes, wrong second factor, sign-in with a second factor).
 
+## Developer: AI agents and service accounts
+
+**Developer** in the sidebar (with a counter while agents wait) has two parts:
+
+- **AI agents**: requests from agents connected with `pbx mcp` wait here for your decision. Wherever you are in the app, a dialog opens for a new request (the desktop app also comes to the front and asks for attention; in the browser you can turn on notifications). The dialog shows the request code the agent also shows, the items (looked up in your own vault; unknown items block approval), the exact command lines or files, the agent's reason (marked as its own words) and how long the access lasts. Approving signs the decision with your account key. Below are recent requests (revoke active ones), the agent activity log and setup instructions. See [architecture/ai-agents.md](architecture/ai-agents.md).
+- **Service accounts**: create one per pipeline, server or agent (name, vaults with read or read and write access, expiry 30/90/365 days or never), copy the token once (the dialog closes only after you confirm you stored it), change vault access or renew it after a key rotation, see its activity, revoke or delete it (both confirmed). See [architecture/service-accounts.md](architecture/service-accounts.md).
+
+Items of the category **Environment** hold the variables of an app (each field is a variable; the label is the name). Their detail view shows how to run a program with them (`pbx env "<title>" -- <command>`) and copies them as `.env` content.
+
 ## Administration
 
 Instance admins (the first account on a server, and `PASSBOX_ADMIN_EMAILS`, see [self-hosting](self-hosting.md#administration)) see **Administration** in the sidebar under Tools and in Settings (`#/admin`); `client.accountInfo().instanceAdmin` decides, checked once per unlock. Other accounts never see it, and the server refuses its endpoints with `forbidden`.

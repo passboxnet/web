@@ -2,6 +2,7 @@ import { Button, Logo } from "@passbox/ui";
 import { Menu as MenuIcon, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { onCommandPaletteRequest } from "../desktop";
+import { ImportView } from "../import/ImportView";
 import { usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
@@ -87,6 +88,9 @@ export function AppShell() {
           {route.view === "watchtower" && <WatchtowerView health={health} navigate={navigate} />}
           {route.view === "generator" && <GeneratorView />}
           {route.view === "settings" && <SettingsView />}
+          {route.view === "import" && (
+            <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
+          )}
         </main>
       </div>
 

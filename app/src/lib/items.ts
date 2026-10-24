@@ -1,6 +1,6 @@
 import { FIELD, fieldValue, type Item, type ItemCategory, type ItemData } from "@passbox/client";
 import type { Translate } from "@passbox/i18n";
-import { CreditCard, FileText, IdCard, KeyRound, type LucideIcon, Shapes } from "lucide-react";
+import { Braces, CreditCard, FileText, IdCard, KeyRound, type LucideIcon, Shapes } from "lucide-react";
 
 /** Message keys and icons per category. `label` is singular, `plural` names the list. */
 export const CATEGORY_META: Record<ItemCategory, { label: string; plural: string; icon: LucideIcon }> = {
@@ -8,11 +8,12 @@ export const CATEGORY_META: Record<ItemCategory, { label: string; plural: string
   note: { label: "category.note", plural: "category.notes", icon: FileText },
   card: { label: "category.card", plural: "category.cards", icon: CreditCard },
   identity: { label: "category.identity", plural: "category.identities", icon: IdCard },
+  environment: { label: "category.environment", plural: "category.environments", icon: Braces },
   other: { label: "category.other", plural: "category.others", icon: Shapes },
 };
 
 /** Categories that can be created from the UI, in menu order. */
-export const CREATABLE: ItemCategory[] = ["login", "note", "card"];
+export const CREATABLE: ItemCategory[] = ["login", "note", "card", "environment"];
 
 /** The title, or "Untitled" in the current language. */
 export function itemTitle(item: { data: { title: string } }, t: Translate): string {

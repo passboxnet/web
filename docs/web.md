@@ -84,7 +84,7 @@ The design is in [recovery.md](architecture/recovery.md). The screens:
 | **Recovery requests** (`#/recovery-requests`, `views/RecoveryRequestsView.tsx`) | Recovery admins open it from Settings → Recovery, where each organization shows the number of pending requests. Approving asks to confirm two things: that the person was verified outside Passbox, and that the request code matches. |
 | Settings → **Emergency access** (`views/settings/EmergencyPanel.tsx`) | Add a trusted person by email and waiting period (1–30 days, default 7). After they accept: choose the vaults, compare the fingerprint, confirm. A request shows the remaining days with "Allow now" and "Decline". People who trust this account are listed below with "Accept", "Request access" and, once released, "Open". |
 | Emergency vaults (`#/emergency/{id}`, `views/EmergencyVaultView.tsx`) | Read-only view of the shared vaults, decrypted on this device and kept in memory only. |
-| Sign in with another device | "Sign in with a code from another device" on the sign-in screen: enter the code, wait for approval, then type the master password; the email and Secret Key are filled in. |
+| Code from another device | "Use a code from another device" on the sign-in screen: enter the code, wait for approval, then type the master password; the email and Secret Key are filled in. |
 
 After every unlock the client refreshes the cached recovery options (for the locked screen) and re-seals emergency access when vault keys changed (`client.resealEmergencyAccess`). The activity log names all recovery and emergency events and marks recoveries and emergency requests as alerts.
 

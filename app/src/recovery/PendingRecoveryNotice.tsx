@@ -25,7 +25,7 @@ export function PendingRecoveryNotice() {
   );
 }
 
-/** "Sign in with another device": a code shown on a device that is already signed in. */
+/** "Use a code from another device": a code shown on a device that is already signed in. */
 export function LinkDeviceLink() {
   const flow = useRecoveryFlow();
   const { t } = useI18n();

@@ -1,24 +1,7 @@
 /** Helpers for two-factor sign-in screens. */
-import type { SecondFactor } from "@passbox/api-client";
 import qrcode from "qrcode-generator";
 
-/** Crockford Base32 as used by recovery codes (O, I and L are read as 0, 1, 1). */
-const RECOVERY_CHARS = /^[0-9A-HJKMNP-TV-Z]{16}$/;
-
-function compactRecoveryCode(input: string): string {
-  return input.replace(/[\s-]/g, "").toUpperCase().replace(/O/g, "0").replace(/[IL]/g, "1");
-}
-
-/** Whether typed input is a recovery code (16 characters) rather than a 6-digit code. */
-export function looksLikeRecoveryCode(input: string): boolean {
-  return RECOVERY_CHARS.test(compactRecoveryCode(input));
-}
-
-/** The second factor for what was typed into the one code field. */
-export function secondFactorFromInput(input: string): SecondFactor {
-  const code = input.trim();
-  return looksLikeRecoveryCode(code) ? { method: "recovery", code } : { method: "totp", code: code.replace(/\s/g, "") };
-}
+export { looksLikeRecoveryCode, secondFactorFromInput } from "@passbox/client";
 
 /** A Base32 setup key in groups of four, easier to type into an app. */
 export function groupSecret(secret: string): string {

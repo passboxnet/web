@@ -23,6 +23,7 @@ import { type LanguagePreference, setPreferences, type Theme, usePreferences } f
 import { useRoute } from "../lib/route";
 import { serverApi, serverLabel } from "../lib/server";
 import { SecurityCodePanel } from "../sharing/SecurityCodePanel";
+import { TrustedDevicesPanel } from "../sso/TrustedDevicesPanel";
 import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "./PageHeader";
 import { ActivityPanel } from "./settings/ActivityPanel";
@@ -114,6 +115,7 @@ export function SettingsView() {
         <RecoveryPanel />
         <EmergencyPanel />
         <DevicesPanel />
+        <TrustedDevicesPanel />
         <ActivityPanel />
         <NotificationsPanel />
 

@@ -6,8 +6,10 @@
  */
 import { createTranslator, detectLocale, type Locale, mergeCatalogs, type Translator } from "@passbox/i18n";
 import deCommon from "@passbox/i18n/messages/de/common.json";
+import deSso from "@passbox/i18n/messages/de/sso.json";
 import deWeb from "@passbox/i18n/messages/de/web.json";
 import enCommon from "@passbox/i18n/messages/en/common.json";
+import enSso from "@passbox/i18n/messages/en/sso.json";
 import enWeb from "@passbox/i18n/messages/en/web.json";
 import { useMemo } from "react";
 import { getPreferences, type LanguagePreference, usePreferences } from "./preferences";
@@ -15,8 +17,8 @@ import { getPreferences, type LanguagePreference, usePreferences } from "./prefe
 export type { Locale, Translator } from "@passbox/i18n";
 
 const CATALOGS = {
-  en: mergeCatalogs(enCommon, enWeb),
-  de: mergeCatalogs(deCommon, deWeb),
+  en: mergeCatalogs(enCommon, enWeb, enSso),
+  de: mergeCatalogs(deCommon, deWeb, deSso),
 };
 
 export function resolveLocale(

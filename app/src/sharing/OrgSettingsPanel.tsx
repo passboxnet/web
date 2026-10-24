@@ -1,6 +1,6 @@
 import type { Org } from "@passbox/client";
 import { Button, Dialog, Input, toast } from "@passbox/ui";
-import { LogOut, Pencil, Trash2 } from "lucide-react";
+import { KeyRound, LogOut, Pencil, Trash2 } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
 import { useI18n } from "../lib/i18n";
@@ -18,6 +18,14 @@ export function OrgSettingsPanel({ org, navigate }: { org: Org; navigate: (route
 
   return (
     <Panel id="org-settings" title={t("sharing.settings.title")}>
+      {isOrgAdmin(org) && org.kind === "team" && (
+        <Row label={t("sso.settings.title")} description={t("sso.settings.entryText")}>
+          <Button size="sm" variant="secondary" onClick={() => navigate({ view: "org-sso", orgId: org.id })}>
+            <KeyRound />
+            {t("sso.settings.open")}
+          </Button>
+        </Row>
+      )}
       {isOrgAdmin(org) && (
         <Row label={t("sharing.settings.rename")} description={t("sharing.settings.renameText")}>
           <Button size="sm" variant="secondary" onClick={() => setDialog("rename")}>

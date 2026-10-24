@@ -13,6 +13,7 @@ import { OrgView } from "../sharing/OrgView";
 import { SharingView } from "../sharing/SharingView";
 import { SharingWarningsBanner } from "../sharing/SharingWarnings";
 import { usePendingRotations } from "../sharing/usePendingRotations";
+import { SsoSettingsView } from "../sso/SsoSettingsView";
 import { useClient, useSnapshot } from "../useClient";
 import { AdminView } from "../views/admin/AdminView";
 import { EmergencyVaultView } from "../views/EmergencyVaultView";
@@ -131,6 +132,7 @@ export function AppShell() {
             {route.view === "emergency" && <EmergencyVaultView key={route.grantId} grantId={route.grantId} />}
             {route.view === "sharing" && <SharingView navigate={navigate} />}
             {route.view === "org" && <OrgView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
+            {route.view === "org-sso" && <SsoSettingsView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
             {route.view === "import" && (
               <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
             )}

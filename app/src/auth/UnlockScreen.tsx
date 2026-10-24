@@ -5,6 +5,7 @@ import { type FormEvent, useState } from "react";
 import { errorMessage, nextFrame } from "../core";
 import { useI18n } from "../lib/i18n";
 import { PendingRecoveryNotice } from "../recovery/PendingRecoveryNotice";
+import { SsoUnlockOption } from "../sso/SsoSignIn";
 import { useClient, useSnapshot } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
@@ -22,6 +23,8 @@ export function UnlockScreen() {
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
+  // Approved by another trusted device: no Secret Key here, so only SSO unlocks.
+  const onlySso = client.deviceAccount?.secretKey === "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,6 +72,7 @@ export function UnlockScreen() {
             </div>
           </div>
         </div>
+        <SsoUnlockOption email={email} onlySso={onlySso} />
         {kit.afterUnlock && (
           <p
             role="status"
@@ -78,22 +82,26 @@ export function UnlockScreen() {
             {t("unlock.kitAfterUnlock")}
           </p>
         )}
-        <PasswordInput
-          label={t("term.masterPassword")}
-          name="password"
-          autoComplete="current-password"
-          autoFocus
-          required
-          labelAction={
-            <button type="button" onClick={() => setForgotOpen(true)} className={linkClass}>
-              {t("forgot.link")}
-            </button>
-          }
-        />
-        <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
-          {busy ? t("unlock.busy") : t("action.unlock")}
-        </Button>
+        {!onlySso && (
+          <>
+            <PasswordInput
+              label={t("term.masterPassword")}
+              name="password"
+              autoComplete="current-password"
+              autoFocus
+              required
+              labelAction={
+                <button type="button" onClick={() => setForgotOpen(true)} className={linkClass}>
+                  {t("forgot.link")}
+                </button>
+              }
+            />
+            <FormError message={error} />
+            <Button type="submit" size="lg" loading={busy}>
+              {busy ? t("unlock.busy") : t("action.unlock")}
+            </Button>
+          </>
+        )}
         <div className="border-t border-border pt-4 text-center">
           <button type="button" onClick={() => setSignOutOpen(true)} className={linkClass}>
             {t("unlock.otherAccount")}

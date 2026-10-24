@@ -1,5 +1,6 @@
 import { ApiError } from "@passbox/api-client";
 import type { Translate } from "@passbox/i18n";
+import { ssoErrorMessage } from "../sso/messages";
 
 /**
  * Where an error happened. The same server answer means different things:
@@ -33,6 +34,7 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
   if (error instanceof Error && error.name === "RecoveryVerificationError") return t("recovery.verificationFailed");
   if (error instanceof Error && error.name === "InvalidDeviceCodeError") return t("linkDevice.invalid");
   if (error instanceof ApiError) {
+    if (error.code?.startsWith("sso_")) return ssoErrorMessage(error.code, t);
     switch (error.code) {
       case "invalid_credentials":
         return context === "unlock" ? t("error.wrongMasterPassword") : t("error.invalidCredentials");

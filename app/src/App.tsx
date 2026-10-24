@@ -15,6 +15,8 @@ import { usePreferences } from "./lib/preferences";
 import { RecoveryFlowProvider, useRecoveryFlow } from "./recovery/RecoveryFlow";
 import { RecoveryScreens } from "./recovery/RecoveryScreens";
 import { AppShell } from "./shell/AppShell";
+import { useSsoCallbackRoute } from "./sso/route";
+import { SsoCallbackScreen } from "./sso/SsoCallbackScreen";
 import { ClientContext, useSnapshot } from "./useClient";
 
 export function App() {
@@ -93,7 +95,10 @@ function Router() {
   const { status } = useSnapshot();
   const kit = useKit();
   const recovery = useRecoveryFlow();
+  const ssoCallback = useSsoCallbackRoute();
 
+  // Back from the identity provider (single sign-on).
+  if (ssoCallback) return <SsoCallbackScreen />;
   if (kit.open) return <EmergencyKitScreen />;
   if (recovery.screen && status !== "unlocked") return <RecoveryScreens />;
   switch (status) {

@@ -12,6 +12,7 @@ import { type InviteLink, inviteFromHash, meetsPasswordPolicy, useServerMeta } f
 import { serverUrl } from "../lib/server";
 import { type OrgInviteLink, useOrgInvite } from "../lib/sharing";
 import { LinkDeviceLink, PendingRecoveryNotice } from "../recovery/PendingRecoveryNotice";
+import { SsoSignInOption } from "../sso/SsoSignIn";
 import { useClient } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
@@ -148,6 +149,7 @@ function SignInForm() {
   const [error, setError] = useState<string>();
   const [forgotOpen, setForgotOpen] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
+  const [email, setEmail] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -198,7 +200,10 @@ function SignInForm() {
         autoComplete="username"
         placeholder={t("field.emailPlaceholder")}
         required
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
       />
+      <SsoSignInOption email={email} />
       <PasswordInput
         label={t("term.masterPassword")}
         name="password"

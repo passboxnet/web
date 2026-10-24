@@ -3,6 +3,7 @@ import { Badge, Button, cn, Dialog, Monogram, Tooltip, toast } from "@passbox/ui
 import { AlertTriangle, RefreshCw, UserPlus, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
+import { VaultAccessRequests } from "../comfort/AccessRequests";
 import { useI18n } from "../lib/i18n";
 import { memberLabel, VAULT_ROLES, vaultRoleKey } from "../lib/sharing";
 import { useClient, useSnapshot } from "../useClient";
@@ -294,6 +295,7 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
         ) : (
           <p className="text-[0.8125rem] text-text-muted">{t("sharing.vaultDialog.onlyManagers")}</p>
         )}
+        {canManage && vaultId && <VaultAccessRequests vaultId={vaultId} />}
 
         <dl className="grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-[auto_1fr]">
           {VAULT_ROLES.map((role) => (

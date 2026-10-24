@@ -11,11 +11,15 @@ import {
   MenuTrigger,
   Monogram,
   Tooltip,
+  toast,
 } from "@passbox/ui";
 import {
+  Archive,
   ArrowDownAZ,
+  ArrowRightLeft,
   AtSign,
   Check,
+  CheckSquare,
   Clock3,
   KeyRound,
   Plus,
@@ -25,16 +29,19 @@ import {
   Timer,
   TimerReset,
   Users,
+  X,
 } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useEffect, useRef } from "react";
-import { loadCore } from "../core";
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import { MoveItemsDialog } from "../comfort/MoveItemsDialog";
+import { errorMessage, loadCore } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
 import { useI18n } from "../lib/i18n";
 import { CATEGORY_META, itemSubtitle, itemTitle } from "../lib/items";
 import type { Route } from "../lib/route";
 import { normalize } from "../lib/search";
+import { writableVaults } from "../lib/sharing";
 import { vaultName } from "../shell/Sidebar";
-import { useSnapshot } from "../useClient";
+import { useClient, useSnapshot } from "../useClient";
 import { GettingStartedCard } from "../views/GettingStarted";
 
 export type SortOrder = "name" | "modified";
@@ -76,8 +83,39 @@ export function ItemList({
   banner,
 }: ItemListProps) {
   const { t } = useI18n();
+  const client = useClient();
+  const { vaults } = useSnapshot();
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  // Selection mode for moving or archiving several items at once (B5, G14).
+  const [picked, setPicked] = useState<string[] | undefined>();
+  const [moving, setMoving] = useState(false);
+  const writable = new Set(writableVaults(vaults).map((v) => v.id));
+  const pickable = items.filter((i) => writable.has(i.vaultId));
+  const toggle = (id: string) =>
+    setPicked((list) => (list?.includes(id) ? list.filter((x) => x !== id) : [...(list ?? []), id]));
+
+  async function archivePicked() {
+    if (!picked?.length) return;
+    const ids = picked;
+    try {
+      const failed = await client.archiveItems(ids);
+      const done = ids.length - failed.length;
+      if (done > 0) {
+        toast.success(t("archive.doneMany", { count: done }), {
+          duration: 10_000,
+          action: {
+            label: t("action.undo"),
+            onClick: () => void client.unarchiveItems(ids).catch(() => undefined),
+          },
+        });
+      }
+      if (failed.length > 0) toast.error(t("archive.failedMany", { count: failed.length }));
+      setPicked(undefined);
+    } catch (error) {
+      toast.error(t("archive.failed"), { description: errorMessage(error) });
+    }
+  }
 
   // "/" focuses the search field, like in most professional tools.
   useEffect(() => {
@@ -178,6 +216,21 @@ export function ItemList({
             {title}
             <span className="ml-2 text-[0.8125rem] font-normal text-text-muted tabular-nums">{items.length}</span>
           </h1>
+          <span className="ml-auto" />
+          {pickable.length > 0 && (
+            <Tooltip content={picked ? t("select.done") : t("select.start")}>
+              <Button
+                variant={picked ? "secondary" : "ghost"}
+                size="icon-sm"
+                aria-label={picked ? t("select.done") : t("select.start")}
+                aria-pressed={picked !== undefined}
+                onClick={() => setPicked(picked ? undefined : [])}
+                data-testid="select-items"
+              >
+                <CheckSquare />
+              </Button>
+            </Tooltip>
+          )}
           <Menu>
             <MenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" aria-label={t("list.sort")}>
@@ -256,7 +309,9 @@ export function ItemList({
                     key={item.id}
                     item={item}
                     selected={item.id === selectedId}
-                    onSelect={() => onSelect(item.id)}
+                    checked={picked ? picked.includes(item.id) : undefined}
+                    disabled={picked !== undefined && !writable.has(item.vaultId)}
+                    onSelect={() => (picked ? writable.has(item.vaultId) && toggle(item.id) : onSelect(item.id))}
                   />
                 ))}
               </div>
@@ -264,6 +319,43 @@ export function ItemList({
           ))}
         </div>
       )}
+
+      {picked && (
+        <div
+          role="toolbar"
+          aria-label={t("select.toolbar")}
+          className="flex flex-wrap items-center gap-2 border-t border-border bg-surface-raised px-3 py-2"
+          data-testid="bulk-bar"
+        >
+          <span className="min-w-0 flex-1 text-[0.8125rem] font-medium" aria-live="polite">
+            {t("select.count", { count: picked.length })}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPicked(picked.length === pickable.length ? [] : pickable.map((i) => i.id))}
+          >
+            {picked.length === pickable.length ? t("select.none") : t("select.all")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={picked.length === 0} onClick={() => setMoving(true)}>
+            <ArrowRightLeft />
+            {t("select.move")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={picked.length === 0} onClick={() => void archivePicked()}>
+            <Archive />
+            {t("select.archive")}
+          </Button>
+          <Button variant="ghost" size="icon-sm" aria-label={t("select.done")} onClick={() => setPicked(undefined)}>
+            <X />
+          </Button>
+        </div>
+      )}
+      <MoveItemsDialog
+        itemIds={picked ?? []}
+        open={moving}
+        onOpenChange={setMoving}
+        onMoved={() => setPicked(undefined)}
+      />
     </section>
   );
 }
@@ -286,7 +378,20 @@ function groupItems(
   return [...groups.entries()];
 }
 
-function ItemRow({ item, selected, onSelect }: { item: Item; selected: boolean; onSelect: () => void }) {
+function ItemRow({
+  item,
+  selected,
+  checked,
+  disabled,
+  onSelect,
+}: {
+  item: Item;
+  selected: boolean;
+  /** Set in selection mode. */
+  checked?: boolean | undefined;
+  disabled?: boolean;
+  onSelect: () => void;
+}) {
   const { t } = useI18n();
   const { vaults } = useSnapshot();
   const vault = vaults.find((v) => v.id === item.vaultId);
@@ -311,15 +416,28 @@ function ItemRow({ item, selected, onSelect }: { item: Item; selected: boolean; 
     <div
       role="option"
       tabIndex={-1}
-      aria-selected={selected}
+      aria-selected={checked ?? selected}
+      aria-disabled={disabled || undefined}
       // Rows are reached with the listbox's arrow keys; clicking selects.
       onClick={onSelect}
-      onKeyDown={(e) => e.key === "Enter" && onSelect()}
+      onKeyDown={(e) => (e.key === "Enter" || (checked !== undefined && e.key === " ")) && onSelect()}
       className={cn(
         "group flex cursor-default items-center gap-3 rounded-lg px-2 py-2 transition-colors",
-        selected ? "bg-accent-soft" : "hover:bg-surface-sunken",
+        (checked ?? selected) ? "bg-accent-soft" : "hover:bg-surface-sunken",
+        disabled && "opacity-50",
       )}
     >
+      {checked !== undefined && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "flex size-4 shrink-0 items-center justify-center rounded border",
+            checked ? "border-accent bg-accent text-white" : "border-border-strong bg-surface",
+          )}
+        >
+          {checked && <Check className="size-3" />}
+        </span>
+      )}
       <Monogram name={item.data.title} size="lg" icon={item.data.category === "login" ? undefined : <Icon />} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[0.8125rem] font-medium text-text">{itemTitle(item, t)}</span>

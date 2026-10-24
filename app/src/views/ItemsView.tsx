@@ -1,5 +1,6 @@
 import type { Item, VaultHealth } from "@passbox/client";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
+import { RequestAccessView } from "../comfort/AccessRequests";
 import { ItemDetail } from "../items/ItemDetail";
 import { ItemEditor } from "../items/ItemEditor";
 import { ItemList, type SortOrder } from "../items/ItemList";
@@ -89,11 +90,12 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
   // (Before the first sync after unlocking there are no vaults at all yet.)
   const vaultGone =
     filterVault !== undefined && snapshot.vaults.length > 0 && !snapshot.vaults.some((v) => v.id === filterVault);
-  useEffect(() => {
-    if (vaultGone) navigate({ view: "items", filter: { kind: "all" } });
-  }, [vaultGone, navigate]);
-
+  // Instead of falling back to all items, offer to ask for access (B9): the
+  // link may come from a colleague, or access ended.
   let pane: ReactNode;
+  if (vaultGone && filterVault) {
+    return <RequestAccessView key={filterVault} vaultId={filterVault} navigate={navigate} />;
+  }
   if (route.create && defaultVaultId) {
     pane = (
       <ItemEditor

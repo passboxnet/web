@@ -1,5 +1,6 @@
 import {
   FIELD,
+  type FieldFormat,
   type FieldType,
   type Item,
   type ItemCategory,
@@ -24,8 +25,26 @@ import {
   Tooltip,
   toast,
 } from "@passbox/ui";
-import { AtSign, Hash, Link2, Lock, Plus, Star, Timer, Trash2, Type, Users, Wand2, X } from "lucide-react";
+import {
+  AlignLeft,
+  AtSign,
+  CalendarDays,
+  CalendarRange,
+  Hash,
+  Link2,
+  Lock,
+  Phone,
+  Plus,
+  Star,
+  Timer,
+  Trash2,
+  Type,
+  Users,
+  Wand2,
+  X,
+} from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { completeSshKey, SshKeyGenerator } from "../comfort/ItemTypeTools";
 import { errorMessage, loadCore } from "../core";
 import { shortcut, useI18n } from "../lib/i18n";
 import { CATEGORY_META, fieldLabel, findDuplicateLogin, hostname, itemTitle, mergeInto } from "../lib/items";
@@ -45,13 +64,23 @@ interface ItemEditorProps {
 
 const WELL_KNOWN = new Set<string>(Object.values(FIELD));
 
-const CUSTOM_FIELD_TYPES: Array<{ type: FieldType; label: string; icon: typeof Type }> = [
+const CUSTOM_FIELD_TYPES: Array<{ type: FieldType; format?: FieldFormat; label: string; icon: typeof Type }> = [
   { type: "text", label: "editor.fieldType.text", icon: Type },
   { type: "concealed", label: "editor.fieldType.concealed", icon: Lock },
   { type: "url", label: "editor.fieldType.url", icon: Link2 },
   { type: "email", label: "editor.fieldType.email", icon: AtSign },
   { type: "totp", label: "editor.fieldType.totp", icon: Timer },
+  { type: "text", format: "date", label: "editor.fieldType.date", icon: CalendarDays },
+  { type: "text", format: "monthYear", label: "editor.fieldType.monthYear", icon: CalendarRange },
+  { type: "text", format: "phone", label: "editor.fieldType.phone", icon: Phone },
+  { type: "text", format: "multiline", label: "editor.fieldType.multiline", icon: AlignLeft },
 ];
+
+/** `MM/YYYY` as typed: digits get the slash added after the month. */
+export function normalizeMonthYear(input: string): string {
+  const digits = input.replace(/[^\d]/g, "").slice(0, 6);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+}
 
 export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEditorProps) {
   const client = useClient();
@@ -132,7 +161,7 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
   async function save(event?: FormEvent, options: { allowDuplicate?: boolean } = {}) {
     event?.preventDefault();
     if (busy) return;
-    const next = cleaned();
+    const next = await completeSshKey(cleaned());
     if (!(await validate(next.fields))) {
       toast.error(t("editor.checkFields"));
       return;
@@ -195,9 +224,10 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
     setField(fieldId, { value: core.generatePassword(JSON.stringify({ length: 24 })) });
   }
 
-  function addField(type: FieldType) {
-    const label = t(CUSTOM_FIELD_TYPES.find((ft) => ft.type === type)?.label ?? "editor.field");
-    setData((d) => ({ ...d, fields: [...d.fields, { id: crypto.randomUUID(), label, type, value: "" }] }));
+  function addField(type: FieldType, format?: FieldFormat) {
+    const label = t(CUSTOM_FIELD_TYPES.find((ft) => ft.type === type && ft.format === format)?.label ?? "editor.field");
+    const field: ItemField = { id: crypto.randomUUID(), label, type, value: "", ...(format ? { format } : {}) };
+    setData((d) => ({ ...d, fields: [...d.fields, field] }));
   }
 
   return (
@@ -283,12 +313,15 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
               </div>
             </div>
 
+            <SshKeyGenerator data={data} onChange={setData} />
+
             {data.fields.length > 0 && (
               <div className="flex flex-col gap-5 rounded-card border border-border bg-surface p-4 shadow-card sm:p-5">
                 {data.fields.map((field) => (
                   <FieldEditor
                     key={field.id}
                     field={field}
+                    category={data.category}
                     error={fieldErrors[field.id]}
                     custom={!WELL_KNOWN.has(field.id)}
                     canGenerate={
@@ -311,8 +344,8 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
                 </Button>
               </MenuTrigger>
               <MenuContent align="start">
-                {CUSTOM_FIELD_TYPES.map(({ type, label, icon: Icon }) => (
-                  <MenuItem key={type} icon={<Icon />} onSelect={() => addField(type)}>
+                {CUSTOM_FIELD_TYPES.map(({ type, format, label, icon: Icon }) => (
+                  <MenuItem key={`${type}-${format ?? ""}`} icon={<Icon />} onSelect={() => addField(type, format)}>
                     {t(label)}
                   </MenuItem>
                 ))}
@@ -421,6 +454,7 @@ function fieldValueOf(data: ItemData | undefined, id: string): string | undefine
 
 interface FieldEditorProps {
   field: ItemField;
+  category: ItemCategory;
   error: string | undefined;
   custom: boolean;
   canGenerate: boolean;
@@ -431,9 +465,19 @@ interface FieldEditorProps {
   onRemove: () => void;
 }
 
-function FieldEditor({ field, error, custom, canGenerate, context, onChange, onGenerate, onRemove }: FieldEditorProps) {
+function FieldEditor({
+  field,
+  category,
+  error,
+  custom,
+  canGenerate,
+  context,
+  onChange,
+  onGenerate,
+  onRemove,
+}: FieldEditorProps) {
   const { t } = useI18n();
-  const label = fieldLabel(field, t);
+  const label = fieldLabel(field, t, category);
   const removeButton = custom ? (
     <Tooltip content={t("editor.removeField")}>
       <Button variant="ghost" size="icon-sm" aria-label={t("editor.removeNamed", { label })} onClick={onRemove}>
@@ -465,6 +509,35 @@ function FieldEditor({ field, error, custom, canGenerate, context, onChange, onG
     );
   }
 
+  if (field.format === "multiline") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <Textarea
+          id={`field-${field.id}`}
+          label={label}
+          value={field.value}
+          onChange={(e) => onChange({ value: e.target.value })}
+          rows={field.type === "concealed" ? 6 : 3}
+          spellCheck={false}
+          autoComplete="off"
+          className={field.type === "concealed" ? "font-mono text-xs" : undefined}
+          error={error}
+        />
+        {(custom || field.type === "concealed") && (
+          <div className="flex items-center justify-between gap-2">
+            {field.type === "concealed" ? (
+              <p className="text-xs text-text-muted">{t("editor.multilineSecret")}</p>
+            ) : (
+              <span />
+            )}
+            {labelAction}
+            {removeButton}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (field.type === "concealed") {
     return (
       <div className="flex flex-col gap-2">
@@ -491,19 +564,29 @@ function FieldEditor({ field, error, custom, canGenerate, context, onChange, onG
     );
   }
 
+  const format = field.type === "text" ? field.format : undefined;
   return (
     <Input
       id={`field-${field.id}`}
       label={label}
       labelAction={labelAction}
       value={field.value}
-      onChange={(e) => onChange({ value: e.target.value })}
-      type={field.type === "email" ? "email" : "text"}
-      inputMode={field.type === "url" ? "url" : undefined}
+      onChange={(e) =>
+        onChange({ value: format === "monthYear" ? normalizeMonthYear(e.target.value) : e.target.value })
+      }
+      type={field.type === "email" ? "email" : format === "date" ? "date" : format === "phone" ? "tel" : "text"}
+      inputMode={field.type === "url" ? "url" : format === "monthYear" ? "numeric" : undefined}
+      maxLength={format === "monthYear" ? 7 : undefined}
       autoComplete="off"
       spellCheck={false}
       error={error}
-      placeholder={field.type === "url" ? t("editor.urlPlaceholder") : undefined}
+      placeholder={
+        field.type === "url"
+          ? t("editor.urlPlaceholder")
+          : format === "monthYear"
+            ? t("editor.monthYearPlaceholder")
+            : undefined
+      }
       trailing={removeButton}
     />
   );

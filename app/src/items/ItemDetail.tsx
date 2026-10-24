@@ -2,6 +2,7 @@ import {
   FIELD,
   fieldValue,
   type Item,
+  type ItemCategory,
   type ItemField,
   type Passkey,
   type PasswordHistoryEntry,
@@ -24,7 +25,10 @@ import {
 } from "@passbox/ui";
 import {
   AlertTriangle,
+  Archive,
+  ArchiveRestore,
   ArrowLeft,
+  ArrowRightLeft,
   ChevronRight,
   Copy,
   ExternalLink,
@@ -33,6 +37,7 @@ import {
   Fingerprint,
   History,
   KeyRound,
+  Link2,
   Maximize2,
   MoreHorizontal,
   Pencil,
@@ -42,6 +47,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { archiveWithUndo } from "../comfort/ArchiveView";
+import { AttachmentsSection } from "../comfort/AttachmentsSection";
+import { WifiJoinCard } from "../comfort/ItemTypeTools";
+import { MoveItemsDialog } from "../comfort/MoveItemsDialog";
+import { ShareLinkDialog } from "../comfort/ShareLinkDialog";
 import { errorMessage } from "../core";
 import { EnvironmentPanel } from "../developer/EnvironmentPanel";
 import { copyToClipboard } from "../lib/clipboard";
@@ -104,6 +114,8 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   const { vaults } = useSnapshot();
   const [changing, setChanging] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [linking, setLinking] = useState(false);
   const itemVault = vaults.find((v) => v.id === item?.vaultId);
   const audience = useAudience(item?.vaultId);
   // View-only members of a shared vault can read, copy and fill, not change.
@@ -170,6 +182,21 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   async function moveToTrash() {
     if (!item) return;
     if (await trashWithUndo(client, item, t)) onDeleted();
+  }
+
+  async function archive() {
+    if (!item) return;
+    if (await archiveWithUndo(client, item, t)) onDeleted();
+  }
+
+  async function unarchive() {
+    if (!item) return;
+    try {
+      await client.unarchiveItem(item.id);
+      toast.success(t("archive.restored", { name: itemTitle(item, t) }));
+    } catch (error) {
+      toast.error(t("archive.restoreFailed"), { description: errorMessage(error) });
+    }
   }
 
   return (
@@ -246,6 +273,19 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
                 <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
                   {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
                 </MenuItem>
+                <MenuItem icon={<Link2 />} onSelect={() => setLinking(true)}>
+                  {t("shareLink.menu")}
+                </MenuItem>
+                {canEdit && (
+                  <MenuItem icon={<ArrowRightLeft />} onSelect={() => setMoving(true)}>
+                    {t("move.menu")}
+                  </MenuItem>
+                )}
+                {canEdit && !data.archivedAt && (
+                  <MenuItem icon={<Archive />} onSelect={() => void archive()}>
+                    {t("archive.action")}
+                  </MenuItem>
+                )}
                 {canEdit && (
                   <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
                     {t("action.moveToTrash")}
@@ -287,6 +327,26 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
               </div>
             </div>
 
+            {data.archivedAt !== undefined && (
+              <div
+                role="note"
+                className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
+                data-testid="archived-note"
+              >
+                <Archive className="size-4 shrink-0 text-text-muted" aria-hidden="true" />
+                <p className="min-w-0 flex-1">
+                  <strong className="font-semibold">{t("archive.note.title")}</strong>{" "}
+                  <span className="text-text-muted">{t("archive.note.text")}</span>
+                </p>
+                {canEdit && (
+                  <Button size="xs" variant="secondary" onClick={() => void unarchive()}>
+                    <ArchiveRestore />
+                    {t("archive.unarchive")}
+                  </Button>
+                )}
+              </div>
+            )}
+
             {!canEdit && (
               <div
                 role="note"
@@ -324,10 +384,17 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
             {fields.length > 0 && (
               <Card className="mt-6">
                 {fields.map((field) => (
-                  <FieldRow key={field.id} field={field} onEdit={canEdit ? () => onEdit(item.id) : undefined} />
+                  <FieldRow
+                    key={field.id}
+                    field={field}
+                    category={data.category}
+                    onEdit={canEdit ? () => onEdit(item.id) : undefined}
+                  />
                 ))}
               </Card>
             )}
+
+            {data.category === "wifi" && <WifiJoinCard item={item} />}
 
             {data.passkeys && data.passkeys.length > 0 && (
               <Card className="mt-4">
@@ -345,6 +412,8 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
                 </div>
               </Card>
             )}
+
+            <AttachmentsSection item={item} canEdit={canEdit} />
 
             {data.tags.length > 0 && (
               <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={t("field.tags")}>
@@ -372,6 +441,13 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
         </div>
 
         {password && <ChangePasswordDialog item={item} open={changing} onOpenChange={setChanging} />}
+        <MoveItemsDialog
+          itemIds={[item.id]}
+          open={moving}
+          onOpenChange={setMoving}
+          onMoved={(vaultId) => navigate({ view: "items", filter: { kind: "vault", vaultId }, itemId: item.id })}
+        />
+        <ShareLinkDialog item={item} open={linking} onOpenChange={setLinking} />
         {audience.shared ? (
           <VaultSharingDialog vaultId={sharing ? item.vaultId : undefined} onOpenChange={setSharing} />
         ) : (
@@ -551,9 +627,17 @@ function PasskeyRow({ passkey }: { passkey: Passkey }) {
   );
 }
 
-function FieldRow({ field, onEdit }: { field: ItemField; onEdit: (() => void) | undefined }) {
+function FieldRow({
+  field,
+  category,
+  onEdit,
+}: {
+  field: ItemField;
+  category?: ItemCategory;
+  onEdit: (() => void) | undefined;
+}) {
   const { t } = useI18n();
-  const label = fieldLabel(field, t);
+  const label = fieldLabel(field, t, category);
   return (
     <div className="group flex items-center gap-4 px-4 py-3">
       <div className="min-w-0 flex-1">
@@ -568,9 +652,30 @@ function FieldRow({ field, onEdit }: { field: ItemField; onEdit: (() => void) | 
 }
 
 function FieldValue({ field, label, onEdit }: { field: ItemField; label: string; onEdit: (() => void) | undefined }) {
+  const i18n = useI18n();
+  if (field.type === "text" && field.format) {
+    switch (field.format) {
+      case "multiline":
+        return <span className="break-words whitespace-pre-wrap">{field.value}</span>;
+      case "date": {
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(field.value) ? new Date(`${field.value}T12:00:00`) : undefined;
+        return <span>{date && !Number.isNaN(date.getTime()) ? i18n.date(date.getTime()) : field.value}</span>;
+      }
+      case "phone":
+        return (
+          <a href={`tel:${field.value.replace(/[^+\d]/g, "")}`} className="text-accent hover:underline">
+            {field.value}
+          </a>
+        );
+    }
+  }
   switch (field.type) {
     case "concealed":
-      return <ConcealedValue field={field} label={label} />;
+      return field.format === "multiline" ? (
+        <ConcealedBlock field={field} label={label} />
+      ) : (
+        <ConcealedValue field={field} label={label} />
+      );
     case "totp":
       return <TotpValue uri={field.value} onEdit={onEdit} />;
     case "url": {
@@ -608,6 +713,52 @@ function FieldActions({ field, label }: { field: ItemField; label: string }) {
         </Button>
       </Tooltip>
     </span>
+  );
+}
+
+/** A secret with line breaks (private keys, recovery phrases): hidden until revealed, shown as a block. */
+function ConcealedBlock({ field, label }: { field: ItemField; label: string }) {
+  const [revealed, setRevealed] = useAutoHide();
+  const reportUsage = useItemUsage();
+  const { t } = useI18n();
+  return (
+    <div className="flex items-start justify-between gap-3">
+      {revealed ? (
+        <pre className="max-h-64 min-w-0 flex-1 overflow-auto rounded-md bg-surface-sunken p-2 font-mono text-xs whitespace-pre-wrap break-all">
+          {field.value}
+        </pre>
+      ) : (
+        <span className="font-mono text-[0.8125rem] tracking-tight">••••••••••••</span>
+      )}
+      <span className="flex shrink-0 items-center">
+        <Tooltip content={revealed ? t("action.hide") : t("action.show")}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => {
+              if (!revealed) reportUsage("secret_revealed", field.id);
+              setRevealed(!revealed);
+            }}
+            aria-label={revealed ? t("detail.hide", { label }) : t("detail.reveal", { label })}
+          >
+            {revealed ? <EyeOff /> : <Eye />}
+          </Button>
+        </Tooltip>
+        <Tooltip content={t("detail.copy", { label })}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("detail.copy", { label })}
+            onClick={() => {
+              reportUsage("item_copied", field.id);
+              void copyToClipboard(field.value, label);
+            }}
+          >
+            <Copy />
+          </Button>
+        </Tooltip>
+      </span>
+    </div>
   );
 }
 

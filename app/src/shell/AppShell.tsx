@@ -4,6 +4,7 @@ import { KeyRound, Menu as MenuIcon, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InsecurePageBanner } from "../auth/AuthLayout";
 import { useKit } from "../auth/KitProvider";
+import { ArchiveView } from "../comfort/ArchiveView";
 import { onCommandPaletteRequest } from "../desktop";
 import { AgentApprovalWatcher } from "../developer/AgentApproval";
 import { DeveloperView } from "../developer/DeveloperView";
@@ -131,6 +132,7 @@ export function AppShell() {
             {route.view === "items" && <ItemsView route={route} navigate={navigate} health={health} />}
             {route.view === "watchtower" && <WatchtowerView health={health} navigate={navigate} />}
             {route.view === "trash" && <TrashView />}
+            {route.view === "archive" && <ArchiveView />}
             {route.view === "getting-started" && <GettingStartedView navigate={navigate} />}
             {route.view === "generator" && <GeneratorView />}
             {route.view === "settings" && <SettingsView />}

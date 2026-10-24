@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from "@passbox/ui";
 import {
+  Archive,
   Building2,
   ChevronsUpDown,
   Code2,
@@ -39,7 +40,7 @@ import { SignOutDialog } from "../auth/SignOutDialog";
 import { usePendingAgentRequests } from "../developer/agentRequests";
 import { shortcut, useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
-import { CATEGORY_META, CREATABLE } from "../lib/items";
+import { ALWAYS_LISTED, CATEGORY_META, CREATABLE, CREATABLE_GROUPS } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { awaitingConfirmation, isOrgAdmin } from "../lib/sharing";
 import { orgName } from "../sharing/common";
@@ -75,7 +76,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;
-  const { email = "", items, vaults, trash, orgs, sharingWarnings } = useSnapshot();
+  const { email = "", items, vaults, trash, archive, orgs, sharingWarnings } = useSnapshot();
   const checklist = useChecklist();
   const isAdmin = useIsInstanceAdmin(client);
   const [newVaultOpen, setNewVaultOpen] = useState(false);
@@ -138,25 +139,30 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               {t("shell.newItem")}
             </Button>
           </MenuTrigger>
-          <MenuContent align="start" className="w-52">
-            {CREATABLE.map((category) => {
-              const { label, icon: Icon } = CATEGORY_META[category];
-              return (
-                <MenuItem
-                  key={category}
-                  icon={<Icon />}
-                  onSelect={() =>
-                    navigate({
-                      view: "items",
-                      filter: route.view === "items" ? route.filter : { kind: "all" },
-                      create: category,
-                    })
-                  }
-                >
-                  {t(label)}
-                </MenuItem>
-              );
-            })}
+          <MenuContent align="start" className="max-h-[min(32rem,70vh)] w-56 overflow-y-auto">
+            {CREATABLE_GROUPS.map((group, index) => (
+              <div key={group[0]}>
+                {index > 0 && <MenuSeparator />}
+                {group.map((category) => {
+                  const { label, icon: Icon } = CATEGORY_META[category];
+                  return (
+                    <MenuItem
+                      key={category}
+                      icon={<Icon />}
+                      onSelect={() =>
+                        navigate({
+                          view: "items",
+                          filter: route.view === "items" ? route.filter : { kind: "all" },
+                          create: category,
+                        })
+                      }
+                    >
+                      {t(label)}
+                    </MenuItem>
+                  );
+                })}
+              </div>
+            ))}
           </MenuContent>
         </Menu>
         <Tooltip content={t("shell.searchShortcut", { shortcut: shortcut(t, "K") })}>
@@ -228,7 +234,12 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
         </NavGroup>
 
         <NavGroup title={t("shell.categories")}>
-          {CREATABLE.map((category) => {
+          {CREATABLE.filter(
+            (category) =>
+              ALWAYS_LISTED.includes(category) ||
+              countCategory(category) > 0 ||
+              sameFilter(route, { kind: "category", category }),
+          ).map((category) => {
             const { plural, icon } = CATEGORY_META[category];
             return (
               <NavItem
@@ -292,6 +303,15 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             active={route.view === "generator"}
             onClick={() => navigate({ view: "generator" })}
           />
+          {archive.length > 0 || route.view === "archive" ? (
+            <NavItem
+              icon={Archive}
+              label={t("archive.title")}
+              count={archive.length}
+              active={route.view === "archive"}
+              onClick={() => navigate({ view: "archive" })}
+            />
+          ) : null}
           <NavItem
             icon={Trash2}
             label={t("term.trash")}

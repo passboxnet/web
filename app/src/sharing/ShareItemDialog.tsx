@@ -14,9 +14,9 @@ const selectClass = cn(fieldClassName, "h-10 px-2.5 coarse:h-12");
 
 /**
  * "Share" on a personal item. Passbox shares whole vaults, so sharing an item
- * means putting it into a shared vault: a copy goes there (without earlier
- * passwords) and the original goes to the trash, restorable for 30 days.
- * The dialog first shows who will be able to see it.
+ * means moving it into a shared vault (re-encrypted for that vault, with its
+ * history and attachments). The dialog first shows who will be able to see
+ * it; the toast offers to move it back.
  */
 export function ShareItemDialog({
   item,
@@ -59,14 +59,24 @@ export function ShareItemDialog({
     setBusy(true);
     setError(undefined);
     try {
-      const { passwordHistory: _history, ...data } = item.data;
-      const id = await client.createItem(target, data);
-      await client.trashItem(item.id);
+      // A real move (B5): same entry, history and attachments, now encrypted for the shared vault.
+      const from = item.vaultId;
+      await client.moveItems([item.id], target);
       toast.success(t("sharing.shareItem.done", { name: itemTitle(item, t), vault: targetName }), {
-        description: t("sharing.shareItem.doneHint"),
+        description: t("move.doneHint"),
+        duration: 10_000,
+        action: {
+          label: t("action.undo"),
+          onClick: () => {
+            client
+              .moveItems([item.id], from)
+              .then(() => toast.success(t("move.undone")))
+              .catch((e: unknown) => toast.error(t("move.undoFailed"), { description: sharingError(e, t) }));
+          },
+        },
       });
       onOpenChange(false);
-      navigate({ view: "items", filter: { kind: "vault", vaultId: target }, itemId: id });
+      navigate({ view: "items", filter: { kind: "vault", vaultId: target }, itemId: item.id });
     } catch (e) {
       setError(sharingError(e, t));
     } finally {
@@ -136,7 +146,7 @@ export function ShareItemDialog({
           )}
           <p className="flex gap-2 text-xs text-text-muted">
             <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            {t("sharing.shareItem.howItWorks")}
+            {t("move.howItWorks")}
           </p>
           <FormError message={error} />
           <div className="flex justify-end gap-2">

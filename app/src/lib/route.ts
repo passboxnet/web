@@ -11,6 +11,7 @@ export type Route =
   | { view: "items"; filter: ItemFilter; itemId?: string; edit?: boolean; create?: ItemCategory }
   | { view: "watchtower" }
   | { view: "trash" }
+  | { view: "archive" }
   | { view: "getting-started" }
   | { view: "generator" }
   | { view: "settings"; section?: string }
@@ -30,6 +31,7 @@ export function parseRoute(hash: string): Route {
   const parts = path.split("/").filter(Boolean);
   if (parts[0] === "watchtower" || parts[0] === "security") return { view: "watchtower" };
   if (parts[0] === "trash") return { view: "trash" };
+  if (parts[0] === "archive") return { view: "archive" };
   if (parts[0] === "getting-started") return { view: "getting-started" };
   if (parts[0] === "generator") return { view: "generator" };
   if (parts[0] === "settings") return parts[1] ? { view: "settings", section: parts[1] } : { view: "settings" };

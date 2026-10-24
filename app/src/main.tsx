@@ -2,6 +2,7 @@ import { Toaster, TooltipProvider, UiStringsProvider } from "@passbox/ui";
 import { type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { ShareLinkViewer, shareLinkFromLocation } from "./comfort/ShareLinkViewer";
 import { applyLocale, useI18n } from "./lib/i18n";
 import { applyTheme, getPreferences, subscribePreferences } from "./lib/preferences";
 import { captureOrgInvite } from "./lib/sharing";
@@ -12,6 +13,9 @@ applyLocale();
 // An invitation link (`/invite/{token}#org=…`) is kept for this tab before routing starts.
 captureOrgInvite();
 subscribePreferences(() => applyLocale());
+
+// A share link (`/s/{id}#{key}`) opens the public viewer, without an account (B7).
+const shareLink = shareLinkFromLocation();
 
 const root = document.getElementById("root");
 if (!root) throw new Error("missing #root element");
@@ -38,7 +42,7 @@ createRoot(root).render(
   <StrictMode>
     <Localized>
       <TooltipProvider>
-        <App />
+        {shareLink ? <ShareLinkViewer link={shareLink} /> : <App />}
         {/* Bottom center keeps toasts away from the sidebar and the controls at the right edge. */}
         <Toaster position="bottom-center" duration={4000} />
       </TooltipProvider>

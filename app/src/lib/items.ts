@@ -1,6 +1,26 @@
 import { FIELD, fieldValue, type Item, type ItemCategory, type ItemData } from "@passbox/client";
 import type { Translate } from "@passbox/i18n";
-import { Braces, CreditCard, FileText, IdCard, KeyRound, type LucideIcon, Shapes } from "lucide-react";
+import {
+  Award,
+  BookUser,
+  Braces,
+  Car,
+  Contact,
+  CreditCard,
+  Database,
+  FileText,
+  IdCard,
+  KeyRound,
+  Landmark,
+  type LucideIcon,
+  Paperclip,
+  Server,
+  Shapes,
+  Terminal,
+  Wallet,
+  Webhook,
+  Wifi,
+} from "lucide-react";
 
 /** Message keys and icons per category. `label` is singular, `plural` names the list. */
 export const CATEGORY_META: Record<ItemCategory, { label: string; plural: string; icon: LucideIcon }> = {
@@ -9,11 +29,33 @@ export const CATEGORY_META: Record<ItemCategory, { label: string; plural: string
   card: { label: "category.card", plural: "category.cards", icon: CreditCard },
   identity: { label: "category.identity", plural: "category.identities", icon: IdCard },
   environment: { label: "category.environment", plural: "category.environments", icon: Braces },
+  document: { label: "category.document", plural: "category.documents", icon: Paperclip },
+  bankAccount: { label: "category.bankAccount", plural: "category.bankAccounts", icon: Landmark },
+  idCard: { label: "category.idCard", plural: "category.idCards", icon: Contact },
+  passport: { label: "category.passport", plural: "category.passports", icon: BookUser },
+  driverLicense: { label: "category.driverLicense", plural: "category.driverLicenses", icon: Car },
+  softwareLicense: { label: "category.softwareLicense", plural: "category.softwareLicenses", icon: Award },
+  wifi: { label: "category.wifi", plural: "category.wifis", icon: Wifi },
+  server: { label: "category.server", plural: "category.servers", icon: Server },
+  database: { label: "category.database", plural: "category.databases", icon: Database },
+  apiCredential: { label: "category.apiCredential", plural: "category.apiCredentials", icon: Webhook },
+  cryptoWallet: { label: "category.cryptoWallet", plural: "category.cryptoWallets", icon: Wallet },
+  sshKey: { label: "category.sshKey", plural: "category.sshKeys", icon: Terminal },
   other: { label: "category.other", plural: "category.others", icon: Shapes },
 };
 
+/** Categories that can be created from the UI, in menu groups (everyday, documents, technical). */
+export const CREATABLE_GROUPS: ItemCategory[][] = [
+  ["login", "note", "card", "identity", "document"],
+  ["bankAccount", "idCard", "passport", "driverLicense"],
+  ["wifi", "softwareLicense", "server", "database", "apiCredential", "sshKey", "cryptoWallet", "environment"],
+];
+
 /** Categories that can be created from the UI, in menu order. */
-export const CREATABLE: ItemCategory[] = ["login", "note", "card", "environment"];
+export const CREATABLE: ItemCategory[] = CREATABLE_GROUPS.flat();
+
+/** Categories the sidebar always lists; others appear once they have items. */
+export const ALWAYS_LISTED: ItemCategory[] = ["login", "note", "card"];
 
 /** The title, or "Untitled" in the current language. */
 export function itemTitle(item: { data: { title: string } }, t: Translate): string {
@@ -41,7 +83,43 @@ export function itemSubtitle(item: Item, t: Translate): string {
       return lines > 0 ? t("item.noteLines", { count: lines }) : t(CATEGORY_META.note.label);
     }
     default:
-      return t(CATEGORY_META[item.data.category].label);
+      return categoryDetail(item) ?? t(CATEGORY_META[item.data.category].label);
+  }
+}
+
+/** A non-secret detail for the list's second line, by category. */
+function categoryDetail(item: Item): string | undefined {
+  const value = (id: string) => fieldValue(item.data, id);
+  switch (item.data.category) {
+    case "wifi":
+      return value(FIELD.wifiSsid);
+    case "server":
+    case "apiCredential":
+      return hostname(value(FIELD.url)) ?? value(FIELD.username);
+    case "database":
+      return value(FIELD.host) ?? value(FIELD.databaseName);
+    case "bankAccount": {
+      const iban = value(FIELD.iban) ?? value(FIELD.accountNumber);
+      return iban ? `•••• ${iban.replace(/\s/g, "").slice(-4)}` : value(FIELD.bankName);
+    }
+    case "identity":
+      return [value(FIELD.firstName), value(FIELD.lastName)].filter(Boolean).join(" ") || undefined;
+    case "idCard":
+    case "passport":
+    case "driverLicense":
+      return value(FIELD.fullName);
+    case "softwareLicense":
+      return value(FIELD.licensedTo) ?? value(FIELD.version);
+    case "sshKey":
+      return value(FIELD.fingerprint);
+    case "cryptoWallet":
+      return value(FIELD.network);
+    case "document": {
+      const files = item.data.attachments ?? [];
+      return files.length === 1 ? files[0]?.name : undefined;
+    }
+    default:
+      return undefined;
   }
 }
 
@@ -128,13 +206,60 @@ const FIELD_LABELS: Record<string, string> = {
   [FIELD.cardNumber]: "field.cardNumber",
   [FIELD.cardExpiry]: "field.cardExpiry",
   [FIELD.cardCode]: "field.cardCode",
+  [FIELD.firstName]: "field.firstName",
+  [FIELD.lastName]: "field.lastName",
+  [FIELD.fullName]: "field.fullName",
+  [FIELD.birthDate]: "field.birthDate",
+  [FIELD.email]: "field.emailAddress",
+  [FIELD.phone]: "field.phone",
+  [FIELD.address]: "field.address",
+  [FIELD.bankName]: "field.bankName",
+  [FIELD.accountHolder]: "field.accountHolder",
+  [FIELD.iban]: "field.iban",
+  [FIELD.bic]: "field.bic",
+  [FIELD.accountNumber]: "field.accountNumber",
+  [FIELD.pin]: "field.pin",
+  [FIELD.documentNumber]: "field.documentNumber",
+  [FIELD.nationality]: "field.nationality",
+  [FIELD.issueDate]: "field.issueDate",
+  [FIELD.expiryDate]: "field.expiryDate",
+  [FIELD.authority]: "field.authority",
+  [FIELD.licenseClasses]: "field.licenseClasses",
+  [FIELD.licenseKey]: "field.licenseKey",
+  [FIELD.licensedTo]: "field.licensedTo",
+  [FIELD.version]: "field.version",
+  [FIELD.purchaseDate]: "field.purchaseDate",
+  [FIELD.wifiSsid]: "field.wifiSsid",
+  [FIELD.wifiSecurity]: "field.wifiSecurity",
+  [FIELD.host]: "field.host",
+  [FIELD.port]: "field.port",
+  [FIELD.databaseType]: "field.databaseType",
+  [FIELD.databaseName]: "field.databaseName",
+  [FIELD.apiKey]: "field.apiKey",
+  [FIELD.apiSecret]: "field.apiSecret",
+  [FIELD.walletAddress]: "field.walletAddress",
+  [FIELD.recoveryPhrase]: "field.recoveryPhrase",
+  [FIELD.network]: "field.network",
+  [FIELD.privateKey]: "field.privateKey",
+  [FIELD.publicKey]: "field.publicKey",
+  [FIELD.fingerprint]: "field.fingerprint",
+  [FIELD.passphrase]: "field.passphrase",
+};
+
+/**
+ * Labels that depend on the category: the URL of a server item is its
+ * address, of an API credential its endpoint.
+ */
+const CATEGORY_FIELD_LABELS: Partial<Record<ItemCategory, Record<string, string>>> = {
+  server: { [FIELD.url]: "field.serverAddress" },
+  apiCredential: { [FIELD.url]: "field.endpoint" },
 };
 
 /**
  * Well-known fields are labeled in the user's language (the stored label is
  * English); custom fields keep the label the user gave them.
  */
-export function fieldLabel(field: { id: string; label: string }, t: Translate): string {
-  const key = FIELD_LABELS[field.id];
+export function fieldLabel(field: { id: string; label: string }, t: Translate, category?: ItemCategory): string {
+  const key = (category && CATEGORY_FIELD_LABELS[category]?.[field.id]) ?? FIELD_LABELS[field.id];
   return key ? t(key) : field.label;
 }

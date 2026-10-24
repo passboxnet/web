@@ -15,6 +15,7 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 import { useKit } from "../auth/KitProvider";
 import { ForgotPasswordDialog, SignOutDialog } from "../auth/SignOutDialog";
+import { ShareLinksPanel } from "../comfort/ShareLinksPanel";
 import { isDesktop } from "../desktop";
 import { ImportExportPanel } from "../export/ImportExportPanel";
 import { useI18n } from "../lib/i18n";
@@ -117,6 +118,7 @@ export function SettingsView() {
         <SecurityCodePanel />
         <RecoveryPanel />
         <EmergencyPanel />
+        <ShareLinksPanel />
         <DevicesPanel />
         <TrustedDevicesPanel />
         <ActivityPanel />

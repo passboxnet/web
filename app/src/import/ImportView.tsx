@@ -616,7 +616,8 @@ function ReviewStep({
         <ul className="mt-3 flex flex-wrap gap-2 text-[13px]">
           {[...counts.byCategory].map(([category, count]) => (
             <li key={category} className="rounded-full bg-surface-sunken px-3 py-1">
-              <span className="font-semibold">{count.toLocaleString()}</span> {t(`category.${category}` as MessageKey)}
+              <span className="font-semibold">{count.toLocaleString()}</span>{" "}
+              {t(`import.category.${category}` as MessageKey)}
             </li>
           ))}
           {counts.totp > 0 && (

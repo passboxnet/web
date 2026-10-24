@@ -48,6 +48,22 @@ The former Watchtower. It shows "X of Y logins are secure" with a bar instead of
 
 Account (Emergency Kit, masked Secret Key `P1-•••••-…`, change master password, forgot password), **Devices** (`client.sessions()`, this device marked, sign out one or all others, with confirmations), **Activity** (last 50 events; failed attempts are called sign-in attempts, with the note that wrong master passwords are detected on the device and may not appear), security on this device, language and theme, About (audit status, server, license) and **Technical details** (account ID, algorithms, KDF parameters, server version). The web app names its device "Chrome on Windows" and so on from the user agent; the desktop app reports "Passbox Desktop on …".
 
+## Administration
+
+Instance admins (the first account on a server, and `PASSBOX_ADMIN_EMAILS`, see [self-hosting](self-hosting.md#administration)) see **Administration** in the sidebar under Tools and in Settings (`#/admin`); `client.accountInfo().instanceAdmin` decides, checked once per unlock. Other accounts never see it, and the server refuses its endpoints with `forbidden`.
+
+| Panel | Behavior |
+| --- | --- |
+| Server settings | Name, who can create an account (Everyone / Invited only / Email domains with a domain list), help address, mail language, master password strength and length. Saving refreshes the cached `/api/v1/meta`. |
+| Email | Delivery (SMTP with TLS/STARTTLS, or "Server log only" with a warning and the environment variables to set), sender, link address, queue, last error, **Send test email**. |
+| Invitations | Invite by email; the link is shown with Copy (needed while mail is not set up). Open invitations can be withdrawn after a confirmation. |
+| Accounts | Search by email (debounced), 25 per page, created, last active, status, 2FA ("–" until login 2FA exists). Disable/enable after a confirmation; your own account has no button. |
+| Administration log | Newest first with actor, time and IP, and "Log intact · n entries checked" or a red warning from the server's hash chain check. |
+
+Sign-up follows `/api/v1/meta`: on invite-only servers "Create account" is hidden and a note asks for an invitation; an invitation link (`#/?invite=…&email=…`) opens "Create account" with the email filled in and is removed from the address bar after use; in `domains` mode the allowed domains are named; the server's password policy is enforced in sign-up and "Change master password" in addition to the client's own minimum (`lib/instance.ts`). A help address from the admins is linked on the sign-in screen and in Settings → About.
+
+Settings → **Notifications** has "Email me when a new device signs in" (`client.updatePreferences`). Opening Settings also sets the account's mail language to the app language.
+
 ## First steps
 
 An empty vault shows a checklist instead of a bare empty state, also reachable as "Getting started" in the sidebar until it is complete or hidden: account created, Emergency Kit, browser extension, import (links to `#/import`), phone, security check. Manual steps are ticked off by the user and stored in the preferences.
@@ -62,4 +78,4 @@ An empty vault shows a checklist instead of a bare empty state, also reachable a
 ## Tests
 
 - Unit tests: `pnpm --filter @passbox/web test` (search, PDF writer, kit check, errors, QR text, server addresses, device names, translations, clipboard, auto-lock).
-- End-to-end: `pnpm --filter @passbox/web build && pnpm e2e` (`e2e/tests/vault.spec.ts`), in English by default plus a German smoke test; covers the kit check after a reload, trash and undo, sign-out confirmation, the 2FA check and server address rules.
+- End-to-end: `pnpm --filter @passbox/web build && pnpm e2e` (`e2e/tests/vault.spec.ts`), in English by default plus a German smoke test; covers the kit check after a reload, trash and undo, sign-out confirmation, the 2FA check and server address rules. `e2e/tests/admin.spec.ts` runs against a second server of its own (`PASSBOX_E2E_ADMIN_PORT`, default `PASSBOX_E2E_PORT` + 1) and covers the administration, invite-only sign-up and disabled accounts.

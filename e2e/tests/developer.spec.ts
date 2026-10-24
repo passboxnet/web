@@ -8,7 +8,8 @@ import { port } from "../ports";
 const PASSWORD = "correct horse battery staple";
 const SERVER = `http://127.0.0.1:${port}`;
 /** The `pbx` binary (built by `cargo build -p passbox-cli`). */
-const PBX = process.env.PBX_BIN ?? resolve(import.meta.dirname, "../../target/debug/pbx");
+const PBX =
+  process.env.PBX_BIN ?? join(process.env.CARGO_TARGET_DIR ?? resolve(import.meta.dirname, "../../target"), "debug", "pbx");
 /** Set to a directory to save screenshots of the developer screens. */
 const SHOTS = process.env.PASSBOX_SCREENSHOTS;
 

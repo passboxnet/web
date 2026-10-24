@@ -1,7 +1,8 @@
-import { createClient, type ServerMeta } from "@passbox/api-client";
+import type { ServerMeta } from "@passbox/api-client";
 import { Logo } from "@passbox/ui";
 import { Fingerprint, KeyRound, ServerCog, ShieldCheck } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { serverApi, serverLabel, serverUrl } from "../lib/server";
 
 const POINTS = [
   {
@@ -77,25 +78,28 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   );
 }
 
-type State = { kind: "checking" } | { kind: "online"; meta: ServerMeta } | { kind: "offline" };
-const api = createClient();
+type State = { kind: "checking" } | { kind: "online"; meta: ServerMeta } | { kind: "offline" } | { kind: "none" };
 
 function ServerStatus() {
-  const [state, setState] = useState<State>({ kind: "checking" });
+  const [state, setState] = useState<State>(serverUrl() ? { kind: "checking" } : { kind: "none" });
 
   useEffect(() => {
-    api
+    if (!serverUrl()) return;
+    serverApi()
       .meta()
       .then((meta) => setState({ kind: "online", meta }))
       .catch(() => setState({ kind: "offline" }));
   }, []);
 
+  const server = serverLabel();
   const text =
-    state.kind === "checking"
-      ? "Connecting…"
-      : state.kind === "online"
-        ? `${window.location.host} · v${state.meta.version}`
-        : "Server not reachable";
+    state.kind === "none"
+      ? "No server selected"
+      : state.kind === "checking"
+        ? `Connecting to ${server}…`
+        : state.kind === "online"
+          ? `${server} · v${state.meta.version}`
+          : `${server} · not reachable`;
   const dot = state.kind === "online" ? "bg-success" : state.kind === "offline" ? "bg-danger" : "bg-warning";
   return (
     <p className="mt-10 flex items-center gap-2 text-xs text-text-subtle" role="status">

@@ -1,6 +1,7 @@
 import { Badge, Button, Logo, toast } from "@passbox/ui";
 import { Copy, Printer, ShieldAlert } from "lucide-react";
 import { useState } from "react";
+import { serverUrl } from "../lib/server";
 import { useSnapshot } from "../useClient";
 
 /**
@@ -38,7 +39,7 @@ export function EmergencyKitScreen({ secretKey, onDone }: { secretKey: string; o
             </p>
           </div>
           <dl className="grid gap-px bg-border sm:grid-cols-2">
-            <KitField label="Sign-in address" value={window.location.origin} />
+            <KitField label="Sign-in address" value={serverUrl() ?? window.location.origin} />
             <KitField label="Email" value={email ?? ""} />
             <div className="bg-surface px-8 py-5 sm:col-span-2">
               <dt className="text-2xs font-semibold tracking-wider text-text-subtle uppercase">Secret Key</dt>

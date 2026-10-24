@@ -1,12 +1,11 @@
-import { createClient, type ServerMeta } from "@passbox/api-client";
+import type { ServerMeta } from "@passbox/api-client";
 import { Badge, Button, ConfirmDialog, Monogram, SegmentedControl } from "@passbox/ui";
 import { Lock, LogOut } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { setPreferences, type Theme, usePreferences } from "../lib/preferences";
+import { serverApi, serverLabel } from "../lib/server";
 import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "./PageHeader";
-
-const api = createClient();
 
 export function SettingsView() {
   const client = useClient();
@@ -17,7 +16,7 @@ export function SettingsView() {
   const account = client.deviceAccount;
 
   useEffect(() => {
-    api
+    serverApi()
       .meta()
       .then(setMeta)
       .catch(() => undefined);
@@ -49,7 +48,7 @@ export function SettingsView() {
           </Row>
         </Panel>
 
-        <Panel title="Security" description="Applies to this browser only.">
+        <Panel title="Security" description="Applies to this device only.">
           <Row label="Auto-lock" description="Lock the vault after a period without activity.">
             <select
               value={preferences.autoLockMinutes}
@@ -102,9 +101,9 @@ export function SettingsView() {
         </Panel>
 
         <Panel title="About">
-          <Row label="Server">
+          <Row label="Server" description="Sign out of this device to use a different server.">
             <span className="flex items-center gap-2 text-[13px] text-text-muted">
-              {window.location.host}
+              <span>{serverLabel()}</span>
               {meta && <Badge tone="success">v{meta.version}</Badge>}
             </span>
           </Row>
@@ -127,7 +126,7 @@ export function SettingsView() {
           <div>
             <h2 className="text-sm font-semibold">Sign out of this device</h2>
             <p className="mt-0.5 text-[13px] text-text-muted">
-              Removes your account and Secret Key from this browser. Your data stays safe on the server.
+              Removes your account and Secret Key from this device. Your data stays safe on the server.
             </p>
           </div>
           <Button variant="danger" size="sm" onClick={() => setConfirmSignOut(true)}>

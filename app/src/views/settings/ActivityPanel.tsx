@@ -47,6 +47,18 @@ const KNOWN = new Set([
   "emergency_access_used",
   "device_link_created",
   "device_link_approved",
+  "service_account_created",
+  "service_account_access_changed",
+  "service_account_revoked",
+  "service_account_deleted",
+  "agent_grant_requested",
+  "agent_grant_approved",
+  "agent_grant_denied",
+  "agent_grant_revoked",
+  "agent_request_access",
+  "agent_run",
+  "agent_inject",
+  "agent_create",
 ]);
 /** Events worth noticing: shown in red. */
 const ALERTS = new Set([

@@ -45,6 +45,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { errorMessage } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
+import { EnvironmentPanel } from "../developer/EnvironmentPanel";
 import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
 import type { Route } from "../lib/route";
 import { AudienceIcon, useAudience } from "../sharing/common";
@@ -291,6 +292,8 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
               ))}
             </div>
           )}
+
+          {data.category === "environment" && <EnvironmentPanel item={item} />}
 
           {fields.length > 0 && (
             <Card className="mt-6">

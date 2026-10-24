@@ -15,6 +15,7 @@ import {
 } from "@passbox/ui";
 import {
   ChevronsUpDown,
+  Code2,
   Layers,
   ListChecks,
   Lock,
@@ -36,6 +37,7 @@ import { type ReactNode, useState } from "react";
 import { SignOutDialog } from "../auth/SignOutDialog";
 import { shortcut, useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
+import { usePendingAgentRequests } from "../developer/agentRequests";
 import { CATEGORY_META, CREATABLE } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { awaitingConfirmation, isOrgAdmin } from "../lib/sharing";
@@ -295,6 +297,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             active={route.view === "trash"}
             onClick={() => navigate({ view: "trash" })}
           />
+          <DeveloperNavItem active={route.view === "developer"} onClick={() => navigate({ view: "developer" })} />
           <NavItem
             icon={Settings}
             label={t("term.settings")}
@@ -402,5 +405,21 @@ function NavItem({ icon: Icon, label, ariaLabel, count, badge, active, onClick }
         {badge ?? (count !== undefined && <span className="text-2xs tabular-nums text-text-muted">{count}</span>)}
       </button>
     </li>
+  );
+}
+
+/** Developer tools; shows how many AI agent requests wait for an answer. */
+function DeveloperNavItem({ active, onClick }: { active: boolean; onClick: () => void }) {
+  const { t } = useI18n();
+  const pending = usePendingAgentRequests().length;
+  return (
+    <NavItem
+      icon={Code2}
+      label={t("developer.title")}
+      ariaLabel={pending > 0 ? t("developer.navPending", { count: pending }) : undefined}
+      count={pending > 0 ? pending : undefined}
+      active={active}
+      onClick={onClick}
+    />
   );
 }

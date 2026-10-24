@@ -153,7 +153,7 @@ export function ItemList({
           icon={<KeyRound />}
           title={t("list.emptyCategory.title")}
           description={
-            category === "login" || category === "note" || category === "card"
+            category === "login" || category === "note" || category === "card" || category === "environment"
               ? t(`list.emptyCategory.${category}`)
               : t("list.emptyCategory.other")
           }

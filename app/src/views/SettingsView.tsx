@@ -1,13 +1,23 @@
 import type { ServerMeta } from "@passbox/api-client";
 import { LOCALE_NAMES } from "@passbox/i18n";
 import { Badge, Button, Monogram, SegmentedControl, Switch } from "@passbox/ui";
-import { ChevronRight, ExternalLink, KeyRound, Lock, LogOut, ShieldAlert } from "lucide-react";
+import {
+  ChevronRight,
+  ExternalLink,
+  KeyRound,
+  LifeBuoy,
+  Lock,
+  LogOut,
+  ShieldAlert,
+  ShieldEllipsis,
+} from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useKit } from "../auth/KitProvider";
 import { ForgotPasswordDialog, SignOutDialog } from "../auth/SignOutDialog";
 import { isDesktop } from "../desktop";
 import { ImportExportPanel } from "../export/ImportExportPanel";
 import { useI18n } from "../lib/i18n";
+import { useIsInstanceAdmin } from "../lib/instance";
 import { LINKS } from "../lib/links";
 import { type LanguagePreference, setPreferences, type Theme, usePreferences } from "../lib/preferences";
 import { serverApi, serverLabel } from "../lib/server";
@@ -16,6 +26,7 @@ import { Page, Panel } from "./PageHeader";
 import { ActivityPanel } from "./settings/ActivityPanel";
 import { ChangeMasterPasswordDialog } from "./settings/ChangeMasterPasswordDialog";
 import { DevicesPanel } from "./settings/DevicesPanel";
+import { NotificationsPanel } from "./settings/NotificationsPanel";
 import { TwoFactorPanel } from "./settings/TwoFactorPanel";
 
 /** A masked Secret Key that reveals nothing but the format (S19). */
@@ -36,6 +47,7 @@ export function SettingsView() {
   const [changeOpen, setChangeOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const account = client.deviceAccount;
+  const isAdmin = useIsInstanceAdmin(client);
 
   useEffect(() => {
     serverApi()
@@ -89,6 +101,21 @@ export function SettingsView() {
         <TwoFactorPanel />
         <DevicesPanel />
         <ActivityPanel />
+        <NotificationsPanel />
+
+        {isAdmin && (
+          <Panel id="administration" title={t("admin.title")}>
+            <Row label={t("settings.adminLabel")} description={t("settings.adminDescription")}>
+              <a
+                href="#/admin"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border-strong bg-surface px-3 text-[0.8125rem] font-medium shadow-xs hover:bg-surface-sunken coarse:h-11"
+              >
+                <ShieldEllipsis className="size-4" aria-hidden="true" />
+                {t("settings.openAdmin")}
+              </a>
+            </Row>
+          </Panel>
+        )}
 
         <Panel id="security" title={t("settings.security")} description={t("settings.securityDescription")}>
           <Row label={t("settings.autoLock")} description={t("settings.autoLockDescription")}>
@@ -178,9 +205,21 @@ export function SettingsView() {
               </p>
             </div>
           </div>
+          {meta?.supportUrl && (
+            <Row label={t("settings.support")} description={t("settings.supportDescription")}>
+              <ExternalTextLink href={meta.supportUrl}>
+                <LifeBuoy className="size-3.5" aria-hidden="true" />
+                {t("settings.supportLink")}
+              </ExternalTextLink>
+            </Row>
+          )}
           <Row label={t("settings.server")} description={t("settings.serverDescription")}>
             <span className="flex items-center gap-2 text-[0.8125rem] text-text-muted">
-              <span>{serverLabel()}</span>
+              <span>
+                {meta?.instanceName && meta.instanceName !== "Passbox"
+                  ? `${meta.instanceName} · ${serverLabel()}`
+                  : serverLabel()}
+              </span>
               {meta && <Badge tone="success">v{meta.version}</Badge>}
             </span>
           </Row>

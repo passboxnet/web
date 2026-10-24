@@ -1,12 +1,14 @@
+import type { ServerMeta } from "@passbox/api-client";
 import { TwoFactorRequiredError } from "@passbox/client";
 import { Button, Input, PasswordInput, SegmentedControl } from "@passbox/ui";
-import { ChevronRight, Sparkles } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { ChevronRight, Info, LifeBuoy, Sparkles } from "lucide-react";
+import { type FormEvent, useEffect, useState } from "react";
 import { errorMessage, loadCore, nextFrame } from "../core";
 import { PasswordStrength } from "../items/PasswordStrength";
 import { SecretKeyFormatError } from "../lib/errors";
 import { wasUsedBefore } from "../lib/firstRun";
 import { useI18n } from "../lib/i18n";
+import { type InviteLink, inviteFromHash, meetsPasswordPolicy, useServerMeta } from "../lib/instance";
 import { serverUrl } from "../lib/server";
 import { useClient } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
@@ -20,9 +22,16 @@ const SECRET_KEY_LENGTH = 28;
 
 export function WelcomeScreen() {
   const { t } = useI18n();
-  // First visit on this device: most people are here to create an account.
-  const [mode, setMode] = useState<"sign-in" | "sign-up">(() => (wasUsedBefore() ? "sign-in" : "sign-up"));
+  const [invite] = useState<InviteLink | undefined>(() => inviteFromHash());
+  // First visit on this device or an invitation: most people are here to create an account.
+  const [mode, setMode] = useState<"sign-in" | "sign-up">(() => (invite || !wasUsedBefore() ? "sign-up" : "sign-in"));
   const [choosingServer, setChoosingServer] = useState(false);
+  const meta = useServerMeta();
+  // Servers that only accept invited accounts hide "Create account" without an invitation.
+  const signUpClosed = meta?.registration === "invite_only" && !invite;
+  useEffect(() => {
+    if (signUpClosed) setMode("sign-in");
+  }, [signUpClosed]);
 
   // The desktop app has no server of its own: ask for one first.
   if (!serverUrl() || choosingServer) {
@@ -40,17 +49,40 @@ export function WelcomeScreen() {
       <p className="mt-1.5 text-sm text-text-muted">
         {mode === "sign-in" ? t("signIn.description") : t("signUp.description")}
       </p>
-      <SegmentedControl
-        className="mt-6 w-full"
-        label={t("welcome.modeLabel")}
-        value={mode}
-        onChange={setMode}
-        options={[
-          { value: "sign-in", label: t("action.signIn") },
-          { value: "sign-up", label: t("action.createAccount") },
-        ]}
-      />
-      <div className="mt-6">{mode === "sign-in" ? <SignInForm /> : <SignUpForm />}</div>
+      {signUpClosed ? (
+        <p
+          role="note"
+          className="mt-6 flex gap-2 rounded-lg border border-border bg-surface-sunken p-3 text-[0.8125rem] text-text-muted"
+        >
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          {t("welcome.inviteOnly")}
+        </p>
+      ) : (
+        <SegmentedControl
+          className="mt-6 w-full"
+          label={t("welcome.modeLabel")}
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: "sign-in", label: t("action.signIn") },
+            { value: "sign-up", label: t("action.createAccount") },
+          ]}
+        />
+      )}
+      <div className="mt-6">
+        {mode === "sign-in" || signUpClosed ? <SignInForm /> : <SignUpForm invite={invite} meta={meta} />}
+      </div>
+      {meta?.supportUrl && (
+        <a
+          href={meta.supportUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          className={`mt-6 inline-flex items-center gap-1.5 ${linkClass}`}
+        >
+          <LifeBuoy className="size-3.5" aria-hidden="true" />
+          {t("welcome.support", { name: meta.instanceName ?? "Passbox" })}
+        </a>
+      )}
       <details className="group mt-6">
         <summary className={`flex cursor-pointer list-none items-center gap-1 ${linkClass}`}>
           <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" aria-hidden="true" />
@@ -167,11 +199,11 @@ function SignInForm() {
   );
 }
 
-function SignUpForm() {
+function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: ServerMeta | undefined }) {
   const client = useClient();
   const kit = useKit();
-  const { t } = useI18n();
-  const [email, setEmail] = useState("");
+  const { t, locale } = useI18n();
+  const [email, setEmail] = useState(invite?.email ?? "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [suggestion, setSuggestion] = useState<string>();
@@ -187,8 +219,14 @@ function SignUpForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!client.estimateStrength(password, [email]).acceptableMasterPassword) {
+    const policy = meta?.passwordPolicy;
+    const verdict = meetsPasswordPolicy(password, client.estimateStrength(password, [email]), policy);
+    if (verdict === "weak") {
       setError(t("signUp.tooWeak"));
+      return;
+    }
+    if (verdict === "policy" && policy) {
+      setError(t("signUp.policy", { length: policy.minLength, strength: t(`strength.${policy.minScore}`) }));
       return;
     }
     if (password !== confirm) {
@@ -199,7 +237,12 @@ function SignUpForm() {
     setError(undefined);
     await nextFrame();
     try {
-      const { accountId } = await client.signUp(email, password);
+      const { accountId } = await client.signUp(email, password, {
+        locale,
+        ...(invite ? { inviteToken: invite.token } : {}),
+      });
+      // The invitation is used up; keep it out of the address bar.
+      if (invite) window.history.replaceState(null, "", "#/");
       kit.startOnboarding(accountId);
     } catch (e) {
       setError(errorMessage(e, "signUp"));
@@ -218,6 +261,13 @@ function SignUpForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
+        hint={
+          invite
+            ? t("signUp.invited")
+            : meta?.registration === "domains" && meta.allowedDomains?.length
+              ? t("signUp.domainsHint", { domains: meta.allowedDomains.join(", ") })
+              : undefined
+        }
       />
       <div className="flex flex-col gap-2">
         <PasswordInput

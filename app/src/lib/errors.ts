@@ -47,6 +47,16 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("error.invalidTwoFactorCode");
       case "two_factor_expired":
         return t("error.twoFactorExpired");
+      case "account_disabled":
+        return t("errors.accountDisabled");
+      case "registration_closed":
+        return t("errors.registrationClosed");
+      case "domain_not_allowed":
+        return t("errors.domainNotAllowed");
+      case "invitation_invalid":
+        return t("errors.invitationInvalid");
+      case "forbidden":
+        return t("errors.forbidden");
       case "not_found":
         return t("errors.notFound");
       case "bad_request":

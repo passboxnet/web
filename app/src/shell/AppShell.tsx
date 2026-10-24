@@ -9,6 +9,7 @@ import { useI18n } from "../lib/i18n";
 import { setChecklist, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
+import { AdminView } from "../views/admin/AdminView";
 import { GeneratorView } from "../views/GeneratorView";
 import { GettingStartedView } from "../views/GettingStarted";
 import { ItemsView } from "../views/ItemsView";
@@ -116,6 +117,7 @@ export function AppShell() {
             {route.view === "getting-started" && <GettingStartedView navigate={navigate} />}
             {route.view === "generator" && <GeneratorView />}
             {route.view === "settings" && <SettingsView />}
+            {route.view === "admin" && <AdminView />}
             {route.view === "import" && (
               <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
             )}

@@ -14,7 +14,8 @@ export type Route =
   | { view: "getting-started" }
   | { view: "generator" }
   | { view: "settings"; section?: string }
-  | { view: "import" };
+  | { view: "import" }
+  | { view: "admin" };
 
 export function parseRoute(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#\/?/, "").split("?");
@@ -26,6 +27,7 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === "generator") return { view: "generator" };
   if (parts[0] === "settings") return parts[1] ? { view: "settings", section: parts[1] } : { view: "settings" };
   if (parts[0] === "import") return { view: "import" };
+  if (parts[0] === "admin") return { view: "admin" };
 
   let filter: ItemFilter = { kind: "all" };
   if (parts[0] === "favorites") filter = { kind: "favorites" };

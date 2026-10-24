@@ -2,10 +2,24 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { defineConfig } from "@playwright/test";
+import { adminPort, port } from "./ports";
 
-// Override with PASSBOX_E2E_PORT to run several suites side by side.
-const port = Number(process.env.PASSBOX_E2E_PORT ?? 8787);
 const dataDir = mkdtempSync(join(tmpdir(), "passbox-e2e-"));
+
+function server(listen: number, database: string) {
+  return {
+    command: "cargo run --quiet --package passbox-server",
+    cwd: "..",
+    url: `http://127.0.0.1:${listen}/health`,
+    timeout: 300_000,
+    reuseExistingServer: false,
+    env: {
+      PASSBOX_BIND: `127.0.0.1:${listen}`,
+      PASSBOX_DATABASE_URL: `sqlite://${join(dataDir, database)}?mode=rwc`,
+      PASSBOX_WEB_DIR: "apps/web/dist",
+    },
+  };
+}
 
 export default defineConfig({
   testDir: "tests",
@@ -19,16 +33,5 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: "cargo run --quiet --package passbox-server",
-    cwd: "..",
-    url: `http://127.0.0.1:${port}/health`,
-    timeout: 300_000,
-    reuseExistingServer: false,
-    env: {
-      PASSBOX_BIND: `127.0.0.1:${port}`,
-      PASSBOX_DATABASE_URL: `sqlite://${join(dataDir, "passbox.db")}?mode=rwc`,
-      PASSBOX_WEB_DIR: "apps/web/dist",
-    },
-  },
+  webServer: [server(port, "passbox.db"), server(adminPort, "admin.db")],
 });

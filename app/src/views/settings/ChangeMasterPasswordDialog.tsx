@@ -7,6 +7,7 @@ import { TwoFactorStep } from "../../auth/TwoFactorStep";
 import { errorMessage, nextFrame } from "../../core";
 import { PasswordStrength } from "../../items/PasswordStrength";
 import { useI18n } from "../../lib/i18n";
+import { meetsPasswordPolicy, useServerMeta } from "../../lib/instance";
 import { useClient, useSnapshot } from "../../useClient";
 
 /** Changes the master password (S10). The Secret Key stays; other devices are signed out. */
@@ -27,6 +28,7 @@ export function ChangeMasterPasswordDialog({
   const [error, setError] = useState<string>();
   // Without a recent login the change needs a fresh one, which may ask for the second factor.
   const [twoFactor, setTwoFactor] = useState(false);
+  const policy = useServerMeta()?.passwordPolicy;
 
   function reset() {
     setCurrent("");
@@ -46,8 +48,13 @@ export function ChangeMasterPasswordDialog({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(undefined);
-    if (!client.estimateStrength(next, [email]).acceptableMasterPassword) {
+    const verdict = meetsPasswordPolicy(next, client.estimateStrength(next, [email]), policy);
+    if (verdict === "weak") {
       setError(t("signUp.tooWeak"));
+      return;
+    }
+    if (verdict === "policy" && policy) {
+      setError(t("signUp.policy", { length: policy.minLength, strength: t(`strength.${policy.minScore}`) }));
       return;
     }
     if (next !== confirm) {

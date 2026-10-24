@@ -351,7 +351,7 @@ function OrgRecoveryWaiting({ pending, onReset }: { pending: PendingOrgRecovery;
           {t("recovery.org.codeLabel")}
         </p>
         <p
-          className="mt-3 font-mono text-2xl font-semibold tracking-wider text-text tabular-nums"
+          className="mt-3 font-mono text-lg font-semibold tracking-wide text-text tabular-nums sm:text-xl"
           data-testid="request-code"
         >
           {pending.requestCode}

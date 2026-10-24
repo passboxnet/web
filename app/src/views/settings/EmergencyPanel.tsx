@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { FormError } from "../../auth/AuthLayout";
 import { errorMessage } from "../../core";
 import { useI18n } from "../../lib/i18n";
+import { vaultName } from "../../shell/Sidebar";
 import { useClient, useSnapshot } from "../../useClient";
 import { Panel } from "../PageHeader";
 
@@ -488,7 +489,7 @@ function ConfirmVaultsDialog({
                 )
               }
             />
-            {vault.name}
+            {vaultName(vault.name, t)}
           </label>
         ))}
         <p className="text-xs text-text-muted">{t("emergency.vaultsHint")}</p>

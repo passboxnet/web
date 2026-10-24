@@ -9,6 +9,7 @@ import { useI18n } from "../../lib/i18n";
 import { serverUrl } from "../../lib/server";
 import { useClient, useSnapshot } from "../../useClient";
 import { Panel } from "../PageHeader";
+import { localizedDeviceName } from "./DevicesPanel";
 import { QrCode, ReauthCancelled, useReauthentication } from "./TwoFactorPanel";
 
 const LINK_POLL_MS = 2_000;
@@ -461,7 +462,9 @@ function AddDeviceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
         <div className="flex flex-col gap-3 text-sm">
           <p className="font-semibold">{t("addDevice.claimedTitle")}</p>
           <p className="rounded-lg border border-border bg-surface-sunken p-3">
-            <span className="font-medium">{claim?.deviceName || t("addDevice.unknownDevice")}</span>
+            <span className="font-medium">
+              {(claim?.deviceName && localizedDeviceName(claim.deviceName, t)) || t("addDevice.unknownDevice")}
+            </span>
             {claim?.ip && <span className="text-text-muted"> · {t("devices.ip", { ip: claim.ip })}</span>}
           </p>
           <p className="text-text-muted">{t("addDevice.claimedBody")}</p>

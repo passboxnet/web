@@ -112,10 +112,17 @@ export function EmergencyKitScreen() {
                   {t("kit.field.recoveryCode")}
                 </dt>
                 <dd
-                  className="mt-2 font-mono text-base font-medium tracking-wide break-all text-text sm:text-lg"
+                  className="mt-2 font-mono text-base font-medium tracking-wide text-text sm:text-lg"
                   data-testid="recovery-code"
                 >
-                  {recoveryCode}
+                  {/* Lines break only after a dash, never inside a group. */}
+                  {recoveryCode.split(/(?<=-)/).map((group, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: groups can repeat and never move
+                    <span key={index}>
+                      {group}
+                      <wbr />
+                    </span>
+                  ))}
                 </dd>
                 <dd className="mt-2 text-xs text-text-muted">{t("kit.recoveryCodeHint")}</dd>
               </div>

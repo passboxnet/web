@@ -6,6 +6,7 @@ import { errorMessage } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
 import { useI18n } from "../lib/i18n";
 import { fieldLabel, itemSubtitle, itemTitle } from "../lib/items";
+import { vaultName } from "../shell/Sidebar";
 import { useClient } from "../useClient";
 import { Page } from "./PageHeader";
 
@@ -59,7 +60,7 @@ export function EmergencyVaultView({ grantId }: { grantId: string }) {
             return (
               <section key={vault.id} className="rounded-card border border-border bg-surface shadow-card">
                 <header className="flex items-center justify-between border-b border-border px-5 py-4">
-                  <h2 className="text-sm font-semibold">{vault.name}</h2>
+                  <h2 className="text-sm font-semibold">{vaultName(vault.name, t)}</h2>
                   <Badge>{t("emergency.view.count", { count: items.length })}</Badge>
                 </header>
                 {items.length === 0 ? (

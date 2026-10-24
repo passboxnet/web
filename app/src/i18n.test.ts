@@ -4,6 +4,7 @@
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { FINDING_KINDS } from "@passbox/client";
 import deCommon from "@passbox/i18n/messages/de/common.json";
 import deOrgAdmin from "@passbox/i18n/messages/de/orgadmin.json";
 import deSso from "@passbox/i18n/messages/de/sso.json";
@@ -111,6 +112,24 @@ describe("translations", () => {
       ...["web", "extension", "desktop", "ios", "android", "cli", "unknown"].map((kind) => `devices.kind.${kind}`),
       ...["password", "words", "readable", "pin"].map((mode) => `generator.modeHint.${mode}`),
       ...["login", "note", "card", "other"].map((category) => `list.emptyCategory.${category}`),
+      ...FINDING_KINDS.flatMap((kind) =>
+        ["title", "short", "summary", "text", "fix"].map((part) => `security.kind.${kind}.${part}`),
+      ),
+      ...[
+        "change_password",
+        "enable_two_factor",
+        "add_passkey",
+        "use_https",
+        "check_website",
+        "renew",
+        "review_duplicates",
+        "add_website",
+        "add_username",
+        "separate_totp",
+      ].map((fix) => `security.fix.${fix}`),
+      ...["critical", "high", "medium", "low", "info"].map((severity) => `security.severity.${severity}`),
+      ...["excellent", "good", "fair", "poor"].map((rating) => `security.rating.${rating}`),
+      ...["auto", "server", "direct"].map((mode) => `security.settings.routeHint.${mode}`),
     ];
     expect(dynamic.filter((key) => !(key in en) || !(key in de))).toEqual([]);
   });

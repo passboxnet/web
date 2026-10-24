@@ -1,3 +1,4 @@
+import { canExportVault } from "@passbox/client";
 import { countExportItems, createCsvExport, createEncryptedExport, exportFileName } from "@passbox/client/export";
 import { Button, cn, Dialog, PasswordInput, StrengthMeter, Switch, toast } from "@passbox/ui";
 import { Lock, ShieldAlert, ShieldCheck } from "lucide-react";
@@ -31,7 +32,8 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   useEffect(() => {
     if (!open) return;
     setKind("encrypted");
-    setVaultIds(snapshot.vaults.map((v) => v.id));
+    // Policy D2: organizations can forbid exporting their vaults.
+    setVaultIds(snapshot.vaults.filter((v) => canExportVault(snapshot.effectivePolicy, v)).map((v) => v.id));
     setIncludeTrash(false);
     setPassword("");
     setRepeat("");
@@ -40,7 +42,13 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     setMasterError(undefined);
   }, [open]);
 
-  const options = { vaultIds, includeTrash };
+  const blockedVaults = snapshot.vaults.filter((v) => !canExportVault(snapshot.effectivePolicy, v)).length;
+  const options = {
+    vaultIds: vaultIds.filter((id) =>
+      canExportVault(snapshot.effectivePolicy, snapshot.vaults.find((v) => v.id === id) ?? {}),
+    ),
+    includeTrash,
+  };
   const count = countExportItems(snapshot, options);
   const strength = kind === "encrypted" && password ? client.estimateStrength(password) : undefined;
   const mismatch = repeat !== "" && repeat !== password;
@@ -107,6 +115,11 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
           />
         </fieldset>
 
+        {blockedVaults > 0 && (
+          <p role="status" className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-[13px]">
+            {t("orgAdmin.export.blocked", { count: blockedVaults })}
+          </p>
+        )}
         {snapshot.vaults.length > 1 && (
           <fieldset>
             <legend className="mb-2 text-[13px] font-medium">{t("export.vaults")}</legend>
@@ -117,6 +130,7 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                     type="checkbox"
                     className="size-4 accent-[var(--color-accent)]"
                     checked={vaultIds.includes(vault.id)}
+                    disabled={!canExportVault(snapshot.effectivePolicy, vault)}
                     onChange={(e) =>
                       setVaultIds(e.target.checked ? [...vaultIds, vault.id] : vaultIds.filter((id) => id !== vault.id))
                     }

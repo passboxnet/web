@@ -1,4 +1,5 @@
 import type { ServerMeta } from "@passbox/api-client";
+import { clampAutoLock } from "@passbox/client";
 import { LOCALE_NAMES } from "@passbox/i18n";
 import { Badge, Button, Monogram, SegmentedControl, Switch } from "@passbox/ui";
 import {
@@ -44,7 +45,9 @@ export function SettingsView() {
   const kit = useKit();
   const i18n = useI18n();
   const { t } = i18n;
-  const { email = "", vaults, items } = useSnapshot();
+  const snapshot = useSnapshot();
+  const { email = "", vaults, items } = snapshot;
+  const autoLockLimit = snapshot.effectivePolicy.maxAutoLockMinutes;
   const preferences = usePreferences();
   const [meta, setMeta] = useState<ServerMeta>();
   const [signOutOpen, setSignOutOpen] = useState(false);
@@ -132,18 +135,29 @@ export function SettingsView() {
         )}
 
         <Panel id="security" title={t("settings.security")} description={t("settings.securityDescription")}>
-          <Row label={t("settings.autoLock")} description={t("settings.autoLockDescription")}>
+          <Row
+            label={t("settings.autoLock")}
+            description={
+              autoLockLimit
+                ? t("orgAdmin.settings.autoLockLimited", { minutes: autoLockLimit })
+                : t("settings.autoLockDescription")
+            }
+          >
             <select
-              value={preferences.autoLockMinutes}
+              value={clampAutoLock(snapshot.effectivePolicy, preferences.autoLockMinutes)}
               onChange={(e) => setPreferences({ autoLockMinutes: Number(e.target.value) })}
               aria-label={t("settings.autoLock")}
               className={selectClass}
             >
-              {[1, 5, 15, 30, 60].map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {t("settings.afterMinutes", { minutes })}
-                </option>
-              ))}
+              {[1, 5, 15, 30, 60]
+                .filter((minutes) => !autoLockLimit || minutes <= autoLockLimit)
+                .concat(autoLockLimit && ![1, 5, 15, 30, 60].includes(autoLockLimit) ? [autoLockLimit] : [])
+                .sort((a, b) => a - b)
+                .map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {t("settings.afterMinutes", { minutes })}
+                  </option>
+                ))}
             </select>
           </Row>
           <Row label={t("settings.clipboard")} description={t("settings.clipboardDescription")}>

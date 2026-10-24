@@ -1,3 +1,4 @@
+import { clampAutoLock } from "@passbox/client";
 import { Button, Logo, toast } from "@passbox/ui";
 import { KeyRound, Menu as MenuIcon, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,6 +9,8 @@ import { ImportView } from "../import/ImportView";
 import { useI18n } from "../lib/i18n";
 import { setChecklist, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
+import { OrgAdminView } from "../orgadmin/OrgAdminView";
+import { PolicyBanner } from "../orgadmin/PolicyBanner";
 import { InvitationPrompt } from "../sharing/InvitationPrompt";
 import { OrgView } from "../sharing/OrgView";
 import { SharingView } from "../sharing/SharingView";
@@ -42,7 +45,8 @@ export function AppShell() {
 
   // A stable callback: a new one on every render would restart the inactivity timer.
   const lock = useCallback(() => client.lock(), [client]);
-  useAutoLock(lock, preferences.autoLockMinutes);
+  // Organization policies can cap the auto-lock time (D2).
+  useAutoLock(lock, clampAutoLock(snapshot.effectivePolicy, preferences.autoLockMinutes));
   usePendingRotations();
 
   useEffect(() => {
@@ -91,6 +95,7 @@ export function AppShell() {
       <InsecurePageBanner />
       <KitReminder />
       <SharingWarningsBanner />
+      <PolicyBanner navigate={navigate} />
       <div className="flex min-h-0 flex-1">
         <div className="hidden w-64 shrink-0 lg:block">{sidebar}</div>
 
@@ -131,6 +136,9 @@ export function AppShell() {
             {route.view === "emergency" && <EmergencyVaultView key={route.grantId} grantId={route.grantId} />}
             {route.view === "sharing" && <SharingView navigate={navigate} />}
             {route.view === "org" && <OrgView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
+            {route.view === "org-admin" && (
+              <OrgAdminView key={route.orgId} orgId={route.orgId} section={route.section} navigate={navigate} />
+            )}
             {route.view === "import" && (
               <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
             )}

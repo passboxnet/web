@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from "@passbox/ui";
 import {
+  Building2,
   ChevronsUpDown,
   Layers,
   ListChecks,
@@ -309,6 +310,15 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               onClick={() => navigate({ view: "admin" })}
             />
           )}
+          {orgs.filter(isOrgAdmin).map((org) => (
+            <NavItem
+              key={`admin-${org.id}`}
+              icon={Building2}
+              label={t("orgAdmin.nav", { name: orgName(org, t) })}
+              active={route.view === "org-admin" && route.orgId === org.id}
+              onClick={() => navigate({ view: "org-admin", orgId: org.id })}
+            />
+          ))}
         </NavGroup>
       </div>
 

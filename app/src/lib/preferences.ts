@@ -1,6 +1,17 @@
+import type { Locale } from "@passbox/i18n";
 import { useSyncExternalStore } from "react";
 
 export type Theme = "system" | "light" | "dark";
+export type LanguagePreference = "system" | Locale;
+
+/** Steps of the first-run checklist the user ticked off by hand. */
+export interface ChecklistState {
+  dismissed: boolean;
+  extension: boolean;
+  phone: boolean;
+  import: boolean;
+  securityCheck: boolean;
+}
 
 export interface Preferences {
   theme: Theme;
@@ -10,10 +21,20 @@ export interface Preferences {
   clipboardClearSeconds: number;
   /** Desktop app: lock the vault when the window is closed (hidden to the tray). */
   lockOnClose: boolean;
+  /** "system" follows the browser's preferred languages. */
+  language: LanguagePreference;
+  checklist: ChecklistState;
 }
 
 const KEY = "passbox.preferences";
-const DEFAULTS: Preferences = { theme: "system", autoLockMinutes: 15, clipboardClearSeconds: 90, lockOnClose: true };
+const DEFAULTS: Preferences = {
+  theme: "system",
+  autoLockMinutes: 15,
+  clipboardClearSeconds: 90,
+  lockOnClose: true,
+  language: "system",
+  checklist: { dismissed: false, extension: false, phone: false, import: false, securityCheck: false },
+};
 
 let current: Preferences = load();
 const listeners = new Set<() => void>();
@@ -21,7 +42,9 @@ const listeners = new Set<() => void>();
 function load(): Preferences {
   try {
     const raw = window.localStorage.getItem(KEY);
-    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Preferences>) } : DEFAULTS;
+    if (!raw) return DEFAULTS;
+    const stored = JSON.parse(raw) as Partial<Preferences>;
+    return { ...DEFAULTS, ...stored, checklist: { ...DEFAULTS.checklist, ...stored.checklist } };
   } catch {
     return DEFAULTS;
   }
@@ -56,4 +79,15 @@ export function usePreferences(): Preferences {
     },
     () => current,
   );
+}
+
+/** Calls `listener` after every change. Returns a function that stops listening. */
+export function subscribePreferences(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** Marks steps of the first-run checklist. */
+export function setChecklist(update: Partial<ChecklistState>) {
+  setPreferences({ checklist: { ...current.checklist, ...update } });
 }

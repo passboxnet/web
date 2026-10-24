@@ -1,11 +1,21 @@
 import { Button, Input } from "@passbox/ui";
 import { Server } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { canUseOwnOrigin, changeServer, parseServerUrl, serverApi, serverLabel, storedServerUrl } from "../lib/server";
+import { useI18n } from "../lib/i18n";
+import {
+  canUseOwnOrigin,
+  changeServer,
+  parseServerUrl,
+  ServerUrlError,
+  serverApi,
+  serverLabel,
+  storedServerUrl,
+} from "../lib/server";
 import { FormError } from "./AuthLayout";
 
 /** Chooses the Passbox server. Only shown while signed out; saving reloads the app. */
 export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const stored = storedServerUrl();
@@ -17,7 +27,7 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
     try {
       url = parseServerUrl(String(new FormData(event.currentTarget).get("server")));
     } catch (e) {
-      setError((e as Error).message);
+      setError(e instanceof ServerUrlError ? t(`server.error.${e.code}`) : t("server.error.invalid"));
       return;
     }
     setBusy(true);
@@ -25,7 +35,7 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
       const meta = await serverApi(url).meta();
       if (meta.name !== "passbox") throw new Error("not a Passbox server");
     } catch {
-      setError(`No Passbox server answered at ${serverLabel(url)}. Check the address and your connection.`);
+      setError(t("server.error.unreachable", { server: serverLabel(url) }));
       setBusy(false);
       return;
     }
@@ -36,20 +46,18 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
     <form onSubmit={submit} className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {onCancel ? "Use a different server" : "Connect to your server"}
+          {onCancel ? t("server.title.change") : t("server.title.connect")}
         </h1>
-        <p className="mt-1.5 text-sm text-text-muted">
-          Enter the address of the Passbox server that stores your vault. It only ever receives encrypted data.
-        </p>
+        <p className="mt-1.5 text-sm text-text-muted">{t("server.description")}</p>
       </div>
       <Input
-        label="Server address"
+        label={t("server.label")}
         name="server"
         type="text"
         inputMode="url"
         autoComplete="url"
         spellCheck={false}
-        placeholder="https://passbox.example.com"
+        placeholder={t("server.placeholder")}
         defaultValue={stored ?? ""}
         leading={<Server />}
         autoFocus
@@ -57,18 +65,18 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
       />
       <FormError message={error} />
       <Button type="submit" size="lg" loading={busy}>
-        {busy ? "Checking the server…" : "Connect"}
+        {busy ? t("server.checking") : t("server.connect")}
       </Button>
       {(onCancel || (canUseOwnOrigin && stored)) && (
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
           {onCancel && (
             <button type="button" onClick={onCancel} className={linkClass}>
-              Cancel
+              {t("action.cancel")}
             </button>
           )}
           {canUseOwnOrigin && stored && (
             <button type="button" onClick={() => changeServer(undefined)} className={linkClass}>
-              Use {window.location.host} instead
+              {t("server.useOwn", { host: window.location.host })}
             </button>
           )}
         </div>
@@ -77,4 +85,5 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
   );
 }
 
-export const linkClass = "text-[13px] text-text-muted underline-offset-4 hover:text-text hover:underline";
+export const linkClass =
+  "rounded text-[0.8125rem] text-text-muted underline-offset-4 hover:text-text hover:underline coarse:py-2.5";

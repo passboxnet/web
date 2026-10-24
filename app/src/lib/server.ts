@@ -9,29 +9,50 @@ import { isDesktop } from "../desktop";
  */
 const KEY = "passbox.server";
 
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+/** Why an address was rejected. The UI shows `server.error.<code>`. */
+export type ServerUrlProblem = "empty" | "invalid" | "scheme" | "credentials" | "query" | "insecure";
 
-/** Normalizes what the user typed to a server URL. Throws an `Error` with a readable message. */
+export class ServerUrlError extends Error {
+  constructor(readonly code: ServerUrlProblem) {
+    super(`invalid server address: ${code}`);
+    this.name = "ServerUrlError";
+  }
+}
+
+/** Loopback hosts, where plain http never crosses a network. */
+export function isLoopbackHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "[::1]" || /^127(\.\d{1,3}){3}$/.test(hostname);
+}
+
+/**
+ * Normalizes what the user typed to a server URL. Throws a `ServerUrlError`.
+ * Plain http is only accepted for this computer: anywhere else, anyone on the
+ * network could read and change what the server sends.
+ */
 export function parseServerUrl(input: string): string {
   let text = input.trim();
-  if (!text) throw new Error("Enter the address of your Passbox server.");
+  if (!text) throw new ServerUrlError("empty");
   if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(text)) text = `https://${text}`;
   let url: URL;
   try {
     url = new URL(text);
   } catch {
-    throw new Error("This is not a valid address.");
+    throw new ServerUrlError("invalid");
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:") {
-    throw new Error("Use an address that starts with https:// or http://.");
-  }
-  if (url.username || url.password) throw new Error("Remove the user name and password from the address.");
-  if (url.search || url.hash) throw new Error("Remove everything after ? or # from the address.");
-  // The desktop app's content security policy only allows plain HTTP to this computer.
-  if (isDesktop && url.protocol === "http:" && !LOCAL_HOSTS.has(url.hostname)) {
-    throw new Error("The desktop app connects to https:// servers only (plain http:// works for localhost).");
-  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") throw new ServerUrlError("scheme");
+  if (url.username || url.password) throw new ServerUrlError("credentials");
+  if (url.search || url.hash) throw new ServerUrlError("query");
+  if (url.protocol === "http:" && !isLoopbackHost(url.hostname)) throw new ServerUrlError("insecure");
   return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+}
+
+/**
+ * True when this page itself was loaded over plain http from another
+ * computer. Then a network attacker could change the app and read the
+ * master password, so the app shows a warning.
+ */
+export function isInsecurePage(location: Pick<Location, "protocol" | "hostname"> = window.location): boolean {
+  return !isDesktop && location.protocol === "http:" && !isLoopbackHost(location.hostname);
 }
 
 /** The server chosen on this device, if any. */
@@ -67,7 +88,7 @@ export function changeServer(url: string | undefined) {
 
 /** Short form for display, for example `passbox.example.com` or `localhost:8080/vault`. */
 export function serverLabel(url: string | undefined = serverUrl()): string {
-  if (!url) return "No server";
+  if (!url) return "";
   const { host, pathname } = new URL(url);
   return pathname === "/" ? host : `${host}${pathname}`;
 }

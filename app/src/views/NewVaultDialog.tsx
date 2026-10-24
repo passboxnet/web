@@ -1,6 +1,7 @@
 import { Button, Dialog, Input, toast } from "@passbox/ui";
 import { type FormEvent, useState } from "react";
 import { errorMessage } from "../core";
+import { useI18n } from "../lib/i18n";
 import { useClient } from "../useClient";
 
 interface NewVaultDialogProps {
@@ -11,6 +12,7 @@ interface NewVaultDialogProps {
 
 export function NewVaultDialog({ open, onOpenChange, onCreated }: NewVaultDialogProps) {
   const client = useClient();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -20,12 +22,12 @@ export function NewVaultDialog({ open, onOpenChange, onCreated }: NewVaultDialog
     setBusy(true);
     try {
       const id = await client.createVault(name.trim());
-      toast.success(`Vault "${name.trim()}" created`);
+      toast.success(t("vault.created", { name: name.trim() }));
       setName("");
       onOpenChange(false);
       onCreated(id);
     } catch (error) {
-      toast.error("The vault could not be created", { description: errorMessage(error) });
+      toast.error(t("vault.createFailed"), { description: errorMessage(error) });
     } finally {
       setBusy(false);
     }
@@ -35,18 +37,24 @@ export function NewVaultDialog({ open, onOpenChange, onCreated }: NewVaultDialog
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="New vault"
-      description="Vaults keep items separate, for example for work and personal use. Each vault has its own key."
+      title={t("vault.new")}
+      description={t("vault.dialog.description")}
       size="sm"
     >
       <form onSubmit={submit} className="flex flex-col gap-4">
-        <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Work" autoFocus />
+        <Input
+          label={t("vault.name")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t("vault.namePlaceholder")}
+          autoFocus
+        />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("action.cancel")}
           </Button>
           <Button type="submit" loading={busy} disabled={!name.trim()}>
-            Create vault
+            {t("vault.create")}
           </Button>
         </div>
       </form>

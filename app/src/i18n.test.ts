@@ -130,6 +130,9 @@ describe("translations", () => {
       ...["critical", "high", "medium", "low", "info"].map((severity) => `security.severity.${severity}`),
       ...["excellent", "good", "fair", "poor"].map((rating) => `security.rating.${rating}`),
       ...["auto", "server", "direct"].map((mode) => `security.settings.routeHint.${mode}`),
+      ...["unauthorized", "rate_limited", "failed", "no_alias", "insecure_url", "no_key", "network"].map(
+        (code) => `alias.error.${code}`,
+      ),
     ];
     expect(dynamic.filter((key) => !(key in en) || !(key in de))).toEqual([]);
   });

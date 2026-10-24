@@ -24,6 +24,7 @@ import {
   Star,
   Timer,
   TimerReset,
+  Users,
 } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useRef } from "react";
 import { loadCore } from "../core";
@@ -32,6 +33,8 @@ import { useI18n } from "../lib/i18n";
 import { CATEGORY_META, itemSubtitle, itemTitle } from "../lib/items";
 import type { Route } from "../lib/route";
 import { normalize } from "../lib/search";
+import { vaultName } from "../shell/Sidebar";
+import { useSnapshot } from "../useClient";
 import { GettingStartedCard } from "../views/GettingStarted";
 
 export type SortOrder = "name" | "modified";
@@ -52,6 +55,8 @@ interface ItemListProps {
   navigate: (route: Route) => void;
   /** Set when the list shows one category, for a matching empty state. */
   category?: ItemCategory | undefined;
+  /** Shown under the search field, for example who can see a shared vault. */
+  banner?: ReactNode;
 }
 
 export function ItemList({
@@ -68,6 +73,7 @@ export function ItemList({
   onCreate,
   navigate,
   category,
+  banner,
 }: ItemListProps) {
   const { t } = useI18n();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -217,6 +223,7 @@ export function ItemList({
           />
           <Kbd>/</Kbd>
         </label>
+        {banner}
       </header>
 
       {empty ?? (
@@ -281,6 +288,9 @@ function groupItems(
 
 function ItemRow({ item, selected, onSelect }: { item: Item; selected: boolean; onSelect: () => void }) {
   const { t } = useI18n();
+  const { vaults } = useSnapshot();
+  const vault = vaults.find((v) => v.id === item.vaultId);
+  const shared = vault?.orgId !== undefined;
   const Icon = CATEGORY_META[item.data.category].icon;
   const username = fieldValue(item.data, FIELD.username);
   const password = fieldValue(item.data, FIELD.password);
@@ -346,6 +356,12 @@ function ItemRow({ item, selected, onSelect }: { item: Item; selected: boolean; 
           selected && (username || password || totp) && "hidden",
         )}
       >
+        {shared && (
+          <Users
+            className="size-3.5"
+            aria-label={t("sharing.list.shared", { vault: vaultName(vault?.name ?? "", t) })}
+          />
+        )}
         {totp && <Timer className="size-3.5" aria-label={t("list.hasTotp")} />}
         {item.data.favorite && <Star className="size-3.5 fill-warning text-warning" aria-label={t("list.favorite")} />}
       </span>

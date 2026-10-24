@@ -17,7 +17,9 @@ export type Route =
   | { view: "import" }
   | { view: "admin" }
   | { view: "recovery-requests" }
-  | { view: "emergency"; grantId: string };
+  | { view: "emergency"; grantId: string }
+  | { view: "sharing" }
+  | { view: "org"; orgId: string };
 
 export function parseRoute(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#\/?/, "").split("?");
@@ -32,6 +34,8 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === "admin") return { view: "admin" };
   if (parts[0] === "recovery-requests") return { view: "recovery-requests" };
   if (parts[0] === "emergency" && parts[1]) return { view: "emergency", grantId: decodeURIComponent(parts[1]) };
+  if (parts[0] === "sharing") return { view: "sharing" };
+  if (parts[0] === "org" && parts[1]) return { view: "org", orgId: parts[1] };
 
   let filter: ItemFilter = { kind: "all" };
   if (parts[0] === "favorites") filter = { kind: "favorites" };
@@ -50,6 +54,7 @@ export function parseRoute(hash: string): Route {
 export function formatRoute(route: Route): string {
   if (route.view === "settings" && route.section) return `#/settings/${route.section}`;
   if (route.view === "emergency") return `#/emergency/${encodeURIComponent(route.grantId)}`;
+  if (route.view === "org") return `#/org/${route.orgId}`;
   if (route.view !== "items") return `#/${route.view}`;
   const { filter } = route;
   const path =

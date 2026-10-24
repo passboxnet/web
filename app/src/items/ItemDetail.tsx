@@ -37,6 +37,7 @@ import {
   MoreHorizontal,
   Pencil,
   RotateCcw,
+  Share2,
   Star,
   Trash2,
 } from "lucide-react";
@@ -45,6 +46,10 @@ import { errorMessage } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
 import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
+import type { Route } from "../lib/route";
+import { AudienceIcon, useAudience } from "../sharing/common";
+import { ShareItemDialog } from "../sharing/ShareItemDialog";
+import { VaultSharingDialog } from "../sharing/VaultSharingDialog";
 import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
@@ -58,6 +63,7 @@ interface ItemDetailProps {
   onEdit: (id: string) => void;
   onBack: () => void;
   onDeleted: () => void;
+  navigate: (route: Route) => void;
 }
 
 /** Moves an item to the trash and offers "Undo" for 10 seconds. */
@@ -89,18 +95,25 @@ export async function trashWithUndo(
   return true;
 }
 
-export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDetailProps) {
+export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }: ItemDetailProps) {
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;
   const { vaults } = useSnapshot();
   const [changing, setChanging] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const itemVault = vaults.find((v) => v.id === item?.vaultId);
+  const audience = useAudience(item?.vaultId);
+  // View-only members of a shared vault can read, copy and fill, not change.
+  const canEdit = !itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage";
 
   // "e" edits the selected item when focus is not in a text field.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement;
-      if (!item || event.metaKey || event.ctrlKey || ["INPUT", "TEXTAREA"].includes(target.tagName)) return;
+      if (!item || !canEdit || event.metaKey || event.ctrlKey || ["INPUT", "TEXTAREA"].includes(target.tagName)) {
+        return;
+      }
       if (event.key === "e" && !document.querySelector("[role=dialog]")) {
         event.preventDefault();
         onEdit(item.id);
@@ -108,7 +121,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [item, onEdit]);
+  }, [item, onEdit, canEdit]);
 
   if (!item) {
     return (
@@ -129,7 +142,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
   const username = fieldValue(data, FIELD.username);
   const password = fieldValue(data, FIELD.password);
   const fields = data.fields.filter((field) => field.value);
-  const warnings = securityWarnings(item.id, health, t);
+  const warnings = canEdit ? securityWarnings(item.id, health, t) : [];
 
   async function toggleFavorite() {
     if (!item) return;
@@ -152,29 +165,34 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
           <Button variant="ghost" size="icon-sm" aria-label={t("detail.back")} onClick={onBack} className="md:hidden">
             <ArrowLeft />
           </Button>
+          <AudienceIcon shared={audience.shared !== undefined} className="hidden shrink-0 sm:inline" />
           <span className="hidden truncate sm:inline">{vault}</span>
           <ChevronRight className="hidden size-3.5 shrink-0 text-text-muted sm:inline" aria-hidden="true" />
           <span className="truncate">{t(category.label)}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
-              aria-pressed={data.favorite}
-              onClick={toggleFavorite}
-            >
-              <Star className={data.favorite ? "fill-warning text-warning" : undefined} />
+          {canEdit && (
+            <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
+                aria-pressed={data.favorite}
+                onClick={toggleFavorite}
+              >
+                <Star className={data.favorite ? "fill-warning text-warning" : undefined} />
+              </Button>
+            </Tooltip>
+          )}
+          {canEdit && (
+            <Button variant="secondary" size="sm" onClick={() => onEdit(item.id)}>
+              <Pencil />
+              {t("action.edit")}
+              <span className="ml-1 hidden sm:inline">
+                <Kbd>E</Kbd>
+              </span>
             </Button>
-          </Tooltip>
-          <Button variant="secondary" size="sm" onClick={() => onEdit(item.id)}>
-            <Pencil />
-            {t("action.edit")}
-            <span className="ml-1 hidden sm:inline">
-              <Kbd>E</Kbd>
-            </span>
-          </Button>
+          )}
           <Menu>
             <MenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label={t("detail.more")}>
@@ -198,9 +216,14 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
                 </MenuItem>
               )}
               {(username || password || url) && <MenuSeparator />}
-              <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
-                {t("action.moveToTrash")}
+              <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
+                {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
               </MenuItem>
+              {canEdit && (
+                <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
+                  {t("action.moveToTrash")}
+                </MenuItem>
+              )}
             </MenuContent>
           </Menu>
         </div>
@@ -225,8 +248,30 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
               ) : (
                 <p className="mt-0.5 text-[0.8125rem] text-text-muted">{t(category.label)}</p>
               )}
+              <button
+                type="button"
+                onClick={() => setSharing(true)}
+                className="mt-1.5 flex items-center gap-1.5 rounded-md text-xs text-text-muted hover:text-accent coarse:py-2"
+                data-testid="item-audience"
+              >
+                <AudienceIcon shared={audience.shared !== undefined} />
+                {audience.shared ? t("sharing.audience.visibleFor", { audience: audience.label }) : audience.label}
+              </button>
             </div>
           </div>
+
+          {!canEdit && (
+            <div
+              role="note"
+              className="mt-6 flex items-start gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
+            >
+              <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
+              <p>
+                <strong className="font-semibold">{t("sharing.viewOnly.title")}</strong>{" "}
+                <span className="text-text-muted">{t("sharing.viewOnly.text")}</span>
+              </p>
+            </div>
+          )}
 
           {warnings.length > 0 && (
             <div className="mt-6 flex flex-col gap-2">
@@ -250,7 +295,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
           {fields.length > 0 && (
             <Card className="mt-6">
               {fields.map((field) => (
-                <FieldRow key={field.id} field={field} onEdit={() => onEdit(item.id)} />
+                <FieldRow key={field.id} field={field} onEdit={canEdit ? () => onEdit(item.id) : undefined} />
               ))}
             </Card>
           )}
@@ -283,7 +328,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
           )}
 
           {data.passwordHistory && data.passwordHistory.length > 0 && (
-            <PasswordHistorySection item={item} history={data.passwordHistory} />
+            <PasswordHistorySection item={item} history={data.passwordHistory} canRestore={canEdit} />
           )}
 
           <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-4 text-xs">
@@ -298,6 +343,11 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
       </div>
 
       {password && <ChangePasswordDialog item={item} open={changing} onOpenChange={setChanging} />}
+      {audience.shared ? (
+        <VaultSharingDialog vaultId={sharing ? item.vaultId : undefined} onOpenChange={setSharing} />
+      ) : (
+        <ShareItemDialog item={item} open={sharing} onOpenChange={setSharing} navigate={navigate} />
+      )}
     </section>
   );
 }
@@ -337,7 +387,15 @@ function Meta({ label, value, title }: { label: string; value: string; title?: s
 }
 
 /** Earlier passwords (S4, family P0): reveal, copy or restore one after a confirmation. */
-function PasswordHistorySection({ item, history }: { item: Item; history: PasswordHistoryEntry[] }) {
+function PasswordHistorySection({
+  item,
+  history,
+  canRestore,
+}: {
+  item: Item;
+  history: PasswordHistoryEntry[];
+  canRestore: boolean;
+}) {
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;
@@ -382,10 +440,12 @@ function PasswordHistorySection({ item, history }: { item: Item; history: Passwo
                 <Copy />
               </Button>
             </Tooltip>
-            <Button variant="secondary" size="xs" onClick={() => setRestoring(entry)}>
-              <RotateCcw />
-              {t("action.restore")}
-            </Button>
+            {canRestore && (
+              <Button variant="secondary" size="xs" onClick={() => setRestoring(entry)}>
+                <RotateCcw />
+                {t("action.restore")}
+              </Button>
+            )}
           </li>
         ))}
       </ul>
@@ -453,7 +513,7 @@ function PasskeyRow({ passkey }: { passkey: Passkey }) {
   );
 }
 
-function FieldRow({ field, onEdit }: { field: ItemField; onEdit: () => void }) {
+function FieldRow({ field, onEdit }: { field: ItemField; onEdit: (() => void) | undefined }) {
   const { t } = useI18n();
   const label = fieldLabel(field, t);
   return (
@@ -469,7 +529,7 @@ function FieldRow({ field, onEdit }: { field: ItemField; onEdit: () => void }) {
   );
 }
 
-function FieldValue({ field, label, onEdit }: { field: ItemField; label: string; onEdit: () => void }) {
+function FieldValue({ field, label, onEdit }: { field: ItemField; label: string; onEdit: (() => void) | undefined }) {
   switch (field.type) {
     case "concealed":
       return <ConcealedValue field={field} label={label} />;
@@ -598,7 +658,7 @@ function LargeType({ value, onClose }: { value: string; onClose: () => void }) {
   );
 }
 
-function TotpValue({ uri, onEdit }: { uri: string; onEdit: () => void }) {
+function TotpValue({ uri, onEdit }: { uri: string; onEdit: (() => void) | undefined }) {
   const { t } = useI18n();
   const totp = useTotp(uri);
   if (totp === undefined) return <span className="text-text-muted">…</span>;
@@ -606,10 +666,12 @@ function TotpValue({ uri, onEdit }: { uri: string; onEdit: () => void }) {
     return (
       <span className="flex flex-wrap items-center gap-2 text-danger">
         {t("detail.totpInvalid")}
-        <Button variant="secondary" size="xs" onClick={onEdit}>
-          <Pencil />
-          {t("action.edit")}
-        </Button>
+        {onEdit && (
+          <Button variant="secondary" size="xs" onClick={onEdit}>
+            <Pencil />
+            {t("action.edit")}
+          </Button>
+        )}
       </span>
     );
   }

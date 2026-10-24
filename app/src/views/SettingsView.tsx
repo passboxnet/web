@@ -22,6 +22,7 @@ import { LINKS } from "../lib/links";
 import { type LanguagePreference, setPreferences, type Theme, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { serverApi, serverLabel } from "../lib/server";
+import { SecurityCodePanel } from "../sharing/SecurityCodePanel";
 import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "./PageHeader";
 import { ActivityPanel } from "./settings/ActivityPanel";
@@ -109,6 +110,7 @@ export function SettingsView() {
         </Panel>
 
         <TwoFactorPanel />
+        <SecurityCodePanel />
         <RecoveryPanel />
         <EmergencyPanel />
         <DevicesPanel />

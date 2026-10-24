@@ -8,6 +8,11 @@ import { ImportView } from "../import/ImportView";
 import { useI18n } from "../lib/i18n";
 import { setChecklist, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
+import { InvitationPrompt } from "../sharing/InvitationPrompt";
+import { OrgView } from "../sharing/OrgView";
+import { SharingView } from "../sharing/SharingView";
+import { SharingWarningsBanner } from "../sharing/SharingWarnings";
+import { usePendingRotations } from "../sharing/usePendingRotations";
 import { useClient, useSnapshot } from "../useClient";
 import { AdminView } from "../views/admin/AdminView";
 import { EmergencyVaultView } from "../views/EmergencyVaultView";
@@ -38,6 +43,7 @@ export function AppShell() {
   // A stable callback: a new one on every render would restart the inactivity timer.
   const lock = useCallback(() => client.lock(), [client]);
   useAutoLock(lock, preferences.autoLockMinutes);
+  usePendingRotations();
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -84,6 +90,7 @@ export function AppShell() {
     <div className="relative flex h-full flex-col overflow-hidden bg-canvas">
       <InsecurePageBanner />
       <KitReminder />
+      <SharingWarningsBanner />
       <div className="flex min-h-0 flex-1">
         <div className="hidden w-64 shrink-0 lg:block">{sidebar}</div>
 
@@ -122,6 +129,8 @@ export function AppShell() {
             {route.view === "admin" && <AdminView />}
             {route.view === "recovery-requests" && <RecoveryRequestsView />}
             {route.view === "emergency" && <EmergencyVaultView key={route.grantId} grantId={route.grantId} />}
+            {route.view === "sharing" && <SharingView navigate={navigate} />}
+            {route.view === "org" && <OrgView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
             {route.view === "import" && (
               <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
             )}
@@ -129,6 +138,7 @@ export function AppShell() {
         </div>
       </div>
 
+      <InvitationPrompt navigate={navigate} />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} navigate={navigate} />
     </div>
   );

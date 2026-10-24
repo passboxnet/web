@@ -28,6 +28,7 @@ import {
   ShieldEllipsis,
   Star,
   Trash2,
+  Users,
   Vault as VaultIcon,
   Wand2,
 } from "lucide-react";
@@ -37,6 +38,8 @@ import { shortcut, useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
 import { CATEGORY_META, CREATABLE } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
+import { awaitingConfirmation, isOrgAdmin } from "../lib/sharing";
+import { orgName } from "../sharing/common";
 import { useClient, useSnapshot } from "../useClient";
 import { useChecklist } from "../views/GettingStarted";
 import { NewVaultDialog } from "../views/NewVaultDialog";
@@ -69,7 +72,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;
-  const { email = "", items, vaults, trash } = useSnapshot();
+  const { email = "", items, vaults, trash, orgs, sharingWarnings } = useSnapshot();
   const checklist = useChecklist();
   const isAdmin = useIsInstanceAdmin(client);
   const [newVaultOpen, setNewVaultOpen] = useState(false);
@@ -78,6 +81,10 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   const goItems = (filter: ItemFilter) => navigate({ view: "items", filter });
 
   const countCategory = (category: ItemCategory) => items.filter((i) => i.data.category === category).length;
+  const personalVaults = vaults.filter((v) => !v.orgId);
+  // Admins see how many people wait for them; everyone sees sharing problems.
+  const waiting = orgs.reduce((sum, org) => sum + (isOrgAdmin(org) ? awaitingConfirmation(org).length : 0), 0);
+  const sharingActive = route.view === "sharing" || route.view === "org";
 
   return (
     <nav
@@ -184,6 +191,23 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               ) : undefined
             }
           />
+          <NavItem
+            icon={Users}
+            label={t("sharing.nav")}
+            active={sharingActive}
+            onClick={() => navigate({ view: "sharing" })}
+            badge={
+              sharingWarnings.length > 0 ? (
+                <Badge tone="warning" aria-label={t("sharing.nav.warnings", { count: sharingWarnings.length })}>
+                  !
+                </Badge>
+              ) : waiting > 0 ? (
+                <Badge tone="accent" aria-label={t("sharing.nav.waiting", { count: waiting })}>
+                  {waiting}
+                </Badge>
+              ) : undefined
+            }
+          />
           {checklist.visible && (
             <NavItem
               icon={ListChecks}
@@ -225,7 +249,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             </Tooltip>
           }
         >
-          {vaults.map((vault) => (
+          {personalVaults.map((vault) => (
             <NavItem
               key={vault.id}
               icon={VaultIcon}
@@ -236,6 +260,26 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             />
           ))}
         </NavGroup>
+
+        {orgs.map((org) => {
+          const orgVaults = vaults.filter((v) => v.orgId === org.id);
+          if (orgVaults.length === 0) return null;
+          return (
+            <NavGroup key={org.id} title={orgName(org, t)}>
+              {orgVaults.map((vault) => (
+                <NavItem
+                  key={vault.id}
+                  icon={Users}
+                  label={vaultName(vault.name, t)}
+                  ariaLabel={t("sharing.nav.sharedVault", { vault: vaultName(vault.name, t), org: orgName(org, t) })}
+                  count={items.filter((i) => i.vaultId === vault.id).length}
+                  active={sameFilter(route, { kind: "vault", vaultId: vault.id })}
+                  onClick={() => goItems({ kind: "vault", vaultId: vault.id })}
+                />
+              ))}
+            </NavGroup>
+          );
+        })}
 
         <NavGroup title={t("shell.tools")}>
           <NavItem
@@ -330,18 +374,21 @@ function NavGroup({ title, action, children }: { title?: string; action?: ReactN
 interface NavItemProps {
   icon: LucideIcon;
   label: string;
+  /** A fuller name for screen readers, for example with the organization. */
+  ariaLabel?: string;
   count?: number;
   badge?: ReactNode;
   active?: boolean;
   onClick: () => void;
 }
 
-function NavItem({ icon: Icon, label, count, badge, active, onClick }: NavItemProps) {
+function NavItem({ icon: Icon, label, ariaLabel, count, badge, active, onClick }: NavItemProps) {
   return (
     <li>
       <button
         type="button"
         onClick={onClick}
+        title={ariaLabel}
         aria-current={active ? "page" : undefined}
         className={cn(
           "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[0.8125rem] transition-colors coarse:h-11",

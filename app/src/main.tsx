@@ -4,10 +4,13 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { applyLocale, useI18n } from "./lib/i18n";
 import { applyTheme, getPreferences, subscribePreferences } from "./lib/preferences";
+import { captureOrgInvite } from "./lib/sharing";
 import "./styles.css";
 
 applyTheme(getPreferences().theme);
 applyLocale();
+// An invitation link (`/invite/{token}#org=…`) is kept for this tab before routing starts.
+captureOrgInvite();
 subscribePreferences(() => applyLocale());
 
 const root = document.getElementById("root");

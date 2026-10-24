@@ -1,5 +1,5 @@
 import type { Item, VaultHealth } from "@passbox/client";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { ItemDetail } from "../items/ItemDetail";
 import { ItemEditor } from "../items/ItemEditor";
 import { ItemList, type SortOrder } from "../items/ItemList";
@@ -7,6 +7,8 @@ import { useI18n } from "../lib/i18n";
 import { CATEGORY_META, searchText } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { matchScore } from "../lib/search";
+import { defaultVault, writableVaults } from "../lib/sharing";
+import { VaultBanner } from "../sharing/VaultBanner";
 import { vaultName } from "../shell/Sidebar";
 import { useSnapshot } from "../useClient";
 import { DecryptionErrors } from "./DecryptionErrors";
@@ -72,15 +74,24 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
             ) || t("term.vault");
 
   const selected = route.create ? undefined : (snapshot.items.find((item) => item.id === route.itemId) ?? items[0]);
-  const defaultVaultId =
-    route.filter.kind === "vault"
-      ? route.filter.vaultId
-      : (snapshot.vaults.find((v) => v.name === "Private") ?? snapshot.vaults[0])?.id;
+  // New items go to the vault shown, unless it is view-only; then to the personal vault.
+  const writable = writableVaults(snapshot.vaults);
+  const filterVault = route.filter.kind === "vault" ? route.filter.vaultId : undefined;
+  const defaultVaultId = writable.some((v) => v.id === filterVault) ? filterVault : defaultVault(snapshot.vaults)?.id;
+  const canEdit = (item: Item) => writable.some((v) => v.id === item.vaultId);
 
   const select = (itemId: string | undefined) =>
     navigate(itemId ? { view: "items", filter: route.filter, itemId } : { view: "items", filter: route.filter });
   const edit = (id: string) => navigate({ view: "items", filter: route.filter, itemId: id, edit: true });
   const showDetailOnMobile = Boolean(route.itemId || route.create);
+
+  // A shared vault this account lost access to (removed, left, deleted) falls back to all items.
+  // (Before the first sync after unlocking there are no vaults at all yet.)
+  const vaultGone =
+    filterVault !== undefined && snapshot.vaults.length > 0 && !snapshot.vaults.some((v) => v.id === filterVault);
+  useEffect(() => {
+    if (vaultGone) navigate({ view: "items", filter: { kind: "all" } });
+  }, [vaultGone, navigate]);
 
   let pane: ReactNode;
   if (route.create && defaultVaultId) {
@@ -92,7 +103,7 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
         onDone={(id) => select(id)}
       />
     );
-  } else if (route.edit && selected) {
+  } else if (route.edit && selected && canEdit(selected)) {
     pane = (
       <ItemEditor
         key={`edit-${selected.id}`}
@@ -110,6 +121,7 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
         onEdit={edit}
         onBack={() => navigate({ view: "items", filter: route.filter })}
         onDeleted={() => select(undefined)}
+        navigate={navigate}
       />
     );
   }
@@ -139,6 +151,7 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
             onCreate={(category) => navigate({ view: "items", filter: route.filter, create: category })}
             navigate={navigate}
             category={route.filter.kind === "category" ? route.filter.category : undefined}
+            banner={filterVault ? <VaultBanner vaultId={filterVault} /> : undefined}
           />
         </div>
         <div className={showDetailOnMobile ? "flex min-w-0 flex-1" : "hidden min-w-0 flex-1 md:flex"}>{pane}</div>

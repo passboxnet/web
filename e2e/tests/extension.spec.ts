@@ -436,6 +436,53 @@ test.describe("Chrome extension", () => {
     await rp.close();
   });
 
+  test("groups shared family vaults in the popup and marks shared items", async ({ baseURL }) => {
+    test.setTimeout(120_000);
+    await web.bringToFront();
+    await web.goto(`${baseURL}/#/sharing`);
+    if (await web.getByRole("button", { name: "Unlock" }).isVisible()) {
+      await web.getByLabel("Master password", { exact: true }).fill(PASSWORD);
+      await web.getByRole("button", { name: "Unlock" }).click();
+    }
+    await web.getByRole("button", { name: "Start a family" }).first().click();
+    await web.getByLabel("Family name").fill("The Millers");
+    await web.getByRole("button", { name: "Start family" }).click();
+    await web
+      .getByRole("navigation")
+      .getByRole("button", { name: /Family vault/ })
+      .click();
+    await web.getByRole("button", { name: "New item" }).click();
+    await web.getByRole("menuitem", { name: "Login" }).click();
+    await web.getByLabel("Title").fill("Family router");
+    await web.getByRole("textbox", { name: "Username" }).fill("admin");
+    await web.getByLabel("Password", { exact: true }).fill("router-Secret-7");
+    await web.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(web.getByTestId("item-audience")).toContainText("Visible to: The Millers (1)");
+
+    const popup = await openPopup(context, extensionId);
+    await popup.evaluate(() =>
+      (
+        globalThis as { chrome?: { runtime: { sendMessage(m: unknown): Promise<unknown> } } }
+      ).chrome?.runtime.sendMessage({
+        type: "popup.sync",
+      }),
+    );
+    await popup.reload();
+    const filter = popup.getByLabel("Vault", { exact: true });
+    await expect(filter.locator("optgroup[label='The Millers'] option")).toHaveText(["Family vault"]);
+    await expect(
+      popup.getByRole("button", { name: /Family router/ }).getByLabel("Shared with your family or team"),
+    ).toBeVisible();
+    await filter.selectOption({ label: "Family vault" });
+    await expect(popup.getByRole("button", { name: /Acme/ })).toHaveCount(0);
+    await shot(popup, "popup-shared");
+    await popup.getByRole("button", { name: /Family router/ }).click();
+    await expect(popup.getByText("Family vault · The Millers")).toBeVisible();
+    await popup.close();
+    // Leave the web vault on all items for the next test.
+    await web.goto(`${baseURL}/#/items`);
+  });
+
   test("locks, asks before signing out and stays out of the web vault", async ({ baseURL }) => {
     const popup = await openPopup(context, extensionId);
     await popup.getByRole("button", { name: "Lock" }).click();

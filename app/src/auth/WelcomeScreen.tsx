@@ -1,4 +1,3 @@
-import { estimateStrength } from "@passbox/client";
 import { Button, Input, PasswordInput, SegmentedControl, StrengthMeter } from "@passbox/ui";
 import { type FormEvent, useState } from "react";
 import { errorMessage, nextFrame } from "../core";
@@ -95,7 +94,7 @@ function SignUpForm({ onSignedUp }: { onSignedUp: (secretKey: string) => void })
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const strength = estimateStrength(password);
+  const strength = client.estimateStrength(password);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,7 +103,7 @@ function SignUpForm({ onSignedUp }: { onSignedUp: (secretKey: string) => void })
       setError(`Use at least ${MIN_PASSWORD_LENGTH} characters for your master password.`);
       return;
     }
-    if (strength.score < 2) {
+    if (!client.estimateStrength(password, [String(form.get("email"))]).acceptableMasterPassword) {
       setError("This master password is too easy to guess. Try a passphrase of four or more random words.");
       return;
     }

@@ -1,11 +1,11 @@
-import { analyzeVault, type Item } from "@passbox/client";
+import type { Item } from "@passbox/client";
 import { useMemo, useState } from "react";
 import { ItemDetail } from "../items/ItemDetail";
 import { ItemEditor } from "../items/ItemEditor";
 import { ItemList, type SortOrder } from "../items/ItemList";
 import { CATEGORY_META } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
-import { useSnapshot } from "../useClient";
+import { useClient, useSnapshot } from "../useClient";
 
 type ItemsRoute = Extract<Route, { view: "items" }>;
 
@@ -43,7 +43,9 @@ export function ItemsView({ route, navigate }: ItemsViewProps) {
   const snapshot = useSnapshot();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOrder>("name");
-  const health = useMemo(() => analyzeVault(snapshot.items), [snapshot.items]);
+  const client = useClient();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: recompute when the items change
+  const health = useMemo(() => client.health(), [client, snapshot.items]);
 
   const items = useMemo(() => {
     const filtered = snapshot.items.filter((item) => matchesFilter(item, route.filter) && matchesQuery(item, query));

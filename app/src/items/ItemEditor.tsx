@@ -1,5 +1,4 @@
 import {
-  estimateStrength,
   FIELD,
   type FieldType,
   type Item,
@@ -306,7 +305,8 @@ interface FieldEditorProps {
 }
 
 function FieldEditor({ field, custom, canGenerate, onChange, onGenerate, onRemove }: FieldEditorProps) {
-  const strength = field.id === FIELD.password && field.value ? estimateStrength(field.value) : undefined;
+  const client = useClient();
+  const strength = field.id === FIELD.password && field.value ? client.estimateStrength(field.value) : undefined;
   const removeButton = custom ? (
     <Tooltip content="Remove field">
       <Button variant="ghost" size="icon-sm" aria-label={`Remove ${field.label}`} onClick={onRemove}>

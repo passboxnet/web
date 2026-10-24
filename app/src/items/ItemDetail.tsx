@@ -1,12 +1,4 @@
-import {
-  estimateStrength,
-  FIELD,
-  fieldValue,
-  type Item,
-  type ItemField,
-  type Passkey,
-  type VaultHealth,
-} from "@passbox/client";
+import { FIELD, fieldValue, type Item, type ItemField, type Passkey, type VaultHealth } from "@passbox/client";
 import {
   Badge,
   Button,
@@ -388,7 +380,8 @@ function FieldActions({ field }: { field: ItemField }) {
 function ConcealedValue({ field }: { field: ItemField }) {
   const [revealed, setRevealed] = useState(false);
   const [large, setLarge] = useState(false);
-  const strength = field.id === FIELD.password ? estimateStrength(field.value) : undefined;
+  const client = useClient();
+  const strength = field.id === FIELD.password ? client.estimateStrength(field.value) : undefined;
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2">

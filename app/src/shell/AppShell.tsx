@@ -1,4 +1,3 @@
-import { analyzeVault } from "@passbox/client";
 import { Button, Logo } from "@passbox/ui";
 import { Menu as MenuIcon, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -23,7 +22,8 @@ export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [syncState, syncNow] = useSyncStatus();
-  const health = useMemo(() => analyzeVault(snapshot.items), [snapshot.items]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: recompute when the items change
+  const health = useMemo(() => client.health(), [client, snapshot.items]);
 
   useAutoLock(client.lock.bind(client), preferences.autoLockMinutes);
 

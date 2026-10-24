@@ -1,10 +1,10 @@
-import { estimateStrength } from "@passbox/client";
 import { Button, SegmentedControl, StrengthMeter, Switch, Tooltip } from "@passbox/ui";
 import { Copy, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { loadCore } from "../core";
 import { ColoredPassword } from "../items/ItemDetail";
 import { copyToClipboard } from "../lib/clipboard";
+import { useClient } from "../useClient";
 import { Page } from "./PageHeader";
 
 type Mode = "password" | "pin";
@@ -17,6 +17,7 @@ interface Options {
 }
 
 export function GeneratorView() {
+  const client = useClient();
   const [mode, setMode] = useState<Mode>("password");
   const [options, setOptions] = useState<Options>({ length: 24, digits: true, symbols: true, avoidAmbiguous: false });
   const [pinLength, setPinLength] = useState(6);
@@ -35,7 +36,7 @@ export function GeneratorView() {
     void regenerate();
   }, [regenerate]);
 
-  const strength = estimateStrength(value);
+  const strength = client.estimateStrength(value);
 
   return (
     <Page

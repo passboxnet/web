@@ -6,10 +6,12 @@
  */
 import { createTranslator, detectLocale, type Locale, mergeCatalogs, type Translator } from "@passbox/i18n";
 import deCommon from "@passbox/i18n/messages/de/common.json";
+import deDeveloper from "@passbox/i18n/messages/de/developer.json";
 import deOrgAdmin from "@passbox/i18n/messages/de/orgadmin.json";
 import deSso from "@passbox/i18n/messages/de/sso.json";
 import deWeb from "@passbox/i18n/messages/de/web.json";
 import enCommon from "@passbox/i18n/messages/en/common.json";
+import enDeveloper from "@passbox/i18n/messages/en/developer.json";
 import enOrgAdmin from "@passbox/i18n/messages/en/orgadmin.json";
 import enSso from "@passbox/i18n/messages/en/sso.json";
 import enWeb from "@passbox/i18n/messages/en/web.json";
@@ -19,8 +21,8 @@ import { getPreferences, type LanguagePreference, usePreferences } from "./prefe
 export type { Locale, Translator } from "@passbox/i18n";
 
 const CATALOGS = {
-  en: mergeCatalogs(enCommon, enWeb, enSso, enOrgAdmin),
-  de: mergeCatalogs(deCommon, deWeb, deSso, deOrgAdmin),
+  en: mergeCatalogs(enCommon, enWeb, enSso, enOrgAdmin, enDeveloper),
+  de: mergeCatalogs(deCommon, deWeb, deSso, deOrgAdmin, deDeveloper),
 };
 
 export function resolveLocale(

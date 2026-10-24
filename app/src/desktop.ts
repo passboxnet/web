@@ -89,3 +89,12 @@ export function setDesktopLockSettings(settings: { lockOnClose: boolean; autoLoc
   if (!isDesktop) return Promise.resolve();
   return invokeDesktop("set_lock_settings", settings);
 }
+
+/**
+ * An AI agent waits for an approval: the desktop shell shows the window and
+ * asks for attention. No-op in browsers.
+ */
+export function requestAgentAttention(): Promise<void> {
+  if (!isDesktop) return Promise.resolve();
+  return invokeDesktop("agent_request_attention");
+}

@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InsecurePageBanner } from "../auth/AuthLayout";
 import { useKit } from "../auth/KitProvider";
 import { onCommandPaletteRequest } from "../desktop";
+import { AgentApprovalWatcher } from "../developer/AgentApproval";
+import { DeveloperView } from "../developer/DeveloperView";
 import { ImportView } from "../import/ImportView";
 import { useI18n } from "../lib/i18n";
 import { setChecklist, usePreferences } from "../lib/preferences";
@@ -141,6 +143,12 @@ export function AppShell() {
             {route.view === "org-admin" && (
               <OrgAdminView key={route.orgId} orgId={route.orgId} section={route.section} navigate={navigate} />
             )}
+            {route.view === "developer" && (
+              <DeveloperView
+                section={route.section ?? "agents"}
+                onSection={(section) => navigate({ view: "developer", section })}
+              />
+            )}
             {route.view === "import" && (
               <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
             )}
@@ -149,6 +157,7 @@ export function AppShell() {
       </div>
 
       <InvitationPrompt navigate={navigate} />
+      <AgentApprovalWatcher />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} navigate={navigate} />
     </div>
   );

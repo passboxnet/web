@@ -8,10 +8,12 @@ export interface Preferences {
   autoLockMinutes: number;
   /** Seconds until copied secrets are cleared from the clipboard. */
   clipboardClearSeconds: number;
+  /** Desktop app: lock the vault when the window is closed (hidden to the tray). */
+  lockOnClose: boolean;
 }
 
 const KEY = "passbox.preferences";
-const DEFAULTS: Preferences = { theme: "system", autoLockMinutes: 15, clipboardClearSeconds: 90 };
+const DEFAULTS: Preferences = { theme: "system", autoLockMinutes: 15, clipboardClearSeconds: 90, lockOnClose: true };
 
 let current: Preferences = load();
 const listeners = new Set<() => void>();

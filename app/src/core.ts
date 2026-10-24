@@ -1,6 +1,10 @@
 import { createClient } from "@passbox/api-client";
 import { PassboxClient } from "@passbox/client";
 import init, * as core from "@passbox/core-wasm";
+import { isDesktop } from "./desktop";
+import { deviceInfo } from "./lib/device";
+import { describeError, type ErrorContext } from "./lib/errors";
+import { i18n } from "./lib/i18n";
 import { serverUrl } from "./lib/server";
 
 let ready: Promise<typeof core> | undefined;
@@ -18,7 +22,12 @@ export function loadClient(): Promise<PassboxClient> {
   client ??= loadCore().then((loaded) => {
     let instance: PassboxClient | undefined;
     const api = createClient({ baseUrl: serverUrl() ?? "", getToken: () => instance?.token });
-    instance = new PassboxClient({ core: loaded, api, storage: window.localStorage });
+    instance = new PassboxClient({
+      core: loaded,
+      api,
+      storage: window.localStorage,
+      device: deviceInfo(isDesktop, navigator.userAgent),
+    });
     return instance;
   });
   return client;
@@ -29,8 +38,9 @@ export function nextFrame(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 30));
 }
 
-export function errorMessage(error: unknown): string {
-  if (error instanceof TypeError) return "The server could not be reached. Check your connection.";
-  if (error instanceof Error) return error.message;
-  return String(error);
+/** A localized message that says what happened and what to do. */
+export function errorMessage(error: unknown, context: ErrorContext = "general"): string {
+  const known = ["ApiError", "InvalidCredentialsError", "ConflictError", "SecretKeyFormatError", "TypeError"];
+  if (!(error instanceof Error && known.includes(error.name))) console.error(error);
+  return describeError(error, i18n().t, context);
 }

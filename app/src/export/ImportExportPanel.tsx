@@ -17,7 +17,7 @@ export function ImportExportPanel() {
         <h2 id="settings-import-export" className="text-sm font-semibold">
           {t("settings.title")}
         </h2>
-        <p className="mt-0.5 text-[13px] text-text-muted">{t("settings.description")}</p>
+        <p className="mt-0.5 text-[13px] text-text-muted">{t("importExport.description")}</p>
       </header>
       <div className="divide-y divide-border">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5 py-4">

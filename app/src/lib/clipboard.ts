@@ -1,5 +1,6 @@
 import { toast } from "@passbox/ui";
 import { desktopClearClipboard, desktopCopySecret, isDesktop } from "../desktop";
+import { i18n } from "./i18n";
 import { getPreferences } from "./preferences";
 
 /*
@@ -21,8 +22,13 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 let waitingForFocus = false;
 let watchingCopies = false;
 
-/** Copies a value, confirms with a toast and clears the clipboard later if it still holds the value. */
+/**
+ * Copies a value, confirms with a toast and clears the clipboard later if it
+ * still holds the value. `label` names what was copied, already translated
+ * ("Password").
+ */
 export async function copyToClipboard(value: string, label: string) {
+  const { t } = i18n();
   const seconds = getPreferences().clipboardClearSeconds;
   try {
     if (isDesktop) {
@@ -32,16 +38,14 @@ export async function copyToClipboard(value: string, label: string) {
       remember(value, seconds);
     }
   } catch {
-    toast.error("Copying failed", {
-      description: isDesktop ? "The clipboard is not available." : "The browser blocked access to the clipboard.",
+    toast.error(t("clipboard.failed"), {
+      description: isDesktop ? t("clipboard.unavailable") : t("clipboard.blocked"),
     });
     return;
   }
-  toast.success(`${label} copied`, {
-    description: isDesktop
-      ? `Clears from the clipboard in ${seconds} seconds.`
-      : // Browsers cannot clear the clipboard from a background tab.
-        `Clears from the clipboard in ${seconds} seconds, or when you return to Passbox if you have switched away.`,
+  toast.success(t("clipboard.copied", { label }), {
+    // Browsers cannot clear the clipboard from a background tab.
+    description: isDesktop ? t("clipboard.clears", { seconds }) : t("clipboard.clearsWeb", { seconds }),
   });
 }
 

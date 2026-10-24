@@ -1,14 +1,23 @@
 import { Button, Monogram, PasswordInput } from "@passbox/ui";
+import { KeyRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { errorMessage, nextFrame } from "../core";
+import { useI18n } from "../lib/i18n";
 import { useClient, useSnapshot } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
+import { useKit } from "./KitProvider";
+import { linkClass } from "./ServerForm";
+import { ForgotPasswordDialog, SignOutDialog } from "./SignOutDialog";
 
 export function UnlockScreen() {
   const client = useClient();
+  const kit = useKit();
+  const { t } = useI18n();
   const { email = "" } = useSnapshot();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -19,7 +28,8 @@ export function UnlockScreen() {
     try {
       await client.unlock(password);
     } catch (e) {
-      setError(errorMessage(e));
+      // Only the master password is typed here, so only it can be wrong.
+      setError(errorMessage(e, "unlock"));
       setBusy(false);
     }
   }
@@ -28,28 +38,48 @@ export function UnlockScreen() {
     <AuthLayout>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Unlock your vault</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("unlock.title")}</h1>
           <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-surface p-3 shadow-xs">
             <Monogram name={email} size="lg" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{email}</p>
-              <p className="text-xs text-text-muted">Secret Key stored on this device</p>
+              <p className="text-sm font-medium break-all">{email}</p>
+              <p className="text-xs text-text-muted">{t("unlock.keyStored")}</p>
             </div>
           </div>
         </div>
-        <PasswordInput label="Master password" name="password" autoComplete="current-password" autoFocus required />
+        {kit.afterUnlock && (
+          <p
+            role="status"
+            className="flex items-start gap-2 rounded-lg bg-accent-soft px-3 py-2.5 text-[0.8125rem] text-text"
+          >
+            <KeyRound className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+            {t("unlock.kitAfterUnlock")}
+          </p>
+        )}
+        <PasswordInput
+          label={t("term.masterPassword")}
+          name="password"
+          autoComplete="current-password"
+          autoFocus
+          required
+          labelAction={
+            <button type="button" onClick={() => setForgotOpen(true)} className={linkClass}>
+              {t("forgot.link")}
+            </button>
+          }
+        />
         <FormError message={error} />
         <Button type="submit" size="lg" loading={busy}>
-          {busy ? "Unlocking…" : "Unlock"}
+          {busy ? t("unlock.busy") : t("action.unlock")}
         </Button>
-        <button
-          type="button"
-          onClick={() => client.signOut()}
-          className="text-[13px] text-text-muted underline-offset-4 hover:text-text hover:underline"
-        >
-          Not you? Sign in with a different account
-        </button>
+        <div className="border-t border-border pt-4 text-center">
+          <button type="button" onClick={() => setSignOutOpen(true)} className={linkClass}>
+            {t("unlock.otherAccount")}
+          </button>
+        </div>
       </form>
+      <SignOutDialog open={signOutOpen} onOpenChange={setSignOutOpen} variant="otherAccount" />
+      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
     </AuthLayout>
   );
 }

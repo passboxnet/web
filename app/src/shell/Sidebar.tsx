@@ -3,7 +3,6 @@ import {
   Badge,
   Button,
   cn,
-  Kbd,
   Logo,
   Menu,
   MenuContent,
@@ -17,6 +16,7 @@ import {
 import {
   ChevronsUpDown,
   Layers,
+  ListChecks,
   Lock,
   LogOut,
   type LucideIcon,
@@ -26,13 +26,17 @@ import {
   Settings,
   ShieldCheck,
   Star,
+  Trash2,
   Vault as VaultIcon,
   Wand2,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { CATEGORY_META, CREATABLE, relativeTime } from "../lib/items";
+import { SignOutDialog } from "../auth/SignOutDialog";
+import { shortcut, useI18n } from "../lib/i18n";
+import { CATEGORY_META, CREATABLE } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
+import { useChecklist } from "../views/GettingStarted";
 import { NewVaultDialog } from "../views/NewVaultDialog";
 import type { SyncState } from "./useSyncStatus";
 
@@ -54,17 +58,29 @@ function sameFilter(route: Route, filter: ItemFilter): boolean {
   return true;
 }
 
+/** Logins with at least one problem; one login counts once, however many problems it has. */
+export function affectedLogins(health: VaultHealth): number {
+  return new Set([...health.weak, ...health.reused.flat(), ...health.insecureUrls]).size;
+}
+
 export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPalette }: SidebarProps) {
   const client = useClient();
-  const { email = "", items, vaults } = useSnapshot();
+  const i18n = useI18n();
+  const { t } = i18n;
+  const { email = "", items, vaults, trash } = useSnapshot();
+  const checklist = useChecklist();
   const [newVaultOpen, setNewVaultOpen] = useState(false);
-  const issues = health.weak.length + health.reused.flat().length + health.insecureUrls.length;
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const affected = affectedLogins(health);
   const goItems = (filter: ItemFilter) => navigate({ view: "items", filter });
 
   const countCategory = (category: ItemCategory) => items.filter((i) => i.data.category === category).length;
 
   return (
-    <nav aria-label="Main" className="flex h-full flex-col border-r border-border bg-surface-raised px-3 pt-3 pb-2">
+    <nav
+      aria-label={t("shell.mainNavigation")}
+      className="flex h-full flex-col border-r border-border bg-surface-raised px-3 pt-3 pb-2"
+    >
       <Menu>
         <MenuTrigger asChild>
           <button
@@ -73,10 +89,10 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           >
             <Logo withWordmark={false} />
             <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-semibold">Passbox</span>
+              <span className="block text-[0.8125rem] font-semibold">Passbox</span>
               <span className="block truncate text-2xs text-text-muted">{email}</span>
             </span>
-            <ChevronsUpDown className="size-4 text-text-subtle" aria-hidden="true" />
+            <ChevronsUpDown className="size-4 text-text-muted" aria-hidden="true" />
           </button>
         </MenuTrigger>
         <MenuContent align="start" className="w-60">
@@ -88,14 +104,14 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           </MenuLabel>
           <MenuSeparator />
           <MenuItem icon={<Settings />} onSelect={() => navigate({ view: "settings" })}>
-            Settings
+            {t("term.settings")}
           </MenuItem>
           <MenuItem icon={<Lock />} onSelect={() => client.lock()}>
-            Lock vault
+            {t("shell.lockVault")}
           </MenuItem>
           <MenuSeparator />
-          <MenuItem icon={<LogOut />} tone="danger" onSelect={() => client.signOut()}>
-            Sign out of this device
+          <MenuItem icon={<LogOut />} tone="danger" onSelect={() => setSignOutOpen(true)}>
+            {t("shell.signOutDevice")}
           </MenuItem>
         </MenuContent>
       </Menu>
@@ -105,7 +121,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           <MenuTrigger asChild>
             <Button className="flex-1">
               <Plus />
-              New item
+              {t("shell.newItem")}
             </Button>
           </MenuTrigger>
           <MenuContent align="start" className="w-52">
@@ -123,14 +139,14 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
                     })
                   }
                 >
-                  {label}
+                  {t(label)}
                 </MenuItem>
               );
             })}
           </MenuContent>
         </Menu>
-        <Tooltip content={<span>Search and commands · ⌘K</span>}>
-          <Button variant="secondary" size="icon" aria-label="Search and commands" onClick={onOpenPalette}>
+        <Tooltip content={t("shell.searchShortcut", { shortcut: shortcut(t, "K") })}>
+          <Button variant="secondary" size="icon" aria-label={t("shell.search")} onClick={onOpenPalette}>
             <Search />
           </Button>
         </Tooltip>
@@ -140,35 +156,54 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
         <NavGroup>
           <NavItem
             icon={Layers}
-            label="All items"
+            label={t("term.allItems")}
             count={items.length}
             active={sameFilter(route, { kind: "all" })}
             onClick={() => goItems({ kind: "all" })}
           />
           <NavItem
             icon={Star}
-            label="Favorites"
+            label={t("term.favorites")}
             count={items.filter((i) => i.data.favorite).length}
             active={sameFilter(route, { kind: "favorites" })}
             onClick={() => goItems({ kind: "favorites" })}
           />
           <NavItem
             icon={ShieldCheck}
-            label="Watchtower"
+            label={t("term.watchtower")}
             active={route.view === "watchtower"}
             onClick={() => navigate({ view: "watchtower" })}
-            badge={issues > 0 ? <Badge tone="warning">{issues}</Badge> : undefined}
+            badge={
+              affected > 0 ? (
+                <Badge tone="warning" aria-label={t("shell.affectedLogins", { count: affected })}>
+                  {affected}
+                </Badge>
+              ) : undefined
+            }
           />
+          {checklist.visible && (
+            <NavItem
+              icon={ListChecks}
+              label={t("start.nav")}
+              active={route.view === "getting-started"}
+              onClick={() => navigate({ view: "getting-started" })}
+              badge={
+                <span className="text-2xs text-text-muted tabular-nums">
+                  {t("start.progressShort", { done: checklist.done, total: checklist.total })}
+                </span>
+              }
+            />
+          )}
         </NavGroup>
 
-        <NavGroup title="Categories">
+        <NavGroup title={t("shell.categories")}>
           {CREATABLE.map((category) => {
             const { plural, icon } = CATEGORY_META[category];
             return (
               <NavItem
                 key={category}
                 icon={icon}
-                label={plural}
+                label={t(plural)}
                 count={countCategory(category)}
                 active={sameFilter(route, { kind: "category", category })}
                 onClick={() => goItems({ kind: "category", category })}
@@ -178,10 +213,10 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
         </NavGroup>
 
         <NavGroup
-          title="Vaults"
+          title={t("term.vaults")}
           action={
-            <Tooltip content="New vault">
-              <Button variant="ghost" size="icon-sm" aria-label="New vault" onClick={() => setNewVaultOpen(true)}>
+            <Tooltip content={t("vault.new")}>
+              <Button variant="ghost" size="icon-sm" aria-label={t("vault.new")} onClick={() => setNewVaultOpen(true)}>
                 <Plus />
               </Button>
             </Tooltip>
@@ -191,7 +226,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             <NavItem
               key={vault.id}
               icon={VaultIcon}
-              label={vault.name}
+              label={vaultName(vault.name, t)}
               count={items.filter((i) => i.vaultId === vault.id).length}
               active={sameFilter(route, { kind: "vault", vaultId: vault.id })}
               onClick={() => goItems({ kind: "vault", vaultId: vault.id })}
@@ -199,16 +234,23 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           ))}
         </NavGroup>
 
-        <NavGroup title="Tools">
+        <NavGroup title={t("shell.tools")}>
           <NavItem
             icon={Wand2}
-            label="Password generator"
+            label={t("term.generator")}
             active={route.view === "generator"}
             onClick={() => navigate({ view: "generator" })}
           />
           <NavItem
+            icon={Trash2}
+            label={t("term.trash")}
+            count={trash.length}
+            active={route.view === "trash"}
+            onClick={() => navigate({ view: "trash" })}
+          />
+          <NavItem
             icon={Settings}
-            label="Settings"
+            label={t("term.settings")}
             active={route.view === "settings"}
             onClick={() => navigate({ view: "settings" })}
           />
@@ -219,7 +261,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
         <button
           type="button"
           onClick={onSync}
-          className="flex items-center gap-2 rounded-md px-1.5 py-1 text-2xs text-text-muted hover:bg-surface-sunken hover:text-text"
+          className="flex items-center gap-2 rounded-md px-1.5 py-1 text-2xs text-text-muted hover:bg-surface-sunken hover:text-text coarse:py-3"
         >
           <span
             aria-hidden="true"
@@ -229,20 +271,20 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             )}
           />
           {syncState.kind === "syncing"
-            ? "Syncing…"
+            ? t("sync.syncing")
             : syncState.kind === "error"
-              ? "Offline · retry"
-              : `Synced ${relativeTime(syncState.at)}`}
+              ? t("sync.offline")
+              : t("sync.synced", { time: i18n.relativeTime(syncState.at) })}
           <RefreshCw className={cn("size-3", syncState.kind === "syncing" && "animate-spin")} aria-hidden="true" />
         </button>
-        <Tooltip content="Lock vault">
-          <Button variant="ghost" size="icon-sm" aria-label="Lock vault" onClick={() => client.lock()}>
+        <Tooltip content={t("shell.lockVault")}>
+          <Button variant="ghost" size="icon-sm" aria-label={t("shell.lockVault")} onClick={() => client.lock()}>
             <Lock />
           </Button>
         </Tooltip>
       </div>
-      <p className="hidden px-2.5 pt-1 text-2xs text-text-subtle lg:block">
-        <Kbd>⌘</Kbd> <Kbd>K</Kbd> to search
+      <p className="hidden px-2.5 pt-1 text-2xs text-text-muted lg:block coarse:hidden">
+        {t("shell.searchHint", { shortcut: shortcut(t, "K") })}
       </p>
 
       <NewVaultDialog
@@ -250,8 +292,14 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
         onOpenChange={setNewVaultOpen}
         onCreated={(vaultId) => goItems({ kind: "vault", vaultId })}
       />
+      <SignOutDialog open={signOutOpen} onOpenChange={setSignOutOpen} />
     </nav>
   );
+}
+
+/** The default vault is called "Private" on the server; show it in the user's language. */
+export function vaultName(name: string, t: (key: string) => string): string {
+  return name === "Private" ? t("vault.private") : name;
 }
 
 function NavGroup({ title, action, children }: { title?: string; action?: ReactNode; children: ReactNode }) {
@@ -259,7 +307,7 @@ function NavGroup({ title, action, children }: { title?: string; action?: ReactN
     <div className="mb-4">
       {title && (
         <div className="flex h-7 items-center justify-between px-2.5">
-          <p className="text-2xs font-semibold tracking-wide text-text-subtle uppercase">{title}</p>
+          <p className="text-2xs font-semibold tracking-wide text-text-muted uppercase">{title}</p>
           {action}
         </div>
       )}
@@ -285,15 +333,15 @@ function NavItem({ icon: Icon, label, count, badge, active, onClick }: NavItemPr
         onClick={onClick}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[13px] transition-colors",
+          "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[0.8125rem] transition-colors coarse:h-11",
           active
             ? "bg-surface font-medium text-text shadow-card ring-1 ring-border"
             : "text-text-muted hover:bg-surface-sunken hover:text-text",
         )}
       >
-        <Icon className={cn("size-4", active ? "text-accent" : "text-text-subtle")} aria-hidden="true" />
+        <Icon className={cn("size-4", active ? "text-accent" : "text-text-muted")} aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">{label}</span>
-        {badge ?? (count !== undefined && <span className="text-2xs tabular-nums text-text-subtle">{count}</span>)}
+        {badge ?? (count !== undefined && <span className="text-2xs tabular-nums text-text-muted">{count}</span>)}
       </button>
     </li>
   );

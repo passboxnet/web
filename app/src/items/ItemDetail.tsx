@@ -1,4 +1,12 @@
-import { FIELD, fieldValue, type Item, type ItemField, type Passkey, type VaultHealth } from "@passbox/client";
+import {
+  FIELD,
+  fieldValue,
+  type Item,
+  type ItemField,
+  type Passkey,
+  type PasswordHistoryEntry,
+  type VaultHealth,
+} from "@passbox/client";
 import {
   Badge,
   Button,
@@ -23,19 +31,26 @@ import {
   Eye,
   EyeOff,
   Fingerprint,
+  History,
   KeyRound,
   Maximize2,
   MoreHorizontal,
   Pencil,
+  RotateCcw,
   Star,
   Trash2,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { errorMessage } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
-import { CATEGORY_META, hostname, relativeTime, safeHref } from "../lib/items";
+import { shortcut, type Translator, useI18n } from "../lib/i18n";
+import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
+import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { ColoredPassword } from "./ColoredPassword";
 import { CountdownRing, useTotp } from "./TotpCode";
+import { useAutoHide } from "./useAutoHide";
 
 interface ItemDetailProps {
   item: Item | undefined;
@@ -45,17 +60,48 @@ interface ItemDetailProps {
   onDeleted: () => void;
 }
 
+/** Moves an item to the trash and offers "Undo" for 10 seconds. */
+export async function trashWithUndo(
+  client: ReturnType<typeof useClient>,
+  item: Item,
+  t: Translator["t"],
+): Promise<boolean> {
+  try {
+    await client.trashItem(item.id);
+  } catch (error) {
+    toast.error(t("trash.moveFailed"), { description: errorMessage(error) });
+    return false;
+  }
+  toast.success(t("trash.moved", { name: itemTitle(item, t) }), {
+    id: `trash:${item.id}`,
+    description: t("trash.movedHint"),
+    duration: 10_000,
+    action: {
+      label: t("action.undo"),
+      onClick: () => {
+        client
+          .restoreItem(item.id)
+          .then(() => toast.success(t("trash.restored", { name: itemTitle(item, t) })))
+          .catch((error: unknown) => toast.error(t("trash.restoreFailed"), { description: errorMessage(error) }));
+      },
+    },
+  });
+  return true;
+}
+
 export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDetailProps) {
   const client = useClient();
+  const i18n = useI18n();
+  const { t } = i18n;
   const { vaults } = useSnapshot();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [changing, setChanging] = useState(false);
 
   // "e" edits the selected item when focus is not in a text field.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement;
       if (!item || event.metaKey || event.ctrlKey || ["INPUT", "TEXTAREA"].includes(target.tagName)) return;
-      if (event.key === "e") {
+      if (event.key === "e" && !document.querySelector("[role=dialog]")) {
         event.preventDefault();
         onEdit(item.id);
       }
@@ -69,59 +115,53 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
       <section className="flex flex-1 items-center justify-center bg-canvas">
         <EmptyState
           icon={<KeyRound />}
-          title="No item selected"
-          description="Choose an item from the list, or press ⌘K to search everything."
+          title={t("detail.none.title")}
+          description={t("detail.none.text", { shortcut: shortcut(t, "K") })}
         />
       </section>
     );
   }
 
   const { data } = item;
-  const vaultName = vaults.find((v) => v.id === item.vaultId)?.name ?? "Vault";
+  const vault = vaultName(vaults.find((v) => v.id === item.vaultId)?.name ?? "", t) || t("term.vault");
   const category = CATEGORY_META[data.category];
   const url = fieldValue(data, FIELD.url);
   const username = fieldValue(data, FIELD.username);
   const password = fieldValue(data, FIELD.password);
   const fields = data.fields.filter((field) => field.value);
-  const warnings = securityWarnings(item.id, health);
+  const warnings = securityWarnings(item.id, health, t);
 
   async function toggleFavorite() {
     if (!item) return;
     try {
       await client.updateItem(item.id, { ...item.data, favorite: !item.data.favorite });
     } catch (error) {
-      toast.error("Could not update the item", { description: errorMessage(error) });
+      toast.error(t("detail.updateFailed"), { description: errorMessage(error) });
     }
   }
 
-  async function remove() {
+  async function moveToTrash() {
     if (!item) return;
-    try {
-      await client.deleteItem(item.id);
-      toast.success(`"${data.title || "Untitled"}" deleted`);
-      onDeleted();
-    } catch (error) {
-      toast.error("Could not delete the item", { description: errorMessage(error) });
-    }
+    if (await trashWithUndo(client, item, t)) onDeleted();
   }
 
   return (
-    <section aria-label={data.title || "Item"} className="flex min-w-0 flex-1 flex-col bg-canvas" key={item.id}>
-      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-4">
-        <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-text-muted">
-          <Button variant="ghost" size="icon-sm" aria-label="Back to list" onClick={onBack} className="md:hidden">
+    <section aria-label={itemTitle(item, t)} className="flex min-w-0 flex-1 flex-col bg-canvas" key={item.id}>
+      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-4 coarse:h-16">
+        <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-text-muted">
+          <Button variant="ghost" size="icon-sm" aria-label={t("detail.back")} onClick={onBack} className="md:hidden">
             <ArrowLeft />
           </Button>
-          <span className="truncate">{vaultName}</span>
-          <ChevronRight className="size-3.5 shrink-0 text-text-subtle" aria-hidden="true" />
-          <span className="truncate">{category.label}</span>
+          <span className="hidden truncate sm:inline">{vault}</span>
+          <ChevronRight className="hidden size-3.5 shrink-0 text-text-muted sm:inline" aria-hidden="true" />
+          <span className="truncate">{t(category.label)}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Tooltip content={data.favorite ? "Remove from favorites" : "Add to favorites"}>
+          <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
             <Button
               variant="ghost"
               size="icon"
-              aria-label={data.favorite ? "Remove from favorites" : "Add to favorites"}
+              aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
               aria-pressed={data.favorite}
               onClick={toggleFavorite}
             >
@@ -130,36 +170,36 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
           </Tooltip>
           <Button variant="secondary" size="sm" onClick={() => onEdit(item.id)}>
             <Pencil />
-            Edit
+            {t("action.edit")}
             <span className="ml-1 hidden sm:inline">
               <Kbd>E</Kbd>
             </span>
           </Button>
           <Menu>
             <MenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="More actions">
+              <Button variant="ghost" size="icon" aria-label={t("detail.more")}>
                 <MoreHorizontal />
               </Button>
             </MenuTrigger>
             <MenuContent>
               {username && (
-                <MenuItem icon={<Copy />} onSelect={() => copyToClipboard(username, "Username")}>
-                  Copy username
+                <MenuItem icon={<Copy />} onSelect={() => copyToClipboard(username, t("field.username"))}>
+                  {t("list.copyUsername")}
                 </MenuItem>
               )}
               {password && (
-                <MenuItem icon={<Copy />} onSelect={() => copyToClipboard(password, "Password")}>
-                  Copy password
+                <MenuItem icon={<Copy />} onSelect={() => copyToClipboard(password, t("field.password"))}>
+                  {t("list.copyPassword")}
                 </MenuItem>
               )}
               {url && safeHref(url) && (
                 <MenuItem icon={<ExternalLink />} onSelect={() => window.open(safeHref(url), "_blank", "noopener")}>
-                  Open website
+                  {t("change.openWebsite")}
                 </MenuItem>
               )}
               {(username || password || url) && <MenuSeparator />}
-              <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => setConfirmDelete(true)}>
-                Delete item
+              <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
+                {t("action.moveToTrash")}
               </MenuItem>
             </MenuContent>
           </Menu>
@@ -167,36 +207,41 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
       </header>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-6 py-8 lg:px-10">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-10">
           <div className="flex items-center gap-4">
             <Monogram name={data.title} size="xl" icon={data.category === "login" ? undefined : <category.icon />} />
             <div className="min-w-0">
-              <h2 className="truncate text-2xl font-semibold tracking-tight">{data.title || "Untitled"}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight break-words">{itemTitle(item, t)}</h2>
               {url && safeHref(url) ? (
                 <a
                   href={safeHref(url)}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="mt-0.5 inline-flex items-center gap-1 text-[13px] text-text-muted hover:text-accent"
+                  className="mt-0.5 inline-flex items-center gap-1 text-[0.8125rem] text-text-muted hover:text-accent"
                 >
                   {hostname(url)}
                   <ExternalLink className="size-3" aria-hidden="true" />
                 </a>
               ) : (
-                <p className="mt-0.5 text-[13px] text-text-muted">{category.label}</p>
+                <p className="mt-0.5 text-[0.8125rem] text-text-muted">{t(category.label)}</p>
               )}
             </div>
           </div>
 
           {warnings.length > 0 && (
             <div className="mt-6 flex flex-col gap-2">
-              {warnings.map((warning) => (
+              {warnings.map(({ text, canChange }) => (
                 <div
-                  key={warning}
-                  className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[13px]"
+                  key={text}
+                  className="flex flex-wrap items-start gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[0.8125rem]"
                 >
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-                  <span>{warning}</span>
+                  <span className="min-w-0 flex-1">{text}</span>
+                  {canChange && password && (
+                    <Button size="xs" variant="secondary" onClick={() => setChanging(true)}>
+                      {t("change.action")}
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -205,7 +250,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
           {fields.length > 0 && (
             <Card className="mt-6">
               {fields.map((field) => (
-                <FieldRow key={field.id} field={field} />
+                <FieldRow key={field.id} field={field} onEdit={() => onEdit(item.id)} />
               ))}
             </Card>
           )}
@@ -221,14 +266,14 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
           {data.notes && (
             <Card className="mt-4">
               <div className="px-4 py-3">
-                <p className="text-2xs font-medium text-text-subtle">Notes</p>
-                <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed">{data.notes}</p>
+                <p className="text-xs font-medium text-text-muted">{t("field.notes")}</p>
+                <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-wrap">{data.notes}</p>
               </div>
             </Card>
           )}
 
           {data.tags.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Tags">
+            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={t("field.tags")}>
               {data.tags.map((tag) => (
                 <li key={tag}>
                   <Badge>{tag}</Badge>
@@ -237,41 +282,36 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted }: ItemDeta
             </ul>
           )}
 
-          <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-4 text-xs sm:grid-cols-3">
+          {data.passwordHistory && data.passwordHistory.length > 0 && (
+            <PasswordHistorySection item={item} history={data.passwordHistory} />
+          )}
+
+          <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-4 text-xs">
             <Meta
-              label="Last modified"
-              value={relativeTime(item.updatedAt)}
-              title={new Date(item.updatedAt).toLocaleString()}
+              label={t("detail.modified")}
+              value={i18n.relativeTime(item.updatedAt)}
+              title={i18n.dateTime(item.updatedAt)}
             />
-            <Meta label="Vault" value={vaultName} />
-            <Meta label="Revision" value={String(item.revision)} />
+            <Meta label={t("term.vault")} value={vault} />
           </dl>
         </div>
       </div>
 
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title="Delete this item?"
-        description={`"${data.title || "Untitled"}" will be deleted on all your devices. This cannot be undone.`}
-        confirmLabel="Delete item"
-        tone="danger"
-        onConfirm={remove}
-      />
+      {password && <ChangePasswordDialog item={item} open={changing} onOpenChange={setChanging} />}
     </section>
   );
 }
 
-function securityWarnings(itemId: string, health: VaultHealth): string[] {
-  const warnings: string[] = [];
-  if (health.weak.includes(itemId))
-    warnings.push("This password is weak. Change it on the website and generate a strong one.");
+function securityWarnings(
+  itemId: string,
+  health: VaultHealth,
+  t: Translator["t"],
+): Array<{ text: string; canChange: boolean }> {
+  const warnings: Array<{ text: string; canChange: boolean }> = [];
+  if (health.weak.includes(itemId)) warnings.push({ text: t("detail.warning.weak"), canChange: true });
   const reused = health.reused.find((group) => group.includes(itemId));
-  if (reused)
-    warnings.push(
-      `This password is used in ${reused.length - 1} other ${reused.length === 2 ? "item" : "items"}. If one site is breached, all of them are at risk.`,
-    );
-  if (health.insecureUrls.includes(itemId)) warnings.push("This website uses an unencrypted http:// address.");
+  if (reused) warnings.push({ text: t("detail.warning.reused", { count: reused.length - 1 }), canChange: true });
+  if (health.insecureUrls.includes(itemId)) warnings.push({ text: t("detail.warning.insecure"), canChange: false });
   return warnings;
 }
 
@@ -288,62 +328,153 @@ function Card({ className, children }: { className?: string; children: ReactNode
 function Meta({ label, value, title }: { label: string; value: string; title?: string }) {
   return (
     <div>
-      <dt className="text-text-subtle">{label}</dt>
-      <dd className="mt-0.5 font-medium text-text-muted" title={title}>
+      <dt className="text-text-muted">{label}</dt>
+      <dd className="mt-0.5 font-medium text-text" title={title}>
         {value}
       </dd>
     </div>
   );
 }
 
+/** Earlier passwords (S4, family P0): reveal, copy or restore one after a confirmation. */
+function PasswordHistorySection({ item, history }: { item: Item; history: PasswordHistoryEntry[] }) {
+  const client = useClient();
+  const i18n = useI18n();
+  const { t } = i18n;
+  const [restoring, setRestoring] = useState<PasswordHistoryEntry>();
+
+  async function restore(entry: PasswordHistoryEntry) {
+    try {
+      await client.updateItem(item.id, {
+        ...item.data,
+        fields: item.data.fields.map((f) => (f.id === FIELD.password ? { ...f, value: entry.value } : f)),
+      });
+      toast.success(t("history.restored"), { description: t("history.restoredHint") });
+    } catch (error) {
+      toast.error(t("detail.updateFailed"), { description: errorMessage(error) });
+    }
+  }
+
+  return (
+    <details className="group mt-4 rounded-card border border-border bg-surface shadow-card">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[0.8125rem] font-medium coarse:py-4">
+        <History className="size-4 text-text-muted" aria-hidden="true" />
+        <span className="flex-1">{t("term.passwordHistory")}</span>
+        <span className="text-xs font-normal text-text-muted">{history.length}</span>
+        <ChevronRight className="size-4 text-text-muted transition-transform group-open:rotate-90" aria-hidden="true" />
+      </summary>
+      <ul className="divide-y divide-border border-t border-border">
+        {history.map((entry) => (
+          <li key={`${entry.replacedAt}-${entry.value.length}`} className="flex items-center gap-3 px-4 py-2.5">
+            <div className="min-w-0 flex-1">
+              <SecretText value={entry.value} label={t("field.password")} />
+              <p className="text-xs text-text-muted" title={i18n.dateTime(entry.replacedAt)}>
+                {t("history.replaced", { date: i18n.date(entry.replacedAt) })}
+              </p>
+            </div>
+            <Tooltip content={t("history.copy")}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("history.copy")}
+                onClick={() => copyToClipboard(entry.value, t("history.previousPassword"))}
+              >
+                <Copy />
+              </Button>
+            </Tooltip>
+            <Button variant="secondary" size="xs" onClick={() => setRestoring(entry)}>
+              <RotateCcw />
+              {t("action.restore")}
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <ConfirmDialog
+        open={restoring !== undefined}
+        onOpenChange={(open) => !open && setRestoring(undefined)}
+        title={t("history.confirmTitle")}
+        description={t("history.confirmText")}
+        confirmLabel={t("action.restore")}
+        onConfirm={() => restoring && void restore(restoring)}
+      />
+    </details>
+  );
+}
+
+/** A masked secret with a reveal toggle that hides again after 30 seconds or when the window loses focus. */
+function SecretText({ value, label }: { value: string; label: string }) {
+  const { t } = useI18n();
+  const [revealed, setRevealed] = useAutoHide();
+  return (
+    <span className="flex items-center gap-1">
+      <span className="truncate font-mono text-[0.8125rem]">
+        {revealed ? <ColoredPassword value={value} /> : "••••••••••••"}
+      </span>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={revealed ? t("detail.hide", { label }) : t("detail.reveal", { label })}
+        onClick={() => setRevealed(!revealed)}
+      >
+        {revealed ? <EyeOff /> : <Eye />}
+      </Button>
+    </span>
+  );
+}
+
 /** Read-only passkey summary. The private key is never shown or copied. */
 function PasskeyRow({ passkey }: { passkey: Passkey }) {
-  const created = passkey.createdAt ? new Date(passkey.createdAt) : undefined;
+  const i18n = useI18n();
+  const { t } = i18n;
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
         <Fingerprint className="size-4" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-2xs font-medium text-text-subtle">
-          Passkey
-          {created && (
+        <p className="text-xs font-medium text-text-muted">
+          {t("term.passkey")}
+          {passkey.createdAt ? (
             <>
               {" · "}
-              <span title={created.toLocaleString()}>created {relativeTime(passkey.createdAt)}</span>
+              <span title={i18n.dateTime(passkey.createdAt)}>
+                {t("detail.passkeyCreated", { time: i18n.relativeTime(passkey.createdAt) })}
+              </span>
             </>
-          )}
+          ) : null}
         </p>
         <p className="mt-0.5 truncate text-sm">
-          {passkey.userName || passkey.userDisplayName || "Passkey"}
+          {passkey.userName || passkey.userDisplayName || t("term.passkey")}
           <span className="text-text-muted"> · {passkey.rpId}</span>
         </p>
       </div>
-      <Badge tone="accent">Passkey</Badge>
+      <Badge tone="accent">{t("term.passkey")}</Badge>
     </div>
   );
 }
 
-function FieldRow({ field }: { field: ItemField }) {
+function FieldRow({ field, onEdit }: { field: ItemField; onEdit: () => void }) {
+  const { t } = useI18n();
+  const label = fieldLabel(field, t);
   return (
     <div className="group flex items-center gap-4 px-4 py-3">
       <div className="min-w-0 flex-1">
-        <p className="text-2xs font-medium text-text-subtle">{field.label}</p>
+        <p className="text-xs font-medium text-text-muted">{label}</p>
         <div className="mt-1 min-h-6 text-sm">
-          <FieldValue field={field} />
+          <FieldValue field={field} label={label} onEdit={onEdit} />
         </div>
       </div>
-      <FieldActions field={field} />
+      <FieldActions field={field} label={label} />
     </div>
   );
 }
 
-function FieldValue({ field }: { field: ItemField }) {
+function FieldValue({ field, label, onEdit }: { field: ItemField; label: string; onEdit: () => void }) {
   switch (field.type) {
     case "concealed":
-      return <ConcealedValue field={field} />;
+      return <ConcealedValue field={field} label={label} />;
     case "totp":
-      return <TotpValue uri={field.value} />;
+      return <TotpValue uri={field.value} onEdit={onEdit} />;
     case "url": {
       const href = safeHref(field.value);
       return href ? (
@@ -359,16 +490,17 @@ function FieldValue({ field }: { field: ItemField }) {
   }
 }
 
-function FieldActions({ field }: { field: ItemField }) {
+function FieldActions({ field, label }: { field: ItemField; label: string }) {
+  const { t } = useI18n();
   if (field.type === "totp" || field.type === "concealed") return null;
   return (
-    <span className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-      <Tooltip content={`Copy ${field.label.toLowerCase()}`}>
+    <span className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 coarse:opacity-100">
+      <Tooltip content={t("detail.copy", { label })}>
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`Copy ${field.label}`}
-          onClick={() => copyToClipboard(field.value, field.label)}
+          aria-label={t("detail.copy", { label })}
+          onClick={() => copyToClipboard(field.value, label)}
         >
           <Copy />
         </Button>
@@ -377,45 +509,46 @@ function FieldActions({ field }: { field: ItemField }) {
   );
 }
 
-function ConcealedValue({ field }: { field: ItemField }) {
-  const [revealed, setRevealed] = useState(false);
+function ConcealedValue({ field, label }: { field: ItemField; label: string }) {
+  const [revealed, setRevealed] = useAutoHide();
   const [large, setLarge] = useState(false);
   const client = useClient();
+  const { t } = useI18n();
   const strength = field.id === FIELD.password ? client.estimateStrength(field.value) : undefined;
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="truncate font-mono text-[13px] tracking-tight">
+        <span className="truncate font-mono text-[0.8125rem] tracking-tight">
           {revealed ? <ColoredPassword value={field.value} /> : "••••••••••••"}
         </span>
         {strength && (
           <Badge tone={strength.score >= 3 ? "success" : strength.score === 2 ? "warning" : "danger"}>
-            {strength.label}
+            {t(`strength.${strength.score}`)}
           </Badge>
         )}
       </div>
       <span className="flex shrink-0 items-center">
-        <Tooltip content={revealed ? "Hide" : "Reveal"}>
+        <Tooltip content={revealed ? t("action.hide") : t("action.show")}>
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => setRevealed((r) => !r)}
-            aria-label={revealed ? `Hide ${field.label}` : `Reveal ${field.label}`}
+            onClick={() => setRevealed(!revealed)}
+            aria-label={revealed ? t("detail.hide", { label }) : t("detail.reveal", { label })}
           >
             {revealed ? <EyeOff /> : <Eye />}
           </Button>
         </Tooltip>
-        <Tooltip content="Show in large type">
-          <Button variant="ghost" size="icon-sm" aria-label="Show in large type" onClick={() => setLarge(true)}>
+        <Tooltip content={t("detail.large")}>
+          <Button variant="ghost" size="icon-sm" aria-label={t("detail.large")} onClick={() => setLarge(true)}>
             <Maximize2 />
           </Button>
         </Tooltip>
-        <Tooltip content={`Copy ${field.label.toLowerCase()}`}>
+        <Tooltip content={t("detail.copy", { label })}>
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Copy ${field.label}`}
-            onClick={() => copyToClipboard(field.value, field.label)}
+            aria-label={t("detail.copy", { label })}
+            onClick={() => copyToClipboard(field.value, label)}
           >
             <Copy />
           </Button>
@@ -428,29 +561,36 @@ function ConcealedValue({ field }: { field: ItemField }) {
 
 /** Full-screen display of a secret, for typing it on another device. */
 function LargeType({ value, onClose }: { value: string; onClose: () => void }) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("blur", onClose);
+    const timer = setTimeout(onClose, 60_000);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onClose);
+      clearTimeout(timer);
+    };
   }, [onClose]);
   return (
     <button
       type="button"
       onClick={onClose}
-      aria-label="Close large type"
-      className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-black/70 p-8 backdrop-blur-sm"
+      aria-label={t("detail.closeLarge")}
+      className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-black/70 p-4 backdrop-blur-sm sm:p-8"
     >
-      <span className="flex flex-wrap justify-center gap-1 rounded-card bg-surface p-8 shadow-overlay">
+      <span className="flex flex-wrap justify-center gap-1 rounded-card bg-surface p-4 shadow-overlay sm:p-8">
         {Array.from(value).map((char, index) => (
           <span
             // biome-ignore lint/suspicious/noArrayIndexKey: characters repeat; position is the identity
             key={index}
-            className="flex w-12 flex-col items-center rounded-md bg-surface-raised py-2"
+            className="flex w-10 flex-col items-center rounded-md bg-surface-raised py-2 sm:w-12"
           >
-            <span className="font-mono text-4xl">
+            <span className="font-mono text-3xl sm:text-4xl">
               <ColoredPassword value={char} />
             </span>
-            <span className="text-2xs text-text-subtle">{index + 1}</span>
+            <span className="text-2xs text-text-muted">{index + 1}</span>
           </span>
         ))}
       </span>
@@ -458,10 +598,21 @@ function LargeType({ value, onClose }: { value: string; onClose: () => void }) {
   );
 }
 
-function TotpValue({ uri }: { uri: string }) {
+function TotpValue({ uri, onEdit }: { uri: string; onEdit: () => void }) {
+  const { t } = useI18n();
   const totp = useTotp(uri);
   if (totp === undefined) return <span className="text-text-muted">…</span>;
-  if (totp === "invalid") return <span className="text-danger">Invalid one-time password setup</span>;
+  if (totp === "invalid") {
+    return (
+      <span className="flex flex-wrap items-center gap-2 text-danger">
+        {t("detail.totpInvalid")}
+        <Button variant="secondary" size="xs" onClick={onEdit}>
+          <Pencil />
+          {t("action.edit")}
+        </Button>
+      </span>
+    );
+  }
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="flex items-center gap-3">
@@ -470,33 +621,16 @@ function TotpValue({ uri }: { uri: string }) {
         </span>
         <CountdownRing remaining={totp.remaining} period={totp.period} />
       </span>
-      <Tooltip content="Copy code">
+      <Tooltip content={t("list.copyCode")}>
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Copy one-time password"
-          onClick={() => copyToClipboard(totp.code, "One-time password")}
+          aria-label={t("list.copyCode")}
+          onClick={() => copyToClipboard(totp.code, t("list.code"))}
         >
           <Copy />
         </Button>
       </Tooltip>
     </div>
-  );
-}
-
-/** Digits and symbols get their own colors so passwords are easier to read and type. */
-export function ColoredPassword({ value }: { value: string }) {
-  return (
-    <>
-      {Array.from(value).map((char, index) => (
-        <span
-          // biome-ignore lint/suspicious/noArrayIndexKey: characters repeat; position is the identity
-          key={index}
-          className={/[0-9]/.test(char) ? "text-accent" : /[^a-zA-Z0-9]/.test(char) ? "text-danger" : undefined}
-        >
-          {char}
-        </span>
-      ))}
-    </>
   );
 }

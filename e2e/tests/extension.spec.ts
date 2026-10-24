@@ -90,9 +90,9 @@ async function signUpWithLogin(page: Page, email: string, website: string): Prom
   await page.getByLabel("Confirm master password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   const secretKey = (await page.getByTestId("secret-key").textContent({ timeout: 30_000 }))?.trim() ?? "";
-  await page.getByLabel("I have saved my Emergency Kit").check();
-  await page.getByRole("button", { name: "Open my vault" }).click();
-  await expect(page.getByText("Your vault is empty")).toBeVisible();
+  await page.getByLabel(/last 4 characters of your Secret Key/).fill(secretKey.slice(-4));
+  await page.getByRole("button", { name: "Continue to my vault" }).click();
+  await expect(page.getByText("No passwords saved yet")).toBeVisible();
 
   await page.getByRole("button", { name: "New item" }).click();
   await page.getByRole("menuitem", { name: "Login" }).click();
@@ -101,7 +101,7 @@ async function signUpWithLogin(page: Page, email: string, website: string): Prom
   await page.getByLabel("Password", { exact: true }).fill(SITE_PASSWORD);
   await page.getByRole("textbox", { name: "Website" }).fill(website);
   await page
-    .getByRole("textbox", { name: "One-time password" })
+    .getByRole("textbox", { name: "Two-factor code (2FA)" })
     .fill("otpauth://totp/Acme:alice?secret=JBSWY3DPEHPK3PXP");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Acme", level: 2 })).toBeVisible();

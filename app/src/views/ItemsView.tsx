@@ -1,17 +1,22 @@
-import type { Item } from "@passbox/client";
-import { useMemo, useState } from "react";
+import type { Item, VaultHealth } from "@passbox/client";
+import { type ReactNode, useMemo, useState } from "react";
 import { ItemDetail } from "../items/ItemDetail";
 import { ItemEditor } from "../items/ItemEditor";
 import { ItemList, type SortOrder } from "../items/ItemList";
-import { CATEGORY_META } from "../lib/items";
+import { useI18n } from "../lib/i18n";
+import { CATEGORY_META, searchText } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
-import { useClient, useSnapshot } from "../useClient";
+import { matchScore } from "../lib/search";
+import { vaultName } from "../shell/Sidebar";
+import { useSnapshot } from "../useClient";
+import { DecryptionErrors } from "./DecryptionErrors";
 
 type ItemsRoute = Extract<Route, { view: "items" }>;
 
 interface ItemsViewProps {
   route: ItemsRoute;
   navigate: (route: Route) => void;
+  health: VaultHealth;
 }
 
 function matchesFilter(item: Item, filter: ItemFilter): boolean {
@@ -27,41 +32,44 @@ function matchesFilter(item: Item, filter: ItemFilter): boolean {
   }
 }
 
-function matchesQuery(item: Item, query: string): boolean {
-  if (!query) return true;
-  const q = query.toLowerCase();
-  return (
-    item.data.title.toLowerCase().includes(q) ||
-    item.data.tags.some((tag) => tag.toLowerCase().includes(q)) ||
-    item.data.fields.some(
-      (field) => field.type !== "concealed" && field.type !== "totp" && field.value.toLowerCase().includes(q),
-    )
-  );
-}
-
-export function ItemsView({ route, navigate }: ItemsViewProps) {
+export function ItemsView({ route, navigate, health }: ItemsViewProps) {
   const snapshot = useSnapshot();
+  const i18n = useI18n();
+  const { t } = i18n;
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortOrder>("name");
-  const client = useClient();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: recompute when the items change
-  const health = useMemo(() => client.health(), [client, snapshot.items]);
 
-  const items = useMemo(() => {
-    const filtered = snapshot.items.filter((item) => matchesFilter(item, route.filter) && matchesQuery(item, query));
-    return sort === "name"
-      ? filtered.sort((a, b) => a.data.title.localeCompare(b.data.title, undefined, { sensitivity: "base" }))
-      : filtered.sort((a, b) => b.updatedAt - a.updatedAt);
-  }, [snapshot.items, route.filter, query, sort]);
+  const { items, fuzzy } = useMemo(() => {
+    const scored = snapshot.items
+      .filter((item) => matchesFilter(item, route.filter))
+      .map((item) => ({ item, score: query ? matchScore(query, searchText(item)) : 3 }))
+      .filter(({ score }) => score > 0);
+    // Typo matches only appear when nothing matches exactly, and then the best ones come first.
+    const exact = scored.filter(({ score }) => score === 3);
+    const shown = exact.length > 0 ? exact : scored;
+    const list = shown.map(({ item }) => item);
+    if (exact.length === 0 && shown.length > 0) {
+      const byScore = new Map(shown.map(({ item, score }) => [item.id, score]));
+      list.sort((a, b) => (byScore.get(b.id) ?? 0) - (byScore.get(a.id) ?? 0));
+    } else if (sort === "name") {
+      list.sort((a, b) => i18n.compare(a.data.title, b.data.title));
+    } else {
+      list.sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+    return { items: list, fuzzy: query !== "" && exact.length === 0 && shown.length > 0 };
+  }, [snapshot.items, route.filter, query, sort, i18n]);
 
   const title =
     route.filter.kind === "all"
-      ? "All items"
+      ? t("term.allItems")
       : route.filter.kind === "favorites"
-        ? "Favorites"
+        ? t("term.favorites")
         : route.filter.kind === "category"
-          ? CATEGORY_META[route.filter.category].plural
-          : (snapshot.vaults.find((v) => v.id === (route.filter as { vaultId: string }).vaultId)?.name ?? "Vault");
+          ? t(CATEGORY_META[route.filter.category].plural)
+          : vaultName(
+              snapshot.vaults.find((v) => v.id === (route.filter as { vaultId: string }).vaultId)?.name ?? "",
+              t,
+            ) || t("term.vault");
 
   const selected = route.create ? undefined : (snapshot.items.find((item) => item.id === route.itemId) ?? items[0]);
   const defaultVaultId =
@@ -71,9 +79,10 @@ export function ItemsView({ route, navigate }: ItemsViewProps) {
 
   const select = (itemId: string | undefined) =>
     navigate(itemId ? { view: "items", filter: route.filter, itemId } : { view: "items", filter: route.filter });
+  const edit = (id: string) => navigate({ view: "items", filter: route.filter, itemId: id, edit: true });
   const showDetailOnMobile = Boolean(route.itemId || route.create);
 
-  let pane: React.ReactNode;
+  let pane: ReactNode;
   if (route.create && defaultVaultId) {
     pane = (
       <ItemEditor
@@ -98,7 +107,7 @@ export function ItemsView({ route, navigate }: ItemsViewProps) {
       <ItemDetail
         item={selected}
         health={health}
-        onEdit={(id) => navigate({ view: "items", filter: route.filter, itemId: id, edit: true })}
+        onEdit={edit}
         onBack={() => navigate({ view: "items", filter: route.filter })}
         onDeleted={() => select(undefined)}
       />
@@ -106,28 +115,34 @@ export function ItemsView({ route, navigate }: ItemsViewProps) {
   }
 
   return (
-    <>
-      <div
-        className={
-          showDetailOnMobile
-            ? "hidden w-[22rem] shrink-0 border-r border-border md:flex"
-            : "flex w-full shrink-0 border-r border-border md:w-[22rem]"
-        }
-      >
-        <ItemList
-          title={title}
-          items={items}
-          totalCount={snapshot.items.length}
-          query={query}
-          onQueryChange={setQuery}
-          sort={sort}
-          onSortChange={setSort}
-          selectedId={route.create ? undefined : selected?.id}
-          onSelect={select}
-          onCreate={(category) => navigate({ view: "items", filter: route.filter, create: category })}
-        />
+    <div className="flex min-w-0 flex-1 flex-col">
+      <DecryptionErrors />
+      <div className="flex min-h-0 flex-1">
+        <div
+          className={
+            showDetailOnMobile
+              ? "hidden w-[22rem] shrink-0 border-r border-border md:flex"
+              : "flex w-full shrink-0 border-r border-border md:w-[22rem]"
+          }
+        >
+          <ItemList
+            title={title}
+            items={items}
+            fuzzy={fuzzy}
+            totalCount={snapshot.items.length}
+            query={query}
+            onQueryChange={setQuery}
+            sort={sort}
+            onSortChange={setSort}
+            selectedId={route.create ? undefined : selected?.id}
+            onSelect={select}
+            onCreate={(category) => navigate({ view: "items", filter: route.filter, create: category })}
+            navigate={navigate}
+            category={route.filter.kind === "category" ? route.filter.category : undefined}
+          />
+        </div>
+        <div className={showDetailOnMobile ? "flex min-w-0 flex-1" : "hidden min-w-0 flex-1 md:flex"}>{pane}</div>
       </div>
-      <div className={showDetailOnMobile ? "flex min-w-0 flex-1" : "hidden min-w-0 flex-1 md:flex"}>{pane}</div>
-    </>
+    </div>
   );
 }

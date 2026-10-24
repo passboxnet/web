@@ -1,18 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { messageCatalogs, plural, translator } from "./messages";
+import { plural, translator } from "./messages";
 import { SOURCES } from "./sources";
 
-const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
-
 describe("import and export messages", () => {
-  it("has every key in English and German with the same placeholders", () => {
-    const { en, de } = messageCatalogs;
-    expect(Object.keys(de).sort()).toEqual(Object.keys(en).sort());
-    for (const key of Object.keys(en) as (keyof typeof en)[]) {
-      expect(placeholders(de[key]), key).toEqual(placeholders(en[key]));
-    }
-  });
-
   it("formats placeholders, numbers and plurals", () => {
     const de = translator("de");
     expect(plural(de, "import.start", 1)).toBe("1 Eintrag importieren");

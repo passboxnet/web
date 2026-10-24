@@ -14,6 +14,8 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
+    // English by default; tests that check German set their own locale.
+    locale: "en-US",
     viewport: { width: 1280, height: 800 },
     trace: "retain-on-failure",
   },

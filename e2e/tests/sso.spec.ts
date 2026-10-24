@@ -135,9 +135,11 @@ test("an admin sets up SSO, signs in with it and unlocks a trusted browser witho
   await shot(page, "sso-scim-en");
 
   // Sign out; on the sign-in page the email domain offers SSO.
-  await page.goto(`${BASE}/#/settings`);
-  await page.getByRole("button", { name: "Sign out" }).first().click();
+  // (Settings also lists "Sign out" for other devices, so go via the lock screen.)
+  await page.getByRole("button", { name: "Lock vault" }).click();
+  await page.getByRole("button", { name: "Use a different account…" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Sign out" }).click();
+  await expect(page.getByRole("heading", { name: "Sign in to Passbox" })).toBeVisible();
   await page.getByLabel("Email").fill(email);
   await expect(page.getByTestId("sso-option")).toContainText("Acme Identity can sign you in.");
   await shot(page, "sso-sign-in-en");

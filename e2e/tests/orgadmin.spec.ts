@@ -30,7 +30,10 @@ test("an owner signs a policy in the admin console and checks the activity log",
   await page.getByRole("button", { name: "Open admin console" }).click();
   await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
   await expect(page.getByText("There is no policy yet.")).toBeVisible();
-  await page.getByRole("navigation", { name: "Admin console sections" }).getByRole("button", { name: "Policies" }).click();
+  await page
+    .getByRole("navigation", { name: "Admin console sections" })
+    .getByRole("button", { name: "Policies" })
+    .click();
 
   // Sign a policy: two-factor sign-in required, auto-lock after 15 minutes at most.
   await page.getByRole("switch", { name: "Require two-factor sign-in" }).click();
@@ -48,7 +51,10 @@ test("an owner signs a policy in the admin console and checks the activity log",
   await expect(page.getByText(`${team} requires two-factor sign-in`)).toBeVisible();
 
   // The activity log shows what happened, and the chain verifies on this device.
-  await page.getByRole("navigation", { name: "Admin console sections" }).getByRole("button", { name: "Activity log" }).click();
+  await page
+    .getByRole("navigation", { name: "Admin console sections" })
+    .getByRole("button", { name: "Activity log" })
+    .click();
   await expect(page.getByTestId("audit-entry").filter({ hasText: "Signed policy version 1" })).toBeVisible();
   await expect(page.getByTestId("audit-entry").filter({ hasText: "Created the organization" })).toBeVisible();
   await page.getByRole("button", { name: "Check on this device" }).click();

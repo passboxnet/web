@@ -8,7 +8,8 @@ function uniqueEmail() {
 
 async function signUp(page: Page, email: string): Promise<string> {
   await page.goto("/");
-  await page.getByRole("tab", { name: "Create account" }).click();
+  await page.locator("fieldset").getByText("Create account").click();
+  await expect(page.getByRole("radio", { name: "Create account" })).toBeChecked();
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Master password", { exact: true }).fill(PASSWORD);
   await page.getByLabel("Confirm master password").fill(PASSWORD);
@@ -17,8 +18,13 @@ async function signUp(page: Page, email: string): Promise<string> {
   expect(secretKey).toMatch(/^P1-[0-9A-Z]{5}(-[0-9A-Z]{5}){3}-[0-9A-Z]{6}$/);
   await page.getByLabel("I have saved my Emergency Kit").check();
   await page.getByRole("button", { name: "Open my vault" }).click();
-  await expect(page.getByText("No items yet")).toBeVisible();
+  await expect(page.getByText("Your vault is empty")).toBeVisible();
   return secretKey;
+}
+
+async function newItem(page: Page, type: "Login" | "Secure note") {
+  await page.getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: type }).click();
 }
 
 async function newDevice(browser: Browser): Promise<Page> {
@@ -29,7 +35,7 @@ async function newDevice(browser: Browser): Promise<Page> {
 async function signIn(page: Page, email: string, secretKey: string) {
   await page.goto("/");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Master password").fill(PASSWORD);
+  await page.getByLabel("Master password", { exact: true }).fill(PASSWORD);
   await page.getByLabel("Secret Key").fill(secretKey);
   await page.getByRole("button", { name: "Sign in" }).click();
 }
@@ -37,56 +43,72 @@ async function signIn(page: Page, email: string, secretKey: string) {
 test("sign up, store a login with TOTP, lock and unlock", async ({ page }) => {
   await signUp(page, uniqueEmail());
 
-  await page.getByRole("button", { name: "New item" }).click();
-  await page.getByRole("button", { name: "Login" }).click();
+  await newItem(page, "Login");
   await page.getByLabel("Title").fill("GitHub");
-  await page.getByLabel("Username").fill("octocat");
+  await page.getByRole("textbox", { name: "Username" }).fill("octocat");
   await page.getByRole("button", { name: "Generate password" }).click();
   await expect(page.getByLabel("Password", { exact: true })).toHaveValue(/.{24}/);
-  await page.getByLabel("Website").fill("github.com");
-  await page.getByLabel("One-time password").fill("otpauth://totp/GitHub:octocat?secret=JBSWY3DPEHPK3PXP");
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("textbox", { name: "Website" }).fill("github.com");
+  await page
+    .getByRole("textbox", { name: "One-time password" })
+    .fill("otpauth://totp/GitHub:octocat?secret=JBSWY3DPEHPK3PXP");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "GitHub" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "GitHub", level: 2 })).toBeVisible();
   await expect(page.getByText(/^\d{3} \d{3}$/)).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Unlock your vault" })).toBeVisible();
-  await page.getByLabel("Master password").fill("not my password");
+  await page.getByLabel("Master password", { exact: true }).fill("not my password");
   await page.getByRole("button", { name: "Unlock" }).click();
   await expect(page.getByRole("alert")).toContainText("incorrect");
 
-  await page.getByLabel("Master password").fill(PASSWORD);
+  await page.getByLabel("Master password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Unlock" }).click();
-  await expect(page.getByRole("button", { name: /GitHub/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /GitHub/ })).toBeVisible();
 });
 
 test("a second device signs in with the Secret Key and changes sync back", async ({ page, browser }) => {
   const email = uniqueEmail();
   const secretKey = await signUp(page, email);
-  await page.getByRole("button", { name: "New item" }).click();
-  await page.getByRole("button", { name: "Secure note" }).click();
+  await newItem(page, "Secure note");
   await page.getByLabel("Title").fill("Wi-Fi");
   await page.getByLabel("Notes").fill("Network: Home");
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("heading", { name: "Wi-Fi" })).toBeVisible();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Wi-Fi", level: 2 })).toBeVisible();
 
   const phone = await newDevice(browser);
   // Secret Key input is forgiving: lowercase and spaces work too.
   await signIn(phone, email.toUpperCase(), secretKey.toLowerCase().replaceAll("-", " "));
-  await phone.getByRole("button", { name: /Wi-Fi/ }).click();
-  await phone.getByRole("button", { name: "Edit" }).click();
+  await phone.getByRole("option", { name: /Wi-Fi/ }).click();
+  await phone.getByRole("button", { name: /^Edit/ }).click();
   await phone.getByLabel("Title").fill("Home Wi-Fi");
-  await phone.getByRole("button", { name: "Save" }).click();
-  await expect(phone.getByRole("heading", { name: "Home Wi-Fi" })).toBeVisible();
+  await phone.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(phone.getByRole("heading", { name: "Home Wi-Fi", level: 2 })).toBeVisible();
 
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(page.getByRole("button", { name: /Home Wi-Fi/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /Home Wi-Fi/ })).toBeVisible();
 
-  page.on("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: /Home Wi-Fi/ }).click();
-  await page.getByRole("button", { name: "Delete item" }).click();
-  await expect(page.getByText("No items yet")).toBeVisible();
+  await page.getByRole("option", { name: /Home Wi-Fi/ }).click();
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: "Delete item" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete item" }).click();
+  await expect(page.getByText("Your vault is empty")).toBeVisible();
+});
+
+test("Watchtower flags weak and reused passwords", async ({ page }) => {
+  await signUp(page, uniqueEmail());
+  for (const title of ["Shop A", "Shop B"]) {
+    await newItem(page, "Login");
+    await page.getByLabel("Title").fill(title);
+    await page.getByLabel("Password", { exact: true }).fill("summer2024");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByRole("heading", { name: title, level: 2 })).toBeVisible();
+  }
+  await expect(page.getByText("This password is weak.")).toBeVisible();
+  await page.getByRole("button", { name: /Watchtower/ }).click();
+  await expect(page.getByRole("heading", { name: "Watchtower", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Reused passwords/ })).toContainText("2");
 });
 
 test("a wrong Secret Key is rejected", async ({ page, browser }) => {

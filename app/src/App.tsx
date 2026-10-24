@@ -1,10 +1,11 @@
 import type { PassboxClient } from "@passbox/client";
+import { Logo, Spinner } from "@passbox/ui";
 import { useEffect, useState } from "react";
-import { loadClient } from "./core";
-import { EmergencyKitScreen } from "./screens/EmergencyKitScreen";
-import { UnlockScreen } from "./screens/UnlockScreen";
-import { VaultScreen } from "./screens/VaultScreen";
-import { WelcomeScreen } from "./screens/WelcomeScreen";
+import { EmergencyKitScreen } from "./auth/EmergencyKitScreen";
+import { UnlockScreen } from "./auth/UnlockScreen";
+import { WelcomeScreen } from "./auth/WelcomeScreen";
+import { errorMessage, loadClient } from "./core";
+import { AppShell } from "./shell/AppShell";
 import { ClientContext, useSnapshot } from "./useClient";
 
 export function App() {
@@ -14,11 +15,24 @@ export function App() {
   useEffect(() => {
     loadClient()
       .then(setClient)
-      .catch((e: unknown) => setError(String(e)));
+      .catch((e: unknown) => setError(errorMessage(e)));
   }, []);
 
-  if (error) return <p className="p-8 text-danger">Passbox could not start: {error}</p>;
-  if (!client) return null;
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center p-8 text-sm text-danger" role="alert">
+        Passbox could not start: {error}
+      </div>
+    );
+  }
+  if (!client) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-text-muted">
+        <Logo className="text-text" />
+        <Spinner label="Loading" />
+      </div>
+    );
+  }
   return (
     <ClientContext.Provider value={client}>
       <Router />
@@ -40,6 +54,6 @@ function Router() {
     case "locked":
       return <UnlockScreen />;
     case "unlocked":
-      return <VaultScreen />;
+      return <AppShell />;
   }
 }

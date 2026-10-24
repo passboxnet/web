@@ -27,3 +27,9 @@ export function loadClient(): Promise<PassboxClient> {
 export function nextFrame(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 30));
 }
+
+export function errorMessage(error: unknown): string {
+  if (error instanceof TypeError) return "The server could not be reached. Check your connection.";
+  if (error instanceof Error) return error.message;
+  return String(error);
+}

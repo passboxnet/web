@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@passbox/ui/fonts.css";
 @import "@passbox/ui/tokens.css";
 @source "../node_modules/@passbox/ui/src";
 
@@ -6,4 +7,14 @@ html,
 body,
 #root {
   height: 100%;
+}
+
+body {
+  font-size: 14px;
+}
+
+@media print {
+  body {
+    background: white;
+  }
 }

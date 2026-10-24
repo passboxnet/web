@@ -21,7 +21,7 @@ The web vault lives in [`apps/web`](../apps/web) (React, Vite, Tailwind 4, hash 
 | Showing the kit again | Settings → Account → "Show Emergency Kit", the reminder banner and the sign-out dialog. When unlocked, Passbox asks for the master password and checks it with `client.verifyMasterPassword`, which derives the keys locally and opens the account key; nothing is sent. On the unlock screen the kit opens right after unlocking. |
 | PDF | `lib/pdf.ts` writes a one-page PDF with the standard fonts (WinAnsi, so German text works) on the device; `lib/kit.ts` lays out the kit. No dependency and no network. A QR code with the setup data is not included yet, because Passbox has no QR encoder and the mobile apps cannot scan it yet. |
 | Sign out | Every way to remove the account from the device ("Sign out" in Settings and the account menu, "Use a different account…" on the unlock screen) asks first, names the Secret Key prefix and offers "Show Emergency Kit". |
-| Forgot master password | A link on sign-in, unlock and Settings opens an honest explanation: nobody can reset it, what to try, and that organization recovery is still to come. |
+| Forgot master password | A link on sign-in, unlock and Settings (`recovery/ForgotPasswordDialog.tsx`) says that nobody can reset it and offers what this device knows about the account: the recovery code from the Emergency Kit, recovery through an organization, or asking an emergency contact. See [Account recovery](#account-recovery-and-emergency-access). |
 | Errors | `lib/errors.ts` maps every server error code to a message. The unlock screen only ever mentions the master password (with a Caps Lock hint). Sign-in checks the Secret Key format locally ("incomplete: 6 characters missing" or "doesn't look like a Secret Key"). `rate_limited` shows the minutes from `retryAfterSeconds`. |
 | http | Server addresses must use https unless they are on this computer (`localhost`, `127.x`, `[::1]`); a stored http address for another host is ignored. A page served over plain http from another host shows a red warning on every screen. |
 | Preview notice | Auth screens show a "Preview" badge with the not-audited notice; Settings → About repeats it with links to the security design and to SECURITY.md for reporting vulnerabilities. |
@@ -47,6 +47,23 @@ The former Watchtower. It shows "X of Y logins are secure" with a bar instead of
 ## Settings
 
 Account (Emergency Kit, masked Secret Key `P1-•••••-…`, change master password, forgot password), **Devices** (`client.sessions()`, this device marked, sign out one or all others, with confirmations), **Activity** (last 50 events; failed attempts are called sign-in attempts, with the note that wrong master passwords are detected on the device and may not appear), security on this device, language and theme, About (audit status, server, license) and **Technical details** (account ID, algorithms, KDF parameters, server version). The web app names its device "Chrome on Windows" and so on from the user agent; the desktop app reports "Passbox Desktop on …".
+
+## Account recovery and emergency access
+
+The design is in [recovery.md](architecture/recovery.md). The screens:
+
+| Screen | Behavior |
+| --- | --- |
+| Sign-up | "Create a recovery code" (off by default) adds the code to the Emergency Kit. The kit then shows it in its own box (screen, PDF and print) with the warning to keep the kit like cash. |
+| Settings → **Recovery** (`views/settings/RecoveryPanel.tsx`) | "Create recovery code" / "Create new code" / "Remove" (needs a recent login, then opens the kit with the new code); per organization the recovery status: admins turn it on ("Set up recovery") and seal it to other admins, members opt in or withdraw. "Add a device" shows a code and QR code, waits for the new device and asks to approve it with its name and IP. |
+| Recovery with the code (`recovery/RecoveryScreens.tsx`) | Email and recovery code (format checked locally), the second factor if the account has one, then a new master password with the strength meter. Afterwards the new Emergency Kit (new Secret Key and recovery code) opens and must be confirmed. All other devices are signed out. |
+| Recovery through the organization | The device creates a key pair and shows a **request code** (4 groups of 5 digits) that the admin compares by phone or in person; it then waits (also across reloads, `PendingRecoveryNotice`) until the request is approved, denied or expired, and continues with the new master password. |
+| **Recovery requests** (`#/recovery-requests`, `views/RecoveryRequestsView.tsx`) | Recovery admins open it from Settings → Recovery, where each organization shows the number of pending requests. Approving asks to confirm two things: that the person was verified outside Passbox, and that the request code matches. |
+| Settings → **Emergency access** (`views/settings/EmergencyPanel.tsx`) | Add a trusted person by email and waiting period (1–30 days, default 7). After they accept: choose the vaults, compare the fingerprint, confirm. A request shows the remaining days with "Allow now" and "Decline". People who trust this account are listed below with "Accept", "Request access" and, once released, "Open". |
+| Emergency vaults (`#/emergency/{id}`, `views/EmergencyVaultView.tsx`) | Read-only view of the shared vaults, decrypted on this device and kept in memory only. |
+| Sign in with another device | "Sign in with a code from another device" on the sign-in screen: enter the code, wait for approval, then type the master password; the email and Secret Key are filled in. |
+
+After every unlock the client refreshes the cached recovery options (for the locked screen) and re-seals emergency access when vault keys changed (`client.resealEmergencyAccess`). The activity log names all recovery and emergency events and marks recoveries and emergency requests as alerts.
 
 ## Two-factor sign-in
 
@@ -93,4 +110,4 @@ An empty vault shows a checklist instead of a bare empty state, also reachable a
 ## Tests
 
 - Unit tests: `pnpm --filter @passbox/web test` (search, PDF writer, kit check, errors, QR text, server addresses, device names, translations, clipboard, auto-lock).
-- End-to-end: `pnpm --filter @passbox/web build && pnpm e2e` (`e2e/tests/vault.spec.ts`; two-factor sign-in with TOTP, recovery codes and a virtual security key in `e2e/tests/two-factor.spec.ts`), in English by default plus a German smoke test; covers the kit check after a reload, trash and undo, sign-out confirmation, the 2FA check and server address rules. `e2e/tests/admin.spec.ts` runs against a second server of its own (`PASSBOX_E2E_ADMIN_PORT`, default `PASSBOX_E2E_PORT` + 1) and covers the administration, invite-only sign-up and disabled accounts.
+- End-to-end: `pnpm --filter @passbox/web build && pnpm e2e` (`e2e/tests/vault.spec.ts`; two-factor sign-in with TOTP, recovery codes and a virtual security key in `e2e/tests/two-factor.spec.ts`), in English by default plus a German smoke test; covers the kit check after a reload, trash and undo, sign-out confirmation, the 2FA check and server address rules. `e2e/tests/recovery.spec.ts` covers the recovery code (sign-up with code, recovery on a fresh browser, the old Secret Key no longer works) and emergency access between two accounts. `e2e/tests/admin.spec.ts` runs against a second server of its own (`PASSBOX_E2E_ADMIN_PORT`, default `PASSBOX_E2E_PORT` + 1) and covers the administration, invite-only sign-up and disabled accounts.

@@ -3,6 +3,7 @@ import { Badge, Button, ConfirmDialog, Monogram, SegmentedControl, Switch } from
 import { Lock, LogOut } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { isDesktop } from "../desktop";
+import { ImportExportPanel } from "../export/ImportExportPanel";
 import { setPreferences, type Theme, usePreferences } from "../lib/preferences";
 import { serverApi, serverLabel } from "../lib/server";
 import { useClient, useSnapshot } from "../useClient";
@@ -95,6 +96,8 @@ export function SettingsView() {
             </Button>
           </Row>
         </Panel>
+
+        <ImportExportPanel />
 
         <Panel title="Appearance">
           <Row label="Theme">

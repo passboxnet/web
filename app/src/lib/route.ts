@@ -11,7 +11,8 @@ export type Route =
   | { view: "items"; filter: ItemFilter; itemId?: string; edit?: boolean; create?: ItemCategory }
   | { view: "watchtower" }
   | { view: "generator" }
-  | { view: "settings" };
+  | { view: "settings" }
+  | { view: "import" };
 
 export function parseRoute(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#\/?/, "").split("?");
@@ -20,6 +21,7 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === "watchtower") return { view: "watchtower" };
   if (parts[0] === "generator") return { view: "generator" };
   if (parts[0] === "settings") return { view: "settings" };
+  if (parts[0] === "import") return { view: "import" };
 
   let filter: ItemFilter = { kind: "all" };
   if (parts[0] === "favorites") filter = { kind: "favorites" };

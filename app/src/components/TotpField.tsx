@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { CopyButton } from "./CopyButton";
 import { useCore } from "./useCore";
 
-const PERIOD = 30;
+/** Reads the period from an otpauth:// URI; plain secrets use the standard 30 seconds. */
+function periodOf(uriOrSecret: string): number {
+  const match = /[?&]period=(\d+)/i.exec(uriOrSecret);
+  const period = match ? Number(match[1]) : 30;
+  return period > 0 ? period : 30;
+}
 
 function now() {
   return Math.floor(Date.now() / 1000);
@@ -25,14 +30,15 @@ export function TotpField({ uri }: { uri: string }) {
   } catch {
     return <span className="text-sm text-danger">Invalid one-time password setup</span>;
   }
-  const remaining = PERIOD - (time % PERIOD);
+  const period = periodOf(uri);
+  const remaining = period - (time % period);
 
   return (
     <div className="flex items-center gap-3">
       <span className="font-mono text-lg tracking-widest">
         {code.slice(0, 3)} {code.slice(3)}
       </span>
-      <CountdownRing remaining={remaining} period={PERIOD} />
+      <CountdownRing remaining={remaining} period={period} />
       <CopyButton value={code} label="one-time password" />
     </div>
   );

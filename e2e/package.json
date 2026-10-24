@@ -1,0 +1,17 @@
+{
+  "name": "@passbox/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Browser end-to-end tests. Needs a built web client (pnpm --filter @passbox/web build).",
+  "scripts": {
+    "e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "26.6.5",
+    "typescript": "5.9.3"
+  }
+}

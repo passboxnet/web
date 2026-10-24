@@ -1,76 +1,56 @@
-import { createClient, type ServerMeta } from "@passbox/api-client";
-import { Button, Input, Logo } from "@passbox/ui";
-import { type FormEvent, useEffect, useState } from "react";
+import { Button, Input } from "@passbox/ui";
+import { type FormEvent, useState } from "react";
+import { AuthLayout, errorMessage, FormError } from "../components/AuthLayout";
+import { nextFrame } from "../core";
+import { useClient, useSnapshot } from "../useClient";
 
-const api = createClient();
+export function UnlockScreen() {
+  const client = useClient();
+  const { email } = useSnapshot();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
 
-type ServerState = { kind: "checking" } | { kind: "online"; meta: ServerMeta } | { kind: "offline" };
-
-export function UnlockScreen({ onUnlock }: { onUnlock: () => void }) {
-  const [server, setServer] = useState<ServerState>({ kind: "checking" });
-
-  useEffect(() => {
-    api
-      .meta()
-      .then((meta) => setServer({ kind: "online", meta }))
-      .catch(() => setServer({ kind: "offline" }));
-  }, []);
-
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onUnlock();
+    const password = String(new FormData(event.currentTarget).get("password"));
+    setBusy(true);
+    setError(undefined);
+    await nextFrame();
+    try {
+      await client.unlock(password);
+    } catch (e) {
+      setError(errorMessage(e));
+      setBusy(false);
+    }
   }
 
   return (
-    <main className="flex min-h-full items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex justify-center">
-          <Logo className="text-text" />
+    <AuthLayout>
+      <form onSubmit={submit} className="flex flex-col gap-5">
+        <div>
+          <h1 className="text-xl font-semibold">Unlock your vault</h1>
+          <p className="mt-1 text-sm text-text-muted">{email}</p>
         </div>
-        <form
-          onSubmit={submit}
-          className="flex flex-col gap-5 rounded-card border border-border bg-surface p-6 shadow-sm"
+        <Input
+          label="Master password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          autoFocus
+          required
+        />
+        <FormError message={error} />
+        <Button type="submit" size="lg" disabled={busy}>
+          {busy ? "Unlocking…" : "Unlock"}
+        </Button>
+        <button
+          type="button"
+          onClick={() => client.signOut()}
+          className="text-sm text-text-muted underline-offset-2 hover:text-text hover:underline"
         >
-          <div>
-            <h1 className="text-xl font-semibold">Unlock your vault</h1>
-            <p className="mt-1 text-sm text-text-muted">
-              Your data is encrypted on this device. The server only ever sees ciphertext.
-            </p>
-          </div>
-          <Input label="Email" type="email" autoComplete="username" placeholder="you@example.com" />
-          <Input label="Master password" type="password" autoComplete="current-password" />
-          <Input
-            label="Secret Key"
-            placeholder="P1-XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX"
-            autoComplete="off"
-            spellCheck={false}
-            hint="Only needed the first time you sign in on a new device. You'll find it in your Emergency Kit."
-          />
-          <Button type="submit" size="lg">
-            Unlock
-          </Button>
-          <p className="rounded-lg bg-surface-raised px-3 py-2 text-xs text-text-muted">
-            Preview build: accounts are not implemented yet. Unlock opens a vault with sample data.
-          </p>
-        </form>
-        <ServerStatus state={server} />
-      </div>
-    </main>
-  );
-}
-
-function ServerStatus({ state }: { state: ServerState }) {
-  const text =
-    state.kind === "checking"
-      ? "Checking server…"
-      : state.kind === "online"
-        ? `Connected to Passbox server ${state.meta.version}`
-        : "Server not reachable";
-  const dot = state.kind === "online" ? "bg-success" : state.kind === "offline" ? "bg-danger" : "bg-warning";
-  return (
-    <p className="mt-4 flex items-center justify-center gap-2 text-xs text-text-muted" role="status">
-      <span className={`size-2 rounded-full ${dot}`} aria-hidden="true" />
-      {text}
-    </p>
+          Use a different account
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

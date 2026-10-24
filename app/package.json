@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@passbox/api-client": "workspace:*",
+    "@passbox/client": "workspace:*",
     "@passbox/core-wasm": "workspace:*",
     "@passbox/ui": "workspace:*",
     "lucide-react": "1.61.0",

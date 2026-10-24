@@ -1,18 +1,19 @@
+import type { Vault } from "@passbox/client";
 import { cn, Logo } from "@passbox/ui";
-import { KeyRound, Layers, Lock, type LucideIcon, Star, Vault, Wand2 } from "lucide-react";
-import { sampleVaults } from "../sampleData";
+import { KeyRound, Layers, Lock, type LucideIcon, Star, Vault as VaultIcon, Wand2 } from "lucide-react";
 
-export type Section = { kind: "all" } | { kind: "favorites" } | { kind: "vault"; name: string } | { kind: "generator" };
+export type Section = { kind: "all" } | { kind: "favorites" } | { kind: "vault"; id: string } | { kind: "generator" };
 
 interface SidebarProps {
   section: Section;
+  vaults: Vault[];
   onSelect: (section: Section) => void;
   onLock: () => void;
 }
 
-export function Sidebar({ section, onSelect, onLock }: SidebarProps) {
+export function Sidebar({ section, vaults, onSelect, onLock }: SidebarProps) {
   const isActive = (s: Section) =>
-    s.kind === "vault" ? section.kind === "vault" && section.name === s.name : s.kind === section.kind;
+    s.kind === "vault" ? section.kind === "vault" && section.id === s.id : s.kind === section.kind;
 
   return (
     <nav
@@ -36,13 +37,13 @@ export function Sidebar({ section, onSelect, onLock }: SidebarProps) {
       </div>
       <div className="flex flex-col gap-0.5">
         <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Vaults</p>
-        {sampleVaults.map((name) => (
+        {vaults.map((vault) => (
           <NavItem
-            key={name}
-            icon={Vault}
-            label={name}
-            active={isActive({ kind: "vault", name })}
-            onClick={() => onSelect({ kind: "vault", name })}
+            key={vault.id}
+            icon={VaultIcon}
+            label={vault.name}
+            active={isActive({ kind: "vault", id: vault.id })}
+            onClick={() => onSelect({ kind: "vault", id: vault.id })}
           />
         ))}
       </div>
@@ -85,7 +86,7 @@ function NavItem({ icon: Icon, label, active, disabled, onClick }: NavItemProps)
       )}
     >
       <Icon className="size-4" aria-hidden="true" />
-      {label}
+      <span className="truncate">{label}</span>
       {disabled && <span className="ml-auto text-[10px] uppercase">soon</span>}
     </button>
   );

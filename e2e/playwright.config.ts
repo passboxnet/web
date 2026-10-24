@@ -3,7 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { defineConfig } from "@playwright/test";
 
-const port = 8787;
+// Override with PASSBOX_E2E_PORT to run several suites side by side.
+const port = Number(process.env.PASSBOX_E2E_PORT ?? 8787);
 const dataDir = mkdtempSync(join(tmpdir(), "passbox-e2e-"));
 
 export default defineConfig({

@@ -1,10 +1,13 @@
-import type { Item, VaultHealth } from "@passbox/client";
-import { Badge, EmptyState, Monogram } from "@passbox/ui";
-import { ChevronRight, Copy, KeyRound, LockOpen, ShieldCheck, Timer, TriangleAlert } from "lucide-react";
-import type { ReactNode } from "react";
-import { itemSubtitle } from "../lib/items";
+import { breachCount, FIELD, fieldValue, type Item, type VaultHealth } from "@passbox/client";
+import { Badge, Button, cn, EmptyState, Monogram } from "@passbox/ui";
+import { ChevronRight, Copy, LockOpen, Search, ShieldCheck, Timer, TriangleAlert } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { ChangePasswordDialog } from "../items/ChangePasswordDialog";
+import { useI18n } from "../lib/i18n";
+import { itemSubtitle, itemTitle } from "../lib/items";
 import type { Route } from "../lib/route";
 import { useSnapshot } from "../useClient";
+import { DecryptionErrors } from "./DecryptionErrors";
 import { Page } from "./PageHeader";
 
 interface WatchtowerViewProps {
@@ -12,113 +15,214 @@ interface WatchtowerViewProps {
   navigate: (route: Route) => void;
 }
 
+/** Results of the last breach check in this session (item ID → times seen in breaches). Memory only. */
+let breachResults: { at: number; counts: Map<string, number> } | undefined;
+
 export function WatchtowerView({ health, navigate }: WatchtowerViewProps) {
   const { items } = useSnapshot();
+  const { t } = useI18n();
+  const [breaches, setBreaches] = useState(breachResults);
+  const [changing, setChanging] = useState<Item>();
   const byId = new Map(items.map((item) => [item.id, item]));
   const resolve = (ids: string[]) => ids.map((id) => byId.get(id)).filter((item): item is Item => Boolean(item));
   const open = (id: string) => navigate({ view: "items", filter: { kind: "all" }, itemId: id });
   const reusedIds = health.reused.flat();
-  const tone = health.score >= 80 ? "success" : health.score >= 50 ? "warning" : "danger";
+  const breachedIds = breaches ? [...breaches.counts.entries()].filter(([, n]) => n > 0).map(([id]) => id) : [];
+  const unsafe = new Set([...health.weak, ...reusedIds, ...health.insecureUrls, ...breachedIds]);
+  const analyzedIds = items
+    .filter((item) => item.data.category === "login" && fieldValue(item.data, FIELD.password))
+    .map((item) => item.id);
+  const secure = analyzedIds.filter((id) => !unsafe.has(id)).length;
+  const ratio = health.analyzed === 0 ? 1 : secure / health.analyzed;
+  const tone = ratio >= 0.8 ? "success" : ratio >= 0.5 ? "warning" : "danger";
+  const fix = (item: Item) => setChanging(item);
 
   return (
-    <Page
-      title="Watchtower"
-      description="Security insights for your logins. The analysis runs on this device; your passwords are never sent anywhere."
-    >
+    <Page title={t("term.watchtower")} description={t("security.description")}>
+      <DecryptionErrors />
       {health.analyzed === 0 ? (
         <div className="rounded-card border border-border bg-surface shadow-card">
-          <EmptyState
-            icon={<ShieldCheck />}
-            title="Nothing to analyze yet"
-            description="Add logins with passwords, and Watchtower will point out weak, reused and insecure ones."
-          />
+          <EmptyState icon={<ShieldCheck />} title={t("security.none.title")} description={t("security.none.text")} />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,1fr))]">
-            <div className="flex items-center gap-5 rounded-card border border-border bg-surface p-5 shadow-card">
-              <ScoreRing score={health.score} tone={tone} />
-              <div>
-                <p className="text-2xs font-semibold tracking-wide text-text-subtle uppercase">Security score</p>
-                <p className="mt-1 text-sm text-text-muted">
-                  {health.analyzed} {health.analyzed === 1 ? "login" : "logins"} analyzed
-                </p>
-              </div>
+          <section className="rounded-card border border-border bg-surface p-5 shadow-card">
+            <p className="text-lg font-semibold tracking-tight">
+              {t("security.summary", { secure, total: health.analyzed })}
+            </p>
+            <div
+              className="mt-3 h-2.5 overflow-hidden rounded-full bg-surface-sunken"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={health.analyzed}
+              aria-valuenow={secure}
+              aria-label={t("security.summary", { secure, total: health.analyzed })}
+            >
+              <div
+                className={cn(
+                  "h-full rounded-full",
+                  tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : "bg-danger",
+                )}
+                style={{ width: `${Math.max(4, ratio * 100)}%` }}
+              />
             </div>
-            <Stat icon={<TriangleAlert />} label="Weak" value={health.weak.length} />
-            <Stat icon={<Copy />} label="Reused" value={reusedIds.length} />
-            <Stat icon={<LockOpen />} label="Unsecured websites" value={health.insecureUrls.length} />
-          </div>
+            <p className="mt-3 text-[0.8125rem] text-text-muted">
+              {unsafe.size === 0 ? t("security.allGood") : t("security.toImprove", { count: unsafe.size })}
+            </p>
+            <p className="mt-1 text-xs text-text-muted">{breaches ? t("security.scopeBreach") : t("security.scope")}</p>
+          </section>
 
+          {unsafe.size > 0 && (
+            <p className="-mb-3 text-[0.8125rem] font-semibold text-text-muted">{t("security.priority")}</p>
+          )}
           <IssueList
-            title="Weak passwords"
-            description="Easy to guess. Change them on the website and let Passbox generate a strong one."
-            items={resolve(health.weak)}
-            onOpen={open}
-          />
-          <IssueList
-            title="Reused passwords"
-            description="If one of these sites is breached, attackers can sign in to the others."
+            icon={<Copy />}
+            title={t("security.reused.title")}
+            description={t("security.reused.text")}
             items={resolve(reusedIds)}
             onOpen={open}
+            onFix={fix}
             badge={(item) => {
               const group = health.reused.find((ids) => ids.includes(item.id));
-              return group ? <Badge tone="warning">Used {group.length}×</Badge> : null;
+              return group ? <Badge tone="warning">{t("security.usedTimes", { count: group.length })}</Badge> : null;
             }}
           />
+          {breaches && (
+            <IssueList
+              icon={<Search />}
+              title={t("security.breached.title")}
+              description={t("security.breached.text")}
+              items={resolve(breachedIds)}
+              onOpen={open}
+              onFix={fix}
+              badge={(item) => (
+                <Badge tone="danger">{t("security.breachedTimes", { count: breaches.counts.get(item.id) ?? 0 })}</Badge>
+              )}
+            />
+          )}
           <IssueList
-            title="Unsecured websites"
-            description="These logins point to http:// addresses, which send data unencrypted."
+            icon={<TriangleAlert />}
+            title={t("security.weak.title")}
+            description={t("security.weak.text")}
+            items={resolve(health.weak)}
+            onOpen={open}
+            onFix={fix}
+          />
+          <IssueList
+            icon={<LockOpen />}
+            title={t("security.insecure.title")}
+            description={t("security.insecure.text")}
             items={resolve(health.insecureUrls)}
             onOpen={open}
           />
-          <IssueList
-            title="Two-factor authentication"
-            description="Logins without a one-time password. Enable 2FA on the website where possible and store the code in Passbox."
-            items={resolve(health.withoutTotp)}
-            onOpen={open}
-            icon={<Timer />}
-            tone="neutral"
+
+          <BreachCheck
+            items={resolve(analyzedIds)}
+            checkedAt={breaches?.at}
+            onDone={(result) => {
+              breachResults = result;
+              setBreaches(result);
+            }}
           />
+
+          <details className="group rounded-card border border-border bg-surface shadow-card">
+            <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 coarse:py-5">
+              <Timer className="size-4 text-text-muted" aria-hidden="true" />
+              <span className="flex-1 text-sm font-semibold">{t("security.more")}</span>
+              <ChevronRight
+                className="size-4 text-text-muted transition-transform group-open:rotate-90"
+                aria-hidden="true"
+              />
+            </summary>
+            <div className="border-t border-border">
+              <IssueList
+                embedded
+                title={t("security.totp.title")}
+                description={t("security.totp.text")}
+                items={resolve(health.withoutTotp)}
+                onOpen={open}
+                tone="neutral"
+              />
+            </div>
+          </details>
         </div>
+      )}
+      {changing && (
+        <ChangePasswordDialog item={changing} open onOpenChange={(isOpen) => !isOpen && setChanging(undefined)} />
       )}
     </Page>
   );
 }
 
-function ScoreRing({ score, tone }: { score: number; tone: "success" | "warning" | "danger" }) {
-  const radius = 26;
-  const circumference = 2 * Math.PI * radius;
-  const stroke = { success: "stroke-success", warning: "stroke-warning", danger: "stroke-danger" }[tone];
-  return (
-    <span className="relative inline-flex size-16 items-center justify-center">
-      <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90" aria-hidden="true">
-        <circle cx="32" cy="32" r={radius} className="fill-none stroke-border" strokeWidth="6" />
-        <circle
-          cx="32"
-          cy="32"
-          r={radius}
-          className={`fill-none ${stroke}`}
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - score / 100)}
-        />
-      </svg>
-      <span className="text-lg font-semibold tabular-nums">{score}</span>
-    </span>
-  );
-}
+/** Opt-in check against Have I Been Pwned with k-anonymity (only a hash prefix leaves the device). */
+function BreachCheck({
+  items,
+  checkedAt,
+  onDone,
+}: {
+  items: Item[];
+  checkedAt: number | undefined;
+  onDone: (result: { at: number; counts: Map<string, number> }) => void;
+}) {
+  const i18n = useI18n();
+  const { t } = i18n;
+  const [progress, setProgress] = useState<{ done: number; total: number }>();
+  const [error, setError] = useState<string>();
 
-function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
+  async function run() {
+    setError(undefined);
+    const byPassword = new Map<string, string[]>();
+    for (const item of items) {
+      const password = fieldValue(item.data, FIELD.password);
+      if (password) byPassword.set(password, [...(byPassword.get(password) ?? []), item.id]);
+    }
+    const counts = new Map<string, number>();
+    let done = 0;
+    setProgress({ done, total: byPassword.size });
+    try {
+      for (const [password, ids] of byPassword) {
+        const count = await breachCount(password);
+        for (const id of ids) counts.set(id, count);
+        done++;
+        setProgress({ done, total: byPassword.size });
+      }
+      onDone({ at: Date.now(), counts });
+    } catch {
+      setError(t("security.breach.failed"));
+    } finally {
+      setProgress(undefined);
+    }
+  }
+
   return (
-    <div className="rounded-card border border-border bg-surface p-5 shadow-card">
-      <div className="flex items-center gap-2 text-text-subtle [&_svg]:size-4">
-        {icon}
-        <p className="text-2xs font-semibold tracking-wide uppercase">{label}</p>
+    <section className="rounded-card border border-border bg-surface p-5 shadow-card">
+      <div className="flex flex-wrap items-start gap-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-text-muted">
+          <Search className="size-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold">{t("security.breach.title")}</h2>
+          <p className="mt-1 text-[0.8125rem] text-text-muted">{t("security.breach.consent")}</p>
+          {checkedAt && (
+            <p className="mt-1 text-xs text-text-muted">
+              {t("security.breach.checked", { time: i18n.relativeTime(checkedAt) })}
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="mt-2 text-[0.8125rem] text-danger">
+              {error}
+            </p>
+          )}
+        </div>
+        <Button variant="secondary" onClick={() => void run()} loading={progress !== undefined}>
+          {progress
+            ? t("security.breach.progress", { done: progress.done, total: progress.total })
+            : checkedAt
+              ? t("security.breach.again")
+              : t("security.breach.start")}
+        </Button>
       </div>
-      <p className={`mt-2 text-2xl font-semibold tabular-nums ${value > 0 ? "text-text" : "text-success"}`}>{value}</p>
-    </div>
+    </section>
   );
 }
 
@@ -127,43 +231,68 @@ interface IssueListProps {
   description: string;
   items: Item[];
   onOpen: (id: string) => void;
+  onFix?: (item: Item) => void;
   badge?: (item: Item) => ReactNode;
   icon?: ReactNode;
   tone?: "warning" | "neutral";
+  embedded?: boolean;
 }
 
-function IssueList({ title, description, items, onOpen, badge, icon, tone = "warning" }: IssueListProps) {
+function IssueList({
+  title,
+  description,
+  items,
+  onOpen,
+  onFix,
+  badge,
+  icon,
+  tone = "warning",
+  embedded,
+}: IssueListProps) {
+  const { t } = useI18n();
   return (
-    <section className="rounded-card border border-border bg-surface shadow-card">
-      <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-        <div>
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
+    <section className={embedded ? undefined : "rounded-card border border-border bg-surface shadow-card"}>
+      <header className="flex items-start gap-3 border-b border-border px-5 py-4">
+        {/* Decorative: it marks the kind of problem and is not a button. */}
+        {icon && (
+          <span
+            aria-hidden="true"
+            className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-text-muted [&_svg]:size-3.5"
+          >
+            {icon}
+          </span>
+        )}
+        <div className="min-w-0">
+          <h2 className="flex flex-wrap items-center gap-2 text-sm font-semibold">
             {title}
             <Badge tone={items.length === 0 ? "success" : tone === "warning" ? "warning" : "neutral"}>
-              {items.length === 0 ? "All good" : items.length}
+              {items.length === 0 ? t("security.none.badge") : items.length}
             </Badge>
           </h2>
-          <p className="mt-0.5 text-[13px] text-text-muted">{description}</p>
+          <p className="mt-0.5 text-[0.8125rem] text-text-muted">{description}</p>
         </div>
-        <span className="text-text-subtle [&_svg]:size-4">{icon ?? <KeyRound />}</span>
       </header>
       {items.length > 0 && (
         <ul className="divide-y divide-border">
           {items.map((item) => (
-            <li key={item.id}>
+            <li key={item.id} className="flex items-center gap-2 pr-3 hover:bg-surface-raised sm:pr-5">
               <button
                 type="button"
                 onClick={() => onOpen(item.id)}
-                className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-surface-raised"
+                className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 text-left coarse:py-4"
               >
                 <Monogram name={item.data.title} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-medium">{item.data.title || "Untitled"}</span>
-                  <span className="block truncate text-xs text-text-muted">{itemSubtitle(item)}</span>
+                  <span className="block truncate text-[0.8125rem] font-medium">{itemTitle(item, t)}</span>
+                  <span className="block truncate text-xs text-text-muted">{itemSubtitle(item, t)}</span>
                 </span>
                 {badge?.(item)}
-                <ChevronRight className="size-4 text-text-subtle" aria-hidden="true" />
               </button>
+              {onFix && (
+                <Button size="sm" variant="secondary" onClick={() => onFix(item)}>
+                  {t("change.action")}
+                </Button>
+              )}
             </li>
           ))}
         </ul>

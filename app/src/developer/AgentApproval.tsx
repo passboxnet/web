@@ -7,7 +7,12 @@ import { requestAgentAttention } from "../desktop";
 import { useI18n } from "../lib/i18n";
 import { itemTitle } from "../lib/items";
 import { useClient, useSnapshot } from "../useClient";
-import { isPrefixPattern, refreshAgentRequests, startAgentRequestPolling, usePendingAgentRequests } from "./agentRequests";
+import {
+  isPrefixPattern,
+  refreshAgentRequests,
+  startAgentRequestPolling,
+  usePendingAgentRequests,
+} from "./agentRequests";
 
 /**
  * Polls for agent requests while unlocked and opens the approval dialog for
@@ -133,11 +138,7 @@ export function AgentApprovalDialog({
             <p className="text-[0.8125rem] font-medium">{t("agent.code.title")}</p>
             <p className="text-xs text-text-muted">{t("agent.code.hint")}</p>
           </div>
-          <p
-            className="font-mono text-2xl font-semibold tracking-wider tabular-nums"
-            data-testid="agent-code"
-            aria-label={t("agent.code.label", { code: request.code })}
-          >
+          <p className="font-mono text-2xl font-semibold tracking-wider tabular-nums" data-testid="agent-code">
             {request.code}
           </p>
         </div>
@@ -149,7 +150,10 @@ export function AgentApprovalDialog({
           </h3>
           <ul className="flex flex-col gap-1">
             {resolved.map(({ ref, item, vault }) => (
-              <li key={ref.itemId} className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-3 py-2">
+              <li
+                key={ref.itemId}
+                className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken px-3 py-2"
+              >
                 <span className="min-w-0 truncate font-medium">
                   {item ? itemTitle(item, t) : t("agent.unknownItem")}
                 </span>
@@ -177,9 +181,7 @@ export function AgentApprovalDialog({
                   <code className="block overflow-x-auto rounded-md bg-surface-sunken px-3 py-2 font-mono text-[0.8125rem] whitespace-pre-wrap break-all">
                     {command}
                   </code>
-                  {isPrefixPattern(command) && (
-                    <p className="mt-1 text-xs text-text-muted">{t("agent.prefixHint")}</p>
-                  )}
+                  {isPrefixPattern(command) && <p className="mt-1 text-xs text-text-muted">{t("agent.prefixHint")}</p>}
                 </li>
               ))}
             </ul>

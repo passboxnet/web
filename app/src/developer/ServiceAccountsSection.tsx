@@ -21,7 +21,17 @@ import {
   Spinner,
   toast,
 } from "@passbox/ui";
-import { AlertTriangle, Copy, History, KeyRound, MoreHorizontal, Plus, ServerCog, ShieldOff, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Copy,
+  History,
+  KeyRound,
+  MoreHorizontal,
+  Plus,
+  ServerCog,
+  ShieldOff,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { errorMessage } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
@@ -104,7 +114,11 @@ export function ServiceAccountsSection() {
           accounts.map((account) => {
             const outdated = account.grants.some((g) => g.keyEpoch < g.currentKeyEpoch);
             return (
-              <div key={account.id} className="flex flex-wrap items-start justify-between gap-3 px-5 py-4" data-testid="sa-row">
+              <div
+                key={account.id}
+                className="flex flex-wrap items-start justify-between gap-3 px-5 py-4"
+                data-testid="sa-row"
+              >
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium">
                     {account.name}
@@ -141,7 +155,11 @@ export function ServiceAccountsSection() {
                 </div>
                 <Menu>
                   <MenuTrigger asChild>
-                    <Button size="icon-sm" variant="ghost" aria-label={t("serviceAccount.actions", { name: account.name })}>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label={t("serviceAccount.actions", { name: account.name })}
+                    >
                       <MoreHorizontal />
                     </Button>
                   </MenuTrigger>
@@ -515,7 +533,16 @@ function HistoryDialog({ account, onClose }: { account: ServiceAccount; onClose:
       .then(setEvents)
       .catch((e: unknown) => setError(errorMessage(e)));
   }, [client, account.id]);
-  const known = new Set(["created", "read", "item_written", "item_deleted", "access_granted", "access_removed", "updated", "revoked"]);
+  const known = new Set([
+    "created",
+    "read",
+    "item_written",
+    "item_deleted",
+    "access_granted",
+    "access_removed",
+    "updated",
+    "revoked",
+  ]);
   return (
     <Dialog
       open

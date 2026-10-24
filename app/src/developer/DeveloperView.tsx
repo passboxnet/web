@@ -34,7 +34,11 @@ export function DeveloperView({
         />
       }
     >
-      {section === "agents" ? <AgentsSection onShowServiceAccounts={() => onSection("service-accounts")} /> : <ServiceAccountsSection />}
+      {section === "agents" ? (
+        <AgentsSection onShowServiceAccounts={() => onSection("service-accounts")} />
+      ) : (
+        <ServiceAccountsSection />
+      )}
     </Page>
   );
 }

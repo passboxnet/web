@@ -35,9 +35,9 @@ import {
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { SignOutDialog } from "../auth/SignOutDialog";
+import { usePendingAgentRequests } from "../developer/agentRequests";
 import { shortcut, useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
-import { usePendingAgentRequests } from "../developer/agentRequests";
 import { CATEGORY_META, CREATABLE } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { awaitingConfirmation, isOrgAdmin } from "../lib/sharing";
@@ -416,8 +416,7 @@ function DeveloperNavItem({ active, onClick }: { active: boolean; onClick: () =>
     <NavItem
       icon={Code2}
       label={t("developer.title")}
-      ariaLabel={pending > 0 ? t("developer.navPending", { count: pending }) : undefined}
-      count={pending > 0 ? pending : undefined}
+      {...(pending > 0 ? { ariaLabel: t("developer.navPending", { count: pending }), count: pending } : {})}
       active={active}
       onClick={onClick}
     />

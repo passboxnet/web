@@ -43,9 +43,9 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { errorMessage } from "../core";
+import { EnvironmentPanel } from "../developer/EnvironmentPanel";
 import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
-import { EnvironmentPanel } from "../developer/EnvironmentPanel";
 import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
 import type { Route } from "../lib/route";
 import { AudienceIcon, useAudience } from "../sharing/common";

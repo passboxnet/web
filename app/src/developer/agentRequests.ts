@@ -31,8 +31,7 @@ export function startAgentRequestPolling(client: PassboxClient): () => void {
     if (stopped || unsupported) return;
     try {
       const requests = await client.agentRequests("pending");
-      if (!stopped)
-        emit(requests.filter((r) => r.expiresAt > Date.now()).sort((a, b) => a.createdAt - b.createdAt));
+      if (!stopped) emit(requests.filter((r) => r.expiresAt > Date.now()).sort((a, b) => a.createdAt - b.createdAt));
     } catch (error) {
       // An older server without agent support: stop asking.
       if ((error as { status?: number }).status === 404) unsupported = true;

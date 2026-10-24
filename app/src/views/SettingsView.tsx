@@ -1,7 +1,8 @@
 import type { ServerMeta } from "@passbox/api-client";
-import { Badge, Button, ConfirmDialog, Monogram, SegmentedControl } from "@passbox/ui";
+import { Badge, Button, ConfirmDialog, Monogram, SegmentedControl, Switch } from "@passbox/ui";
 import { Lock, LogOut } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { isDesktop } from "../desktop";
 import { setPreferences, type Theme, usePreferences } from "../lib/preferences";
 import { serverApi, serverLabel } from "../lib/server";
 import { useClient, useSnapshot } from "../useClient";
@@ -77,6 +78,16 @@ export function SettingsView() {
               ))}
             </select>
           </Row>
+          {isDesktop && (
+            <div className="px-5 py-4">
+              <Switch
+                label="Lock when the window is closed"
+                description="Passbox keeps running in the tray after you close the window."
+                checked={preferences.lockOnClose}
+                onCheckedChange={(lockOnClose) => setPreferences({ lockOnClose })}
+              />
+            </div>
+          )}
           <Row label="Lock now" description="Removes all keys and decrypted data from memory.">
             <Button variant="secondary" size="sm" onClick={() => client.lock()}>
               <Lock />

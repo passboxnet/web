@@ -1,6 +1,6 @@
 import { Button, Logo } from "@passbox/ui";
 import { Menu as MenuIcon, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { onCommandPaletteRequest } from "../desktop";
 import { usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
@@ -25,7 +25,9 @@ export function AppShell() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: recompute when the items change
   const health = useMemo(() => client.health(), [client, snapshot.items]);
 
-  useAutoLock(client.lock.bind(client), preferences.autoLockMinutes);
+  // A stable callback: a new one on every render would restart the inactivity timer.
+  const lock = useCallback(() => client.lock(), [client]);
+  useAutoLock(lock, preferences.autoLockMinutes);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

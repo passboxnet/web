@@ -118,3 +118,37 @@ test("a wrong Secret Key is rejected", async ({ page, browser }) => {
   await signIn(stranger, email, "P1-00000-00000-00000-00000-000000");
   await expect(stranger.getByRole("alert")).toContainText("incorrect");
 });
+
+test("a different server address works across origins", async ({ page, baseURL }) => {
+  // The app is served from 127.0.0.1; localhost is another origin for the
+  // browser, so this goes through the server's CORS support like the desktop app.
+  const port = new URL(baseURL ?? "").port;
+  const other = `http://localhost:${port}`;
+  await page.goto("/");
+  await expect(page.getByText(`127.0.0.1:${port} · v`)).toBeVisible();
+  await page.getByRole("button", { name: "Use a different server" }).click();
+  await page.getByLabel("Server address").fill("ftp://example.com");
+  await page.getByRole("button", { name: "Connect" }).click();
+  await expect(page.getByRole("alert")).toContainText("https://");
+  await page.getByLabel("Server address").fill(other);
+  await page.getByRole("button", { name: "Connect" }).click();
+  await expect(page.getByText(`localhost:${port} · v`)).toBeVisible();
+
+  await page.locator("fieldset").getByText("Create account").click();
+  await page.getByLabel("Email").fill(uniqueEmail());
+  await page.getByLabel("Master password", { exact: true }).fill(PASSWORD);
+  await page.getByLabel("Confirm master password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText(other, { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel("I have saved my Emergency Kit").check();
+  await page.getByRole("button", { name: "Open my vault" }).click();
+  await newItem(page, "Secure note");
+  await page.getByLabel("Title").fill("Cross-origin");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Cross-origin", level: 2 })).toBeVisible();
+
+  await page.evaluate(() => {
+    window.location.hash = "#/settings";
+  });
+  await expect(page.getByText(`localhost:${port}`, { exact: true })).toBeVisible();
+});

@@ -2,6 +2,7 @@ import { analyzeVault } from "@passbox/client";
 import { Button, Logo } from "@passbox/ui";
 import { Menu as MenuIcon, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { onCommandPaletteRequest } from "../desktop";
 import { usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
@@ -36,6 +37,9 @@ export function AppShell() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // Global shortcut of the desktop app.
+  useEffect(() => onCommandPaletteRequest(() => setPaletteOpen(true)), []);
 
   // Close the mobile drawer on navigation.
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the route changes

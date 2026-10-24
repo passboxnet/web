@@ -1,6 +1,7 @@
 import { createClient } from "@passbox/api-client";
 import { PassboxClient } from "@passbox/client";
 import init, * as core from "@passbox/core-wasm";
+import { serverUrl } from "./lib/server";
 
 let ready: Promise<typeof core> | undefined;
 
@@ -12,11 +13,11 @@ export function loadCore(): Promise<typeof core> {
 
 let client: Promise<PassboxClient> | undefined;
 
-/** The app-wide client. The web app talks to the server it was loaded from. */
+/** The app-wide client. It talks to the server from `serverUrl()`, by default the one the app was loaded from. */
 export function loadClient(): Promise<PassboxClient> {
   client ??= loadCore().then((loaded) => {
     let instance: PassboxClient | undefined;
-    const api = createClient({ getToken: () => instance?.token });
+    const api = createClient({ baseUrl: serverUrl() ?? "", getToken: () => instance?.token });
     instance = new PassboxClient({ core: loaded, api, storage: window.localStorage });
     return instance;
   });

@@ -2,13 +2,25 @@ import { estimateStrength } from "@passbox/client";
 import { Button, Input, PasswordInput, SegmentedControl, StrengthMeter } from "@passbox/ui";
 import { type FormEvent, useState } from "react";
 import { errorMessage, nextFrame } from "../core";
+import { serverUrl } from "../lib/server";
 import { useClient } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
+import { linkClass, ServerForm } from "./ServerForm";
 
 const MIN_PASSWORD_LENGTH = 10;
 
 export function WelcomeScreen({ onSignedUp }: { onSignedUp: (secretKey: string) => void }) {
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [choosingServer, setChoosingServer] = useState(false);
+
+  // The desktop app has no server of its own: ask for one first.
+  if (!serverUrl() || choosingServer) {
+    return (
+      <AuthLayout>
+        <ServerForm onCancel={serverUrl() ? () => setChoosingServer(false) : undefined} />
+      </AuthLayout>
+    );
+  }
   return (
     <AuthLayout>
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -30,6 +42,9 @@ export function WelcomeScreen({ onSignedUp }: { onSignedUp: (secretKey: string) 
         ]}
       />
       <div className="mt-6">{mode === "sign-in" ? <SignInForm /> : <SignUpForm onSignedUp={onSignedUp} />}</div>
+      <button type="button" onClick={() => setChoosingServer(true)} className={`mt-6 ${linkClass}`}>
+        Use a different server
+      </button>
     </AuthLayout>
   );
 }

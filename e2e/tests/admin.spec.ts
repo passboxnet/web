@@ -52,7 +52,9 @@ test("the first account administers the server and invite-only registration", as
   await expect(page.getByText("Email is not set up")).toBeVisible();
   await expect(page.getByText("Log intact")).toBeVisible();
 
+  const testMail = page.waitForResponse((r) => r.url().endsWith("/api/v1/admin/mail/test"), { timeout: 30_000 });
   await page.getByRole("button", { name: "Send test email" }).click();
+  expect((await testMail).status()).toBe(200);
   await expect(page.getByText("Test email written to the server log")).toBeVisible();
 
   // Invite only, with a name and a help address.

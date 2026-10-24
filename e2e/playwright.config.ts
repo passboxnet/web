@@ -13,7 +13,10 @@ function server(listen: number, database: string) {
     url: `http://127.0.0.1:${listen}/health`,
     timeout: 300_000,
     reuseExistingServer: false,
+    // Server logs (with request timings) show up in CI output.
+    stdout: process.env.CI ? ("pipe" as const) : ("ignore" as const),
     env: {
+      RUST_LOG: "info,tower_http=debug",
       PASSBOX_BIND: `127.0.0.1:${listen}`,
       PASSBOX_DATABASE_URL: `sqlite://${join(dataDir, database)}?mode=rwc`,
       PASSBOX_WEB_DIR: "apps/web/dist",

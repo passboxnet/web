@@ -55,6 +55,7 @@ export function errorMessage(error: unknown, context: ErrorContext = "general"):
     "RecoveryExpiredError",
     "RecoveryVerificationError",
     "InvalidDeviceCodeError",
+    "PolicyViolationError",
   ];
   if (!(error instanceof Error && known.includes(error.name))) console.error(error);
   return describeError(error, i18n().t, context);

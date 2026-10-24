@@ -2,7 +2,7 @@ import { Button, Dialog, Input, toast } from "@passbox/ui";
 import { type FormEvent, useState } from "react";
 import { errorMessage } from "../core";
 import { useI18n } from "../lib/i18n";
-import { useClient } from "../useClient";
+import { useClient, useSnapshot } from "../useClient";
 
 interface NewVaultDialogProps {
   open: boolean;
@@ -15,6 +15,8 @@ export function NewVaultDialog({ open, onOpenChange, onCreated }: NewVaultDialog
   const { t } = useI18n();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  // Policy D2: an organization can turn personal vaults off.
+  const blocked = !useSnapshot().effectivePolicy.allowPersonalVault;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -49,11 +51,16 @@ export function NewVaultDialog({ open, onOpenChange, onCreated }: NewVaultDialog
           placeholder={t("vault.namePlaceholder")}
           autoFocus
         />
+        {blocked && (
+          <p role="status" className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-[0.8125rem]">
+            {t("orgAdmin.error.personalVault")}
+          </p>
+        )}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             {t("action.cancel")}
           </Button>
-          <Button type="submit" loading={busy} disabled={!name.trim()}>
+          <Button type="submit" loading={busy} disabled={!name.trim() || blocked}>
             {t("vault.create")}
           </Button>
         </div>

@@ -1,6 +1,6 @@
 import type { PassboxClient } from "@passbox/client";
 import { Logo, Spinner } from "@passbox/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { EmergencyKitScreen } from "./auth/EmergencyKitScreen";
 import { KitProvider, useKit } from "./auth/KitProvider";
 import { UnlockScreen } from "./auth/UnlockScreen";
@@ -18,6 +18,8 @@ import { AppShell } from "./shell/AppShell";
 import { useSsoCallbackRoute } from "./sso/route";
 import { SsoCallbackScreen } from "./sso/SsoCallbackScreen";
 import { ClientContext, useSnapshot } from "./useClient";
+
+const noSubscribe = () => () => undefined;
 
 export function App() {
   const { t } = useI18n();
@@ -52,13 +54,25 @@ export function App() {
         // access sealed again after vault key changes (best effort).
         client.refreshRecoveryOptions().catch((e: unknown) => console.warn("Could not load recovery options", e));
         client.resealEmergencyAccess().catch((e: unknown) => console.warn("Could not update emergency access", e));
+        // Organizations receive security aggregates (numbers only) at most daily
+        // (D6), once the first sync has brought the organizations in.
+        setTimeout(() => {
+          if (client.getSnapshot().status !== "unlocked") return;
+          client.reportSecurityAggregates().catch((e: unknown) => console.warn("Could not report security", e));
+        }, 15_000);
       }
       status = next;
     });
   }, [client]);
 
   // The desktop shell applies these while the window is hidden.
-  const { lockOnClose, autoLockMinutes } = usePreferences();
+  const { lockOnClose, autoLockMinutes: preferred } = usePreferences();
+  // An organization policy can cap the auto-lock time (D2).
+  const limit = useSyncExternalStore(
+    client?.subscribe ?? noSubscribe,
+    () => client?.getSnapshot().effectivePolicy.maxAutoLockMinutes ?? null,
+  );
+  const autoLockMinutes = limit && preferred > limit ? limit : preferred;
   useEffect(() => {
     setDesktopLockSettings({ lockOnClose, autoLockMinutes }).catch((e: unknown) =>
       console.error("Could not pass the lock settings to the desktop app", e),

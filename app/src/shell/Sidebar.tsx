@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from "@passbox/ui";
 import {
+  Building2,
   ChevronsUpDown,
   Layers,
   ListChecks,
@@ -85,6 +86,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   // Admins see how many people wait for them; everyone sees sharing problems.
   const waiting = orgs.reduce((sum, org) => sum + (isOrgAdmin(org) ? awaitingConfirmation(org).length : 0), 0);
   const sharingActive = route.view === "sharing" || route.view === "org";
+  const adminOrgs = orgs.filter(isOrgAdmin);
 
   return (
     <nav
@@ -307,6 +309,18 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               label={t("admin.title")}
               active={route.view === "admin"}
               onClick={() => navigate({ view: "admin" })}
+            />
+          )}
+          {adminOrgs.length > 0 && (
+            <NavItem
+              icon={Building2}
+              label={t("orgAdmin.title")}
+              active={route.view === "org-admin"}
+              onClick={() => {
+                // The organization on screen, else the first one this account administers.
+                const current = route.view === "org" ? adminOrgs.find((o) => o.id === route.orgId) : undefined;
+                navigate({ view: "org-admin", orgId: (current ?? adminOrgs[0])?.id ?? "" });
+              }}
             />
           )}
         </NavGroup>

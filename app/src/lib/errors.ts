@@ -33,6 +33,10 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
   if (error instanceof Error && error.name === "RecoveryExpiredError") return t("recovery.expired");
   if (error instanceof Error && error.name === "RecoveryVerificationError") return t("recovery.verificationFailed");
   if (error instanceof Error && error.name === "InvalidDeviceCodeError") return t("linkDevice.invalid");
+  if (error instanceof Error && error.name === "PolicyViolationError") {
+    const rule = (error as Error & { rule?: string }).rule;
+    return rule === "personal_vault" ? t("orgAdmin.error.personalVault") : t("orgAdmin.error.policy");
+  }
   if (error instanceof ApiError) {
     if (error.code?.startsWith("sso_")) return ssoErrorMessage(error.code, t);
     switch (error.code) {
@@ -71,6 +75,12 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("errors.emergencyWaiting");
       case "device_link_expired":
         return t("linkDevice.invalid");
+      case "policy_violation":
+        return /personal vault/i.test(error.body?.message ?? "")
+          ? t("orgAdmin.error.personalVault")
+          : /two-factor/i.test(error.body?.message ?? "")
+            ? t("orgAdmin.error.twoFactorRequired")
+            : t("orgAdmin.error.policy");
       case "forbidden":
         return t("errors.forbidden");
       case "not_found":

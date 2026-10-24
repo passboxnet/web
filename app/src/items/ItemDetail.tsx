@@ -41,7 +41,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { errorMessage } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
@@ -56,6 +56,7 @@ import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { ColoredPassword } from "./ColoredPassword";
 import { CountdownRing, useTotp } from "./TotpCode";
 import { useAutoHide } from "./useAutoHide";
+import { ItemUsageContext, type ReportUsage, useItemUsage } from "./useItemUsage";
 
 interface ItemDetailProps {
   item: Item | undefined;
@@ -106,6 +107,18 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   const audience = useAudience(item?.vaultId);
   // View-only members of a shared vault can read, copy and fill, not change.
   const canEdit = !itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage";
+
+  // Item usage for organizations whose policy asks for it (D3).
+  const itemId = item?.id;
+  const reportUsage = useCallback<ReportUsage>(
+    (action, field = "") => {
+      if (itemId) client.reportItemUsage(itemId, action, field);
+    },
+    [client, itemId],
+  );
+  useEffect(() => {
+    if (itemId) client.reportItemUsage(itemId, "item_viewed");
+  }, [client, itemId]);
 
   // "e" edits the selected item when focus is not in a text field.
   useEffect(() => {
@@ -159,196 +172,210 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   }
 
   return (
-    <section aria-label={itemTitle(item, t)} className="flex min-w-0 flex-1 flex-col bg-canvas" key={item.id}>
-      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-4 coarse:h-16">
-        <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-text-muted">
-          <Button variant="ghost" size="icon-sm" aria-label={t("detail.back")} onClick={onBack} className="md:hidden">
-            <ArrowLeft />
-          </Button>
-          <AudienceIcon shared={audience.shared !== undefined} className="hidden shrink-0 sm:inline" />
-          <span className="hidden truncate sm:inline">{vault}</span>
-          <ChevronRight className="hidden size-3.5 shrink-0 text-text-muted sm:inline" aria-hidden="true" />
-          <span className="truncate">{t(category.label)}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          {canEdit && (
-            <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
-                aria-pressed={data.favorite}
-                onClick={toggleFavorite}
-              >
-                <Star className={data.favorite ? "fill-warning text-warning" : undefined} />
-              </Button>
-            </Tooltip>
-          )}
-          {canEdit && (
-            <Button variant="secondary" size="sm" onClick={() => onEdit(item.id)}>
-              <Pencil />
-              {t("action.edit")}
-              <span className="ml-1 hidden sm:inline">
-                <Kbd>E</Kbd>
-              </span>
+    <ItemUsageContext.Provider value={reportUsage}>
+      <section aria-label={itemTitle(item, t)} className="flex min-w-0 flex-1 flex-col bg-canvas" key={item.id}>
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-4 coarse:h-16">
+          <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-text-muted">
+            <Button variant="ghost" size="icon-sm" aria-label={t("detail.back")} onClick={onBack} className="md:hidden">
+              <ArrowLeft />
             </Button>
-          )}
-          <Menu>
-            <MenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t("detail.more")}>
-                <MoreHorizontal />
-              </Button>
-            </MenuTrigger>
-            <MenuContent>
-              {username && (
-                <MenuItem icon={<Copy />} onSelect={() => copyToClipboard(username, t("field.username"))}>
-                  {t("list.copyUsername")}
-                </MenuItem>
-              )}
-              {password && (
-                <MenuItem icon={<Copy />} onSelect={() => copyToClipboard(password, t("field.password"))}>
-                  {t("list.copyPassword")}
-                </MenuItem>
-              )}
-              {url && safeHref(url) && (
-                <MenuItem icon={<ExternalLink />} onSelect={() => window.open(safeHref(url), "_blank", "noopener")}>
-                  {t("change.openWebsite")}
-                </MenuItem>
-              )}
-              {(username || password || url) && <MenuSeparator />}
-              <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
-                {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
-              </MenuItem>
-              {canEdit && (
-                <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
-                  {t("action.moveToTrash")}
-                </MenuItem>
-              )}
-            </MenuContent>
-          </Menu>
-        </div>
-      </header>
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-10">
-          <div className="flex items-center gap-4">
-            <Monogram name={data.title} size="xl" icon={data.category === "login" ? undefined : <category.icon />} />
-            <div className="min-w-0">
-              <h2 className="text-2xl font-semibold tracking-tight break-words">{itemTitle(item, t)}</h2>
-              {url && safeHref(url) ? (
-                <a
-                  href={safeHref(url)}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="mt-0.5 inline-flex items-center gap-1 text-[0.8125rem] text-text-muted hover:text-accent"
-                >
-                  {hostname(url)}
-                  <ExternalLink className="size-3" aria-hidden="true" />
-                </a>
-              ) : (
-                <p className="mt-0.5 text-[0.8125rem] text-text-muted">{t(category.label)}</p>
-              )}
-              <button
-                type="button"
-                onClick={() => setSharing(true)}
-                className="mt-1.5 flex items-center gap-1.5 rounded-md text-xs text-text-muted hover:text-accent coarse:py-2"
-                data-testid="item-audience"
-              >
-                <AudienceIcon shared={audience.shared !== undefined} />
-                {audience.shared ? t("sharing.audience.visibleFor", { audience: audience.label }) : audience.label}
-              </button>
-            </div>
+            <AudienceIcon shared={audience.shared !== undefined} className="hidden shrink-0 sm:inline" />
+            <span className="hidden truncate sm:inline">{vault}</span>
+            <ChevronRight className="hidden size-3.5 shrink-0 text-text-muted sm:inline" aria-hidden="true" />
+            <span className="truncate">{t(category.label)}</span>
           </div>
-
-          {!canEdit && (
-            <div
-              role="note"
-              className="mt-6 flex items-start gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
-            >
-              <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
-              <p>
-                <strong className="font-semibold">{t("sharing.viewOnly.title")}</strong>{" "}
-                <span className="text-text-muted">{t("sharing.viewOnly.text")}</span>
-              </p>
-            </div>
-          )}
-
-          {warnings.length > 0 && (
-            <div className="mt-6 flex flex-col gap-2">
-              {warnings.map(({ text, canChange }) => (
-                <div
-                  key={text}
-                  className="flex flex-wrap items-start gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[0.8125rem]"
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
+                  aria-pressed={data.favorite}
+                  onClick={toggleFavorite}
                 >
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-                  <span className="min-w-0 flex-1">{text}</span>
-                  {canChange && password && (
-                    <Button size="xs" variant="secondary" onClick={() => setChanging(true)}>
-                      {t("change.action")}
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  <Star className={data.favorite ? "fill-warning text-warning" : undefined} />
+                </Button>
+              </Tooltip>
+            )}
+            {canEdit && (
+              <Button variant="secondary" size="sm" onClick={() => onEdit(item.id)}>
+                <Pencil />
+                {t("action.edit")}
+                <span className="ml-1 hidden sm:inline">
+                  <Kbd>E</Kbd>
+                </span>
+              </Button>
+            )}
+            <Menu>
+              <MenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label={t("detail.more")}>
+                  <MoreHorizontal />
+                </Button>
+              </MenuTrigger>
+              <MenuContent>
+                {username && (
+                  <MenuItem
+                    icon={<Copy />}
+                    onSelect={() => {
+                      reportUsage("item_copied", FIELD.username);
+                      void copyToClipboard(username, t("field.username"));
+                    }}
+                  >
+                    {t("list.copyUsername")}
+                  </MenuItem>
+                )}
+                {password && (
+                  <MenuItem
+                    icon={<Copy />}
+                    onSelect={() => {
+                      reportUsage("item_copied", FIELD.password);
+                      void copyToClipboard(password, t("field.password"));
+                    }}
+                  >
+                    {t("list.copyPassword")}
+                  </MenuItem>
+                )}
+                {url && safeHref(url) && (
+                  <MenuItem icon={<ExternalLink />} onSelect={() => window.open(safeHref(url), "_blank", "noopener")}>
+                    {t("change.openWebsite")}
+                  </MenuItem>
+                )}
+                {(username || password || url) && <MenuSeparator />}
+                <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
+                  {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
+                </MenuItem>
+                {canEdit && (
+                  <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
+                    {t("action.moveToTrash")}
+                  </MenuItem>
+                )}
+              </MenuContent>
+            </Menu>
+          </div>
+        </header>
 
-          {fields.length > 0 && (
-            <Card className="mt-6">
-              {fields.map((field) => (
-                <FieldRow key={field.id} field={field} onEdit={canEdit ? () => onEdit(item.id) : undefined} />
-              ))}
-            </Card>
-          )}
-
-          {data.passkeys && data.passkeys.length > 0 && (
-            <Card className="mt-4">
-              {data.passkeys.map((passkey) => (
-                <PasskeyRow key={passkey.credentialId} passkey={passkey} />
-              ))}
-            </Card>
-          )}
-
-          {data.notes && (
-            <Card className="mt-4">
-              <div className="px-4 py-3">
-                <p className="text-xs font-medium text-text-muted">{t("field.notes")}</p>
-                <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-wrap">{data.notes}</p>
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-10">
+            <div className="flex items-center gap-4">
+              <Monogram name={data.title} size="xl" icon={data.category === "login" ? undefined : <category.icon />} />
+              <div className="min-w-0">
+                <h2 className="text-2xl font-semibold tracking-tight break-words">{itemTitle(item, t)}</h2>
+                {url && safeHref(url) ? (
+                  <a
+                    href={safeHref(url)}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="mt-0.5 inline-flex items-center gap-1 text-[0.8125rem] text-text-muted hover:text-accent"
+                  >
+                    {hostname(url)}
+                    <ExternalLink className="size-3" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <p className="mt-0.5 text-[0.8125rem] text-text-muted">{t(category.label)}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSharing(true)}
+                  className="mt-1.5 flex items-center gap-1.5 rounded-md text-xs text-text-muted hover:text-accent coarse:py-2"
+                  data-testid="item-audience"
+                >
+                  <AudienceIcon shared={audience.shared !== undefined} />
+                  {audience.shared ? t("sharing.audience.visibleFor", { audience: audience.label }) : audience.label}
+                </button>
               </div>
-            </Card>
-          )}
+            </div>
 
-          {data.tags.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={t("field.tags")}>
-              {data.tags.map((tag) => (
-                <li key={tag}>
-                  <Badge>{tag}</Badge>
-                </li>
-              ))}
-            </ul>
-          )}
+            {!canEdit && (
+              <div
+                role="note"
+                className="mt-6 flex items-start gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
+              >
+                <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
+                <p>
+                  <strong className="font-semibold">{t("sharing.viewOnly.title")}</strong>{" "}
+                  <span className="text-text-muted">{t("sharing.viewOnly.text")}</span>
+                </p>
+              </div>
+            )}
 
-          {data.passwordHistory && data.passwordHistory.length > 0 && (
-            <PasswordHistorySection item={item} history={data.passwordHistory} canRestore={canEdit} />
-          )}
+            {warnings.length > 0 && (
+              <div className="mt-6 flex flex-col gap-2">
+                {warnings.map(({ text, canChange }) => (
+                  <div
+                    key={text}
+                    className="flex flex-wrap items-start gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[0.8125rem]"
+                  >
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+                    <span className="min-w-0 flex-1">{text}</span>
+                    {canChange && password && (
+                      <Button size="xs" variant="secondary" onClick={() => setChanging(true)}>
+                        {t("change.action")}
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-4 text-xs">
-            <Meta
-              label={t("detail.modified")}
-              value={i18n.relativeTime(item.updatedAt)}
-              title={i18n.dateTime(item.updatedAt)}
-            />
-            <Meta label={t("term.vault")} value={vault} />
-          </dl>
+            {fields.length > 0 && (
+              <Card className="mt-6">
+                {fields.map((field) => (
+                  <FieldRow key={field.id} field={field} onEdit={canEdit ? () => onEdit(item.id) : undefined} />
+                ))}
+              </Card>
+            )}
+
+            {data.passkeys && data.passkeys.length > 0 && (
+              <Card className="mt-4">
+                {data.passkeys.map((passkey) => (
+                  <PasskeyRow key={passkey.credentialId} passkey={passkey} />
+                ))}
+              </Card>
+            )}
+
+            {data.notes && (
+              <Card className="mt-4">
+                <div className="px-4 py-3">
+                  <p className="text-xs font-medium text-text-muted">{t("field.notes")}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-wrap">{data.notes}</p>
+                </div>
+              </Card>
+            )}
+
+            {data.tags.length > 0 && (
+              <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={t("field.tags")}>
+                {data.tags.map((tag) => (
+                  <li key={tag}>
+                    <Badge>{tag}</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {data.passwordHistory && data.passwordHistory.length > 0 && (
+              <PasswordHistorySection item={item} history={data.passwordHistory} canRestore={canEdit} />
+            )}
+
+            <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-4 text-xs">
+              <Meta
+                label={t("detail.modified")}
+                value={i18n.relativeTime(item.updatedAt)}
+                title={i18n.dateTime(item.updatedAt)}
+              />
+              <Meta label={t("term.vault")} value={vault} />
+            </dl>
+          </div>
         </div>
-      </div>
 
-      {password && <ChangePasswordDialog item={item} open={changing} onOpenChange={setChanging} />}
-      {audience.shared ? (
-        <VaultSharingDialog vaultId={sharing ? item.vaultId : undefined} onOpenChange={setSharing} />
-      ) : (
-        <ShareItemDialog item={item} open={sharing} onOpenChange={setSharing} navigate={navigate} />
-      )}
-    </section>
+        {password && <ChangePasswordDialog item={item} open={changing} onOpenChange={setChanging} />}
+        {audience.shared ? (
+          <VaultSharingDialog vaultId={sharing ? item.vaultId : undefined} onOpenChange={setSharing} />
+        ) : (
+          <ShareItemDialog item={item} open={sharing} onOpenChange={setSharing} navigate={navigate} />
+        )}
+      </section>
+    </ItemUsageContext.Provider>
   );
 }
 
@@ -400,6 +427,7 @@ function PasswordHistorySection({
   const i18n = useI18n();
   const { t } = i18n;
   const [restoring, setRestoring] = useState<PasswordHistoryEntry>();
+  const reportUsage = useItemUsage();
 
   async function restore(entry: PasswordHistoryEntry) {
     try {
@@ -435,7 +463,10 @@ function PasswordHistorySection({
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t("history.copy")}
-                onClick={() => copyToClipboard(entry.value, t("history.previousPassword"))}
+                onClick={() => {
+                  reportUsage("item_copied", "password_history");
+                  void copyToClipboard(entry.value, t("history.previousPassword"));
+                }}
               >
                 <Copy />
               </Button>
@@ -465,6 +496,7 @@ function PasswordHistorySection({
 function SecretText({ value, label }: { value: string; label: string }) {
   const { t } = useI18n();
   const [revealed, setRevealed] = useAutoHide();
+  const reportUsage = useItemUsage();
   return (
     <span className="flex items-center gap-1">
       <span className="truncate font-mono text-[0.8125rem]">
@@ -474,7 +506,10 @@ function SecretText({ value, label }: { value: string; label: string }) {
         variant="ghost"
         size="icon-sm"
         aria-label={revealed ? t("detail.hide", { label }) : t("detail.reveal", { label })}
-        onClick={() => setRevealed(!revealed)}
+        onClick={() => {
+          if (!revealed) reportUsage("secret_revealed", "password_history");
+          setRevealed(!revealed);
+        }}
       >
         {revealed ? <EyeOff /> : <Eye />}
       </Button>
@@ -552,6 +587,7 @@ function FieldValue({ field, label, onEdit }: { field: ItemField; label: string;
 
 function FieldActions({ field, label }: { field: ItemField; label: string }) {
   const { t } = useI18n();
+  const reportUsage = useItemUsage();
   if (field.type === "totp" || field.type === "concealed") return null;
   return (
     <span className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 coarse:opacity-100">
@@ -560,7 +596,10 @@ function FieldActions({ field, label }: { field: ItemField; label: string }) {
           variant="ghost"
           size="icon-sm"
           aria-label={t("detail.copy", { label })}
-          onClick={() => copyToClipboard(field.value, label)}
+          onClick={() => {
+            reportUsage("item_copied", field.id);
+            void copyToClipboard(field.value, label);
+          }}
         >
           <Copy />
         </Button>
@@ -573,6 +612,7 @@ function ConcealedValue({ field, label }: { field: ItemField; label: string }) {
   const [revealed, setRevealed] = useAutoHide();
   const [large, setLarge] = useState(false);
   const client = useClient();
+  const reportUsage = useItemUsage();
   const { t } = useI18n();
   const strength = field.id === FIELD.password ? client.estimateStrength(field.value) : undefined;
   return (
@@ -592,14 +632,25 @@ function ConcealedValue({ field, label }: { field: ItemField; label: string }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => setRevealed(!revealed)}
+            onClick={() => {
+              if (!revealed) reportUsage("secret_revealed", field.id);
+              setRevealed(!revealed);
+            }}
             aria-label={revealed ? t("detail.hide", { label }) : t("detail.reveal", { label })}
           >
             {revealed ? <EyeOff /> : <Eye />}
           </Button>
         </Tooltip>
         <Tooltip content={t("detail.large")}>
-          <Button variant="ghost" size="icon-sm" aria-label={t("detail.large")} onClick={() => setLarge(true)}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("detail.large")}
+            onClick={() => {
+              reportUsage("secret_revealed", field.id);
+              setLarge(true);
+            }}
+          >
             <Maximize2 />
           </Button>
         </Tooltip>
@@ -608,7 +659,10 @@ function ConcealedValue({ field, label }: { field: ItemField; label: string }) {
             variant="ghost"
             size="icon-sm"
             aria-label={t("detail.copy", { label })}
-            onClick={() => copyToClipboard(field.value, label)}
+            onClick={() => {
+              reportUsage("item_copied", field.id);
+              void copyToClipboard(field.value, label);
+            }}
           >
             <Copy />
           </Button>
@@ -660,6 +714,7 @@ function LargeType({ value, onClose }: { value: string; onClose: () => void }) {
 
 function TotpValue({ uri, onEdit }: { uri: string; onEdit: (() => void) | undefined }) {
   const { t } = useI18n();
+  const reportUsage = useItemUsage();
   const totp = useTotp(uri);
   if (totp === undefined) return <span className="text-text-muted">…</span>;
   if (totp === "invalid") {
@@ -688,7 +743,10 @@ function TotpValue({ uri, onEdit }: { uri: string; onEdit: (() => void) | undefi
           variant="ghost"
           size="icon-sm"
           aria-label={t("list.copyCode")}
-          onClick={() => copyToClipboard(totp.code, t("list.code"))}
+          onClick={() => {
+            reportUsage("item_copied", "totp");
+            void copyToClipboard(totp.code, t("list.code"));
+          }}
         >
           <Copy />
         </Button>

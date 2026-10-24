@@ -5,17 +5,19 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import deCommon from "@passbox/i18n/messages/de/common.json";
+import deOrgAdmin from "@passbox/i18n/messages/de/orgadmin.json";
 import deSso from "@passbox/i18n/messages/de/sso.json";
 import deWeb from "@passbox/i18n/messages/de/web.json";
 import enCommon from "@passbox/i18n/messages/en/common.json";
+import enOrgAdmin from "@passbox/i18n/messages/en/orgadmin.json";
 import enSso from "@passbox/i18n/messages/en/sso.json";
 import enWeb from "@passbox/i18n/messages/en/web.json";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 const root = import.meta.dirname;
-const en: Record<string, string> = { ...enCommon, ...enWeb, ...enSso };
-const de: Record<string, string> = { ...deCommon, ...deWeb, ...deSso };
+const en: Record<string, string> = { ...enCommon, ...enWeb, ...enSso, ...enOrgAdmin };
+const de: Record<string, string> = { ...deCommon, ...deWeb, ...deSso, ...deOrgAdmin };
 
 /** Text that is the same in every language: the brand, key names, formats. */
 const ALLOWED_TEXT = new Set(["Passbox", "Esc", "E", "K", "/", "PIN", "v"]);

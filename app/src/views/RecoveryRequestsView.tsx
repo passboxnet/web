@@ -34,7 +34,7 @@ export function RecoveryRequestsView() {
   );
 }
 
-function OrgRequests({ org }: { org: Org }) {
+export function OrgRequests({ org }: { org: Org }) {
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;

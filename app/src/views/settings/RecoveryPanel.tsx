@@ -153,7 +153,7 @@ export function RecoveryPanel() {
   );
 }
 
-function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => void }) {
+export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => void }) {
   const client = useClient();
   const { t } = useI18n();
   const [info, setInfo] = useState<OrgRecoveryInfo>();

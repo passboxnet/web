@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   Ban,
   Hourglass,
+  LayoutDashboard,
   MoreHorizontal,
   Plus,
   RefreshCw,
@@ -36,6 +37,7 @@ import { FormError } from "../auth/AuthLayout";
 import { useI18n } from "../lib/i18n";
 import type { Route } from "../lib/route";
 import { canManageMember, isOrgAdmin, memberLabel, orgRoleKey, vaultRoleKey } from "../lib/sharing";
+import { PolicySummary } from "../orgadmin/PolicyBanner";
 import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "../views/PageHeader";
 import { ConfirmMemberDialog } from "./ConfirmMemberDialog";
@@ -98,10 +100,16 @@ export function OrgView({ orgId, navigate }: OrgViewProps) {
       }
       actions={
         admin && (
-          <Button onClick={() => setInviting(true)}>
-            <UserPlus />
-            {org.kind === "family" ? t("sharing.invite.familyButton") : t("sharing.invite.teamButton")}
-          </Button>
+          <span className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => navigate({ view: "org-admin", orgId: org.id })}>
+              <LayoutDashboard />
+              {t("orgAdmin.open")}
+            </Button>
+            <Button onClick={() => setInviting(true)}>
+              <UserPlus />
+              {org.kind === "family" ? t("sharing.invite.familyButton") : t("sharing.invite.teamButton")}
+            </Button>
+          </span>
         )
       }
     >
@@ -129,6 +137,7 @@ export function OrgView({ orgId, navigate }: OrgViewProps) {
         {admin && <InvitationsPanel org={org} revision={invitationsRevision} onInvite={() => setInviting(true)} />}
         {!waiting && <VaultsPanel org={org} navigate={navigate} />}
         {org.kind === "team" && !waiting && <GroupsPanel org={org} />}
+        {!waiting && <PolicySummary org={org} />}
         <OrgSettingsPanel org={org} navigate={navigate} />
       </div>
       <InviteDialog
@@ -534,7 +543,7 @@ function VaultRow({
   );
 }
 
-function NewSharedVaultDialog({
+export function NewSharedVaultDialog({
   org,
   open,
   onOpenChange,

@@ -315,7 +315,7 @@ function OidcPanel({ orgId }: { orgId: string }) {
           label={t("sso.settings.domains")}
           value={domains}
           onChange={(event) => setDomains(event.target.value)}
-          placeholder="example.com"
+          placeholder={t("sso.settings.domainsPlaceholder")}
           hint={t("sso.settings.domainsHint")}
           rows={2}
           spellCheck={false}

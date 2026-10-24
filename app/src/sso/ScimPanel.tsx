@@ -314,7 +314,7 @@ function CreateTokenDialog({
         <Input
           label={t("scim.tokens.name")}
           name="name"
-          placeholder="Microsoft Entra ID"
+          placeholder={t("scim.tokens.namePlaceholder")}
           required
           maxLength={80}
           autoFocus

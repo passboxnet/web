@@ -90,12 +90,12 @@ test("an admin sets up SSO, signs in with it and unlocks a trusted browser witho
   // Open the SSO settings and configure the provider.
   await page.getByRole("button", { name: "Set up" }).click();
   await expect(page.getByRole("heading", { name: "Single sign-on", level: 1 })).toBeVisible();
-  await page.getByLabel("Provider").selectOption("keycloak");
-  await page.getByLabel("Name on the sign-in button").fill("Acme Identity");
-  await page.getByLabel("Issuer URL").fill(idp.issuer);
-  await page.getByLabel("Client ID").fill(idp.clientId);
-  await page.getByLabel("Client secret").fill(idp.clientSecret);
-  await page.getByLabel("Email domains").fill("acme.example");
+  await page.getByLabel("Provider", { exact: true }).selectOption("keycloak");
+  await page.getByLabel("Name on the sign-in button", { exact: true }).fill("Acme Identity");
+  await page.getByLabel("Issuer URL", { exact: true }).fill(idp.issuer);
+  await page.getByLabel("Client ID", { exact: true }).fill(idp.clientId);
+  await page.getByLabel("Client secret", { exact: true }).fill(idp.clientSecret);
+  await page.getByLabel("Email domains", { exact: true }).fill("acme.example");
   await page.getByRole("button", { name: "Check connection" }).click();
   await expect(page.getByTestId("sso-check")).toContainText("publishes 1 signing key");
   await page.getByRole("switch", { name: "Single sign-on is on" }).click();

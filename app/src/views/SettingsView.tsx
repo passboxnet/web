@@ -20,13 +20,16 @@ import { useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
 import { LINKS } from "../lib/links";
 import { type LanguagePreference, setPreferences, type Theme, usePreferences } from "../lib/preferences";
+import { useRoute } from "../lib/route";
 import { serverApi, serverLabel } from "../lib/server";
 import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "./PageHeader";
 import { ActivityPanel } from "./settings/ActivityPanel";
 import { ChangeMasterPasswordDialog } from "./settings/ChangeMasterPasswordDialog";
 import { DevicesPanel } from "./settings/DevicesPanel";
+import { EmergencyPanel } from "./settings/EmergencyPanel";
 import { NotificationsPanel } from "./settings/NotificationsPanel";
+import { RecoveryPanel } from "./settings/RecoveryPanel";
 import { TwoFactorPanel } from "./settings/TwoFactorPanel";
 
 /** A masked Secret Key that reveals nothing but the format (S19). */
@@ -55,6 +58,13 @@ export function SettingsView() {
       .then(setMeta)
       .catch(() => undefined);
   }, []);
+
+  // Links such as #/settings/emergency (from mails) open their panel.
+  const [route] = useRoute();
+  const section = route.view === "settings" ? route.section : undefined;
+  useEffect(() => {
+    if (section) document.getElementById(section)?.scrollIntoView({ block: "start" });
+  }, [section]);
 
   return (
     <Page title={t("term.settings")} description={t("settings.description")}>
@@ -99,6 +109,8 @@ export function SettingsView() {
         </Panel>
 
         <TwoFactorPanel />
+        <RecoveryPanel />
+        <EmergencyPanel />
         <DevicesPanel />
         <ActivityPanel />
         <NotificationsPanel />

@@ -188,7 +188,7 @@ test("signing out asks first and names the Emergency Kit", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Unlock your vault" })).toBeVisible();
 
   await page.getByRole("button", { name: "Forgot your master password?" }).click();
-  await expect(page.getByRole("dialog")).toContainText("Passbox can't reset your master password");
+  await expect(page.getByRole("dialog")).toContainText("Passbox can't reset it");
   await page.getByRole("button", { name: "Got it" }).click();
 
   await page.getByRole("button", { name: "Use a different account…" }).click();

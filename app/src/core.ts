@@ -51,6 +51,10 @@ export function errorMessage(error: unknown, context: ErrorContext = "general"):
     "InvalidTwoFactorCodeError",
     "TwoFactorExpiredError",
     "ReauthenticationRequiredError",
+    "InvalidRecoveryCodeError",
+    "RecoveryExpiredError",
+    "RecoveryVerificationError",
+    "InvalidDeviceCodeError",
   ];
   if (!(error instanceof Error && known.includes(error.name))) console.error(error);
   return describeError(error, i18n().t, context);

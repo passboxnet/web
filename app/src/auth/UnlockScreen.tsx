@@ -4,6 +4,7 @@ import { KeyRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { errorMessage, nextFrame } from "../core";
 import { useI18n } from "../lib/i18n";
+import { PendingRecoveryNotice } from "../recovery/PendingRecoveryNotice";
 import { useClient, useSnapshot } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
@@ -56,6 +57,7 @@ export function UnlockScreen() {
 
   return (
     <AuthLayout>
+      <PendingRecoveryNotice />
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t("unlock.title")}</h1>

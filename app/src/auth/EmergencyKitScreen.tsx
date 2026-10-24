@@ -20,14 +20,22 @@ export function EmergencyKitScreen() {
   const { t } = i18n;
   const kit = useKit();
   const secretKey = client.deviceAccount?.secretKey ?? "";
+  const recoveryCode = kit.recoveryCode;
+  const checkingCode = kit.mode === "recoveryCode" && recoveryCode !== undefined;
   const [check, setCheck] = useState("");
-  const verified = matchesKitCheck(secretKey, check);
+  const verified = matchesKitCheck(checkingCode ? recoveryCode : secretKey, check);
   const typedEnough = check.replace(/[\s-]/g, "").length >= KIT_CHECK_LENGTH;
   const data: KitData = useMemo(
-    () => ({ email, secretKey, server: serverUrl() ?? window.location.origin, createdAt: Date.now() }),
-    [email, secretKey],
+    () => ({
+      email,
+      secretKey,
+      server: serverUrl() ?? window.location.origin,
+      createdAt: Date.now(),
+      ...(recoveryCode ? { recoveryCode } : {}),
+    }),
+    [email, secretKey, recoveryCode],
   );
-  const needsCheck = kit.pending;
+  const needsCheck = kit.pending || checkingCode;
 
   function download() {
     downloadEmergencyKit(data, i18n);
@@ -37,8 +45,8 @@ export function EmergencyKitScreen() {
   function finish() {
     if (needsCheck) {
       if (!verified) return;
-      kit.confirm();
-      toast.success(t("kit.done"));
+      if (kit.pending) kit.confirm();
+      toast.success(checkingCode ? t("recoveryCode.saved") : t("kit.done"));
     }
     kit.close();
   }
@@ -48,17 +56,29 @@ export function EmergencyKitScreen() {
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex items-center justify-between print:hidden">
           <Logo className="text-text" />
-          {kit.mode === "onboarding" && <Badge tone="success">{t("kit.badge.created")}</Badge>}
+          {kit.mode === "onboarding" && (
+            <Badge tone="success">{kit.recovered ? t("kit.badge.recovered") : t("kit.badge.created")}</Badge>
+          )}
+          {checkingCode && <Badge tone="success">{t("kit.badge.recoveryCode")}</Badge>}
         </div>
 
         <div className="mb-6 print:hidden">
-          <h1 className="text-2xl font-semibold tracking-tight">{t("kit.title")}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {kit.recovered ? t("kit.titleRecovered") : t("kit.title")}
+          </h1>
+          {kit.recovered && (
+            <p role="status" className="mt-2 text-sm text-text-muted">
+              {t("kit.recoveredHint")}
+            </p>
+          )}
           <div className="mt-4 flex gap-4 rounded-card border border-accent/20 bg-accent-soft p-5">
             <KeyRound className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
             <div className="text-sm leading-relaxed">
               <p className="font-semibold">{t("kit.explain.title")}</p>
               <p className="mt-1">{t("kit.explain.body")}</p>
-              <p className="mt-2 text-text-muted">{t("kit.explain.noRecovery")}</p>
+              <p className="mt-2 text-text-muted">
+                {recoveryCode ? t("kit.explain.withRecoveryCode") : t("kit.explain.noRecovery")}
+              </p>
             </div>
           </div>
         </div>
@@ -86,6 +106,20 @@ export function EmergencyKitScreen() {
                 {secretKey}
               </dd>
             </div>
+            {recoveryCode && (
+              <div className="bg-success-soft px-6 py-5 sm:col-span-2 sm:px-8">
+                <dt className="text-2xs font-semibold tracking-wider text-success-text uppercase">
+                  {t("kit.field.recoveryCode")}
+                </dt>
+                <dd
+                  className="mt-2 font-mono text-base font-medium tracking-wide break-all text-text sm:text-lg"
+                  data-testid="recovery-code"
+                >
+                  {recoveryCode}
+                </dd>
+                <dd className="mt-2 text-xs text-text-muted">{t("kit.recoveryCodeHint")}</dd>
+              </div>
+            )}
             <div className="bg-surface px-6 py-5 sm:col-span-2 sm:px-8">
               <dt className="text-2xs font-semibold tracking-wider text-text-muted uppercase">
                 {t("term.masterPassword")}
@@ -128,7 +162,7 @@ export function EmergencyKitScreen() {
             className="mt-6 rounded-card border border-border bg-surface p-5 shadow-card print:hidden"
           >
             <h2 id="kit-check" className="text-sm font-semibold">
-              {t("kit.check.title")}
+              {checkingCode ? t("recoveryCode.checkTitle") : t("kit.check.title")}
             </h2>
             <form
               className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end"
@@ -139,14 +173,24 @@ export function EmergencyKitScreen() {
             >
               <div className="flex-1">
                 <Input
-                  label={t("kit.check.label", { count: KIT_CHECK_LENGTH })}
+                  label={
+                    checkingCode
+                      ? t("recoveryCode.checkLabel", { count: KIT_CHECK_LENGTH })
+                      : t("kit.check.label", { count: KIT_CHECK_LENGTH })
+                  }
                   value={check}
                   onChange={(e) => setCheck(e.target.value)}
                   autoComplete="off"
                   spellCheck={false}
                   maxLength={8}
                   className="max-w-48 font-mono tracking-widest uppercase"
-                  error={typedEnough && !verified ? t("kit.check.wrong") : undefined}
+                  error={
+                    typedEnough && !verified
+                      ? checkingCode
+                        ? t("recoveryCode.checkWrong")
+                        : t("kit.check.wrong")
+                      : undefined
+                  }
                   hint={
                     verified ? (
                       <span className="flex items-center gap-1 text-success-text">
@@ -158,7 +202,7 @@ export function EmergencyKitScreen() {
                 />
               </div>
               <Button type="submit" size="lg" disabled={!verified}>
-                {t("kit.continue")}
+                {checkingCode ? t("recoveryCode.done") : t("kit.continue")}
               </Button>
             </form>
             {kit.mode === "onboarding" && (
@@ -173,7 +217,7 @@ export function EmergencyKitScreen() {
                 <span className="text-xs text-text-muted">{t("kit.laterHint")}</span>
               </div>
             )}
-            {kit.mode === "review" && (
+            {(kit.mode === "review" || checkingCode) && (
               <div className="mt-4 border-t border-border pt-4">
                 <Button variant="ghost" onClick={kit.close}>
                   {t("kit.close")}

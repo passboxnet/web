@@ -12,6 +12,8 @@ import { clearClipboardNow } from "./lib/clipboard";
 import { markUsedBefore } from "./lib/firstRun";
 import { useI18n } from "./lib/i18n";
 import { usePreferences } from "./lib/preferences";
+import { RecoveryFlowProvider, useRecoveryFlow } from "./recovery/RecoveryFlow";
+import { RecoveryScreens } from "./recovery/RecoveryScreens";
 import { AppShell } from "./shell/AppShell";
 import { ClientContext, useSnapshot } from "./useClient";
 
@@ -44,6 +46,10 @@ export function App() {
       if (status !== "unlocked" && next === "unlocked") {
         markUsedBefore();
         client.purgeTrash().catch((e: unknown) => console.warn("Could not empty the trash", e));
+        // What "Forgot master password?" can offer while locked, and emergency
+        // access sealed again after vault key changes (best effort).
+        client.refreshRecoveryOptions().catch((e: unknown) => console.warn("Could not load recovery options", e));
+        client.resealEmergencyAccess().catch((e: unknown) => console.warn("Could not update emergency access", e));
       }
       status = next;
     });
@@ -75,7 +81,9 @@ export function App() {
   return (
     <ClientContext.Provider value={client}>
       <KitProvider>
-        <Router />
+        <RecoveryFlowProvider>
+          <Router />
+        </RecoveryFlowProvider>
       </KitProvider>
     </ClientContext.Provider>
   );
@@ -84,8 +92,10 @@ export function App() {
 function Router() {
   const { status } = useSnapshot();
   const kit = useKit();
+  const recovery = useRecoveryFlow();
 
   if (kit.open) return <EmergencyKitScreen />;
+  if (recovery.screen && status !== "unlocked") return <RecoveryScreens />;
   switch (status) {
     case "signed-out":
       return <WelcomeScreen />;

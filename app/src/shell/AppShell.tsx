@@ -10,9 +10,11 @@ import { setChecklist, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { useClient, useSnapshot } from "../useClient";
 import { AdminView } from "../views/admin/AdminView";
+import { EmergencyVaultView } from "../views/EmergencyVaultView";
 import { GeneratorView } from "../views/GeneratorView";
 import { GettingStartedView } from "../views/GettingStarted";
 import { ItemsView } from "../views/ItemsView";
+import { RecoveryRequestsView } from "../views/RecoveryRequestsView";
 import { SettingsView } from "../views/SettingsView";
 import { TrashView } from "../views/TrashView";
 import { WatchtowerView } from "../views/WatchtowerView";
@@ -118,6 +120,8 @@ export function AppShell() {
             {route.view === "generator" && <GeneratorView />}
             {route.view === "settings" && <SettingsView />}
             {route.view === "admin" && <AdminView />}
+            {route.view === "recovery-requests" && <RecoveryRequestsView />}
+            {route.view === "emergency" && <EmergencyVaultView key={route.grantId} grantId={route.grantId} />}
             {route.view === "import" && (
               <ImportView onShowItems={() => navigate({ view: "items", filter: { kind: "all" } })} />
             )}

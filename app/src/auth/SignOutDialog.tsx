@@ -1,4 +1,4 @@
-import { Button, ConfirmDialog, Dialog } from "@passbox/ui";
+import { Button, ConfirmDialog } from "@passbox/ui";
 import { AlertTriangle } from "lucide-react";
 import { useI18n } from "../lib/i18n";
 import { secretKeyPrefix, setKitPending } from "../lib/kit";
@@ -63,23 +63,5 @@ export function SignOutDialog({
   );
 }
 
-/** The honest answer to "I forgot my master password" (nobody can reset it). */
-export function ForgotPasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { t } = useI18n();
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("forgot.title")}
-      description={t("forgot.intro")}
-      footer={<Button onClick={() => onOpenChange(false)}>{t("forgot.close")}</Button>}
-    >
-      <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm leading-relaxed">
-        <li>{t("forgot.step1")}</li>
-        <li>{t("forgot.step2")}</li>
-        <li>{t("forgot.step3")}</li>
-        <li>{t("forgot.step4")}</li>
-      </ol>
-    </Dialog>
-  );
-}
+/** "Forgot master password?" now lives with the recovery flows. */
+export { ForgotPasswordDialog } from "../recovery/ForgotPasswordDialog";

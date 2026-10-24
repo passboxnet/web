@@ -47,6 +47,8 @@ export interface KitData {
   server: string;
   secretKey: string;
   createdAt: number;
+  /** The account recovery code, when the kit is made right after creating one. */
+  recoveryCode?: string;
 }
 
 const ACCENT: Rgb = [0.2, 0.33, 0.85];
@@ -69,7 +71,10 @@ export function emergencyKitPdf(kit: KitData, i18n: Translator): Uint8Array {
   y += 34;
   page.text(left, y, t("kit.pdf.title"), { size: 26, font: "bold" });
   y += 26;
-  y = page.paragraph(left, y, width, t("kit.pdf.intro"), { size: 10.5, color: MUTED });
+  y = page.paragraph(left, y, width, t(kit.recoveryCode ? "kit.pdf.introRecovery" : "kit.pdf.intro"), {
+    size: 10.5,
+    color: MUTED,
+  });
   y += 10;
 
   const field = (label: string, value: string, font: "regular" | "mono" = "mono", size = 12) => {
@@ -88,6 +93,22 @@ export function emergencyKitPdf(kit: KitData, i18n: Translator): Uint8Array {
   page.text(left + 14, y + 12, t("term.secretKey").toUpperCase(), { size: 8, font: "bold", color: ACCENT });
   page.text(left + 14, y + 40, kit.secretKey, { size: 19, font: "mono" });
   y += 78;
+
+  if (kit.recoveryCode) {
+    // Two lines of groups, so the 69 characters fit the page width.
+    const groups = kit.recoveryCode.split("-");
+    const half = Math.ceil(groups.length / 2);
+    page.rect(left, y - 4, width, 96, { fill: [0.94, 0.98, 0.95], stroke: [0.7, 0.86, 0.75] });
+    page.text(left + 14, y + 12, t("kit.field.recoveryCode").toUpperCase(), {
+      size: 8,
+      font: "bold",
+      color: [0.1, 0.45, 0.25],
+    });
+    page.text(left + 14, y + 36, groups.slice(0, half).join("-"), { size: 14, font: "mono" });
+    page.text(left + 14, y + 56, `-${groups.slice(half).join("-")}`, { size: 14, font: "mono" });
+    page.paragraph(left + 14, y + 76, width - 28, t("kit.pdf.recoveryCodeHint"), { size: 8.5, color: MUTED });
+    y += 110;
+  }
 
   page.text(left, y, t("term.masterPassword").toUpperCase(), { size: 8, font: "bold", color: MUTED });
   y += 34;
@@ -109,8 +130,11 @@ export function emergencyKitPdf(kit: KitData, i18n: Translator): Uint8Array {
   }
   y += 14;
 
-  page.text(left, y, t("kit.pdf.helper"), { size: 10.5 });
-  y += 30;
+  // With a recovery code the page is full; the helper line is left out.
+  if (!kit.recoveryCode) {
+    page.text(left, y, t("kit.pdf.helper"), { size: 10.5 });
+    y += 30;
+  }
 
   page.rect(left, y, width, 64, { fill: [1, 0.97, 0.9], stroke: [0.93, 0.8, 0.5] });
   page.paragraph(left + 14, y + 20, width - 28, t("kit.storage"), { size: 10, leading: 14 });

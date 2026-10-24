@@ -28,6 +28,10 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
   if (error instanceof Error && error.name === "InvalidTwoFactorCodeError") return t("error.invalidTwoFactorCode");
   if (error instanceof Error && error.name === "TwoFactorExpiredError") return t("error.twoFactorExpired");
   if (error instanceof Error && error.name === "ReauthenticationRequiredError") return t("errors.reauthenticate");
+  if (error instanceof Error && error.name === "InvalidRecoveryCodeError") return t("recovery.code.invalid");
+  if (error instanceof Error && error.name === "RecoveryExpiredError") return t("recovery.expired");
+  if (error instanceof Error && error.name === "RecoveryVerificationError") return t("recovery.verificationFailed");
+  if (error instanceof Error && error.name === "InvalidDeviceCodeError") return t("linkDevice.invalid");
   if (error instanceof ApiError) {
     switch (error.code) {
       case "invalid_credentials":
@@ -55,6 +59,16 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("errors.domainNotAllowed");
       case "invitation_invalid":
         return t("errors.invitationInvalid");
+      case "recovery_expired":
+        return t("recovery.expired");
+      case "recovery_needs_security_key":
+        return t("recovery.code.needsSecurityKey");
+      case "two_factor_required":
+        return t("recovery.twoFactor.description");
+      case "emergency_access_waiting":
+        return t("errors.emergencyWaiting");
+      case "device_link_expired":
+        return t("linkDevice.invalid");
       case "forbidden":
         return t("errors.forbidden");
       case "not_found":

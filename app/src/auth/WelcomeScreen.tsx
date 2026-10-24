@@ -1,6 +1,6 @@
 import type { ServerMeta } from "@passbox/api-client";
 import { TwoFactorRequiredError } from "@passbox/client";
-import { Button, Input, PasswordInput, SegmentedControl } from "@passbox/ui";
+import { Button, Input, PasswordInput, SegmentedControl, Switch, toast } from "@passbox/ui";
 import { ChevronRight, Info, LifeBuoy, Sparkles } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { errorMessage, loadCore, nextFrame } from "../core";
@@ -10,6 +10,7 @@ import { wasUsedBefore } from "../lib/firstRun";
 import { useI18n } from "../lib/i18n";
 import { type InviteLink, inviteFromHash, meetsPasswordPolicy, useServerMeta } from "../lib/instance";
 import { serverUrl } from "../lib/server";
+import { LinkDeviceLink, PendingRecoveryNotice } from "../recovery/PendingRecoveryNotice";
 import { useClient } from "../useClient";
 import { AuthLayout, FormError } from "./AuthLayout";
 import { useKit } from "./KitProvider";
@@ -43,6 +44,7 @@ export function WelcomeScreen() {
   }
   return (
     <AuthLayout>
+      <PendingRecoveryNotice />
       <h1 className="text-2xl font-semibold tracking-tight">
         {mode === "sign-in" ? t("signIn.title") : t("signUp.title")}
       </h1>
@@ -194,6 +196,9 @@ function SignInForm() {
       <Button type="submit" size="lg" loading={busy} className="mt-1">
         {busy ? t("signIn.busy") : t("action.signIn")}
       </Button>
+      <div className="text-center">
+        <LinkDeviceLink />
+      </div>
       <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
     </form>
   );
@@ -209,6 +214,8 @@ function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: Se
   const [suggestion, setSuggestion] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // Opt-in: a recovery code for the Emergency Kit (C2).
+  const [withRecoveryCode, setWithRecoveryCode] = useState(false);
 
   async function suggest() {
     const core = await loadCore();
@@ -243,7 +250,15 @@ function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: Se
       });
       // The invitation is used up; keep it out of the address bar.
       if (invite) window.history.replaceState(null, "", "#/");
-      kit.startOnboarding(accountId);
+      let recoveryCode: string | undefined;
+      if (withRecoveryCode) {
+        try {
+          recoveryCode = await client.createRecoveryCode();
+        } catch (e) {
+          toast.error(t("recoveryCode.signUpFailed"), { description: errorMessage(e) });
+        }
+      }
+      kit.startOnboarding(accountId, recoveryCode ? { recoveryCode } : {});
     } catch (e) {
       setError(errorMessage(e, "signUp"));
       setBusy(false);
@@ -315,6 +330,12 @@ function SignUpForm({ invite, meta }: { invite: InviteLink | undefined; meta: Se
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         required
+      />
+      <Switch
+        label={t("recoveryCode.signUpLabel")}
+        description={t("recoveryCode.signUpDescription")}
+        checked={withRecoveryCode}
+        onCheckedChange={setWithRecoveryCode}
       />
       <FormError message={error} />
       <Button type="submit" size="lg" loading={busy} className="mt-1">

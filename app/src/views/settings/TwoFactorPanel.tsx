@@ -19,7 +19,7 @@ import { useClient, useSnapshot } from "../../useClient";
 import { Panel } from "../PageHeader";
 
 /** The user closed a dialog instead of confirming with the master password. */
-class ReauthCancelled extends Error {}
+export class ReauthCancelled extends Error {}
 
 /**
  * Settings → Two-factor sign-in: authenticator app, security keys, recovery
@@ -271,7 +271,7 @@ type Run = <T>(action: () => Promise<T>) => Promise<T>;
  * `reauthentication_required`, asks for the master password (and the second
  * factor, if needed) and runs it again.
  */
-function useReauthentication(): { run: Run; dialog: ReactNode } {
+export function useReauthentication(): { run: Run; dialog: ReactNode } {
   const [waiting, setWaiting] = useState<{ resolve: () => void; reject: (error: Error) => void }>();
   const run = useCallback<Run>(async (action) => {
     try {
@@ -375,7 +375,7 @@ function ReauthDialog({ open, onDone, onCancel }: { open: boolean; onDone: () =>
   );
 }
 
-function QrCode({ text, label }: { text: string; label: string }) {
+export function QrCode({ text, label }: { text: string; label: string }) {
   const { path, side } = useMemo(() => {
     const matrix = qrMatrix(text);
     return { path: qrPath(matrix, 4), side: matrix.size + 8 };

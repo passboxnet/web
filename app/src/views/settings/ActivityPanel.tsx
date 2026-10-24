@@ -23,6 +23,41 @@ const KNOWN = new Set([
   "two_factor_method_removed",
   "recovery_code_used",
   "recovery_codes_regenerated",
+  "login_recovered",
+  "account_recovery_code_created",
+  "account_recovery_code_removed",
+  "account_recovery_failed",
+  "account_recovered_code",
+  "account_recovered_org",
+  "org_recovery_enabled",
+  "org_recovery_admin_added",
+  "org_recovery_enrolled",
+  "org_recovery_withdrawn",
+  "org_recovery_requested",
+  "org_recovery_approved",
+  "org_recovery_denied",
+  "org_member_recovered",
+  "emergency_contact_added",
+  "emergency_contact_removed",
+  "emergency_invitation_accepted",
+  "emergency_access_confirmed",
+  "emergency_access_requested",
+  "emergency_access_approved",
+  "emergency_access_denied",
+  "emergency_access_used",
+  "device_link_created",
+  "device_link_approved",
+]);
+/** Events worth noticing: shown in red. */
+const ALERTS = new Set([
+  "login_failed",
+  "two_factor_failed",
+  "account_recovery_failed",
+  "account_recovered_code",
+  "account_recovered_org",
+  "org_recovery_requested",
+  "emergency_access_requested",
+  "emergency_access_used",
 ]);
 const COLLAPSED = 8;
 
@@ -74,7 +109,7 @@ export function ActivityPanel() {
                   <div className="min-w-0">
                     <p
                       className={
-                        event.kind === "login_failed" || event.kind === "two_factor_failed"
+                        ALERTS.has(event.kind)
                           ? "text-[0.8125rem] font-medium text-danger"
                           : "text-[0.8125rem] font-medium"
                       }

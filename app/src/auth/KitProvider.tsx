@@ -11,7 +11,7 @@ import { FormError } from "./AuthLayout";
  * after every unlock until the kit is confirmed), "review" from Settings, the
  * reminder banner or the sign-out dialog.
  */
-export type KitMode = "onboarding" | "review";
+export type KitMode = "onboarding" | "review" | "recoveryCode";
 
 interface KitState {
   /** Whether the kit screen is showing. */
@@ -23,8 +23,18 @@ interface KitState {
   deferred: boolean;
   /** Set when the kit should open as soon as the vault is unlocked. */
   afterUnlock: boolean;
-  /** Shows the kit right after sign-up, without asking for the password again. */
-  startOnboarding: (accountId: string) => void;
+  /**
+   * A new account recovery code to show in the kit (once; it is not stored).
+   * Set after sign-up with a code, after a recovery and after creating a code
+   * in Settings.
+   */
+  recoveryCode: string | undefined;
+  /** The kit belongs to an account that was just recovered (new Secret Key). */
+  recovered: boolean;
+  /** Shows the kit right after sign-up (or a recovery), without asking for the password again. */
+  startOnboarding: (accountId: string, options?: { recoveryCode?: string; recovered?: boolean }) => void;
+  /** Shows the kit with a new recovery code; the user confirms by typing its end. */
+  showRecoveryCode: (recoveryCode: string) => void;
   /** Asks for the master password (or to unlock first), then shows the kit. */
   requestKit: () => void;
   /** Kit confirmed: clears the pending flag. */
@@ -51,6 +61,8 @@ export function KitProvider({ children }: { children: ReactNode }) {
   const [deferred, setDeferred] = useState(false);
   const [afterUnlock, setAfterUnlock] = useState(false);
   const [reauthOpen, setReauthOpen] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState<string>();
+  const [recovered, setRecovered] = useState(false);
 
   // The flag belongs to one account on this device; re-read it when that changes.
   useEffect(() => {
@@ -63,6 +75,7 @@ export function KitProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== "unlocked") {
       setOpen(false);
+      setRecoveryCode(undefined);
       return;
     }
     if (afterUnlock) {
@@ -75,11 +88,20 @@ export function KitProvider({ children }: { children: ReactNode }) {
     }
   }, [status]);
 
-  const startOnboarding = useCallback((id: string) => {
+  const startOnboarding = useCallback((id: string, options: { recoveryCode?: string; recovered?: boolean } = {}) => {
     setKitPending(id);
     setPending(true);
     setDeferred(false);
+    setRecoveryCode(options.recoveryCode);
+    setRecovered(options.recovered ?? false);
     setMode("onboarding");
+    setOpen(true);
+  }, []);
+
+  const showRecoveryCode = useCallback((code: string) => {
+    setRecoveryCode(code);
+    setRecovered(false);
+    setMode("recoveryCode");
     setOpen(true);
   }, []);
 
@@ -94,16 +116,24 @@ export function KitProvider({ children }: { children: ReactNode }) {
     pending,
     deferred,
     afterUnlock,
+    recoveryCode,
+    recovered,
     startOnboarding,
+    showRecoveryCode,
     requestKit,
     confirm: () => {
       setKitPending(undefined);
       setPending(false);
     },
-    close: () => setOpen(false),
+    close: () => {
+      setOpen(false);
+      setRecoveryCode(undefined);
+      setRecovered(false);
+    },
     later: () => {
       setDeferred(true);
       setOpen(false);
+      setRecoveryCode(undefined);
     },
   };
 

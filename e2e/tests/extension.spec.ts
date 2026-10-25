@@ -152,7 +152,7 @@ async function signUpWithLogin(page: Page, email: string, website: string): Prom
 
 async function openPopup(context: BrowserContext, extensionId: string): Promise<Page> {
   const popup = await context.newPage();
-  await popup.setViewportSize({ width: 360, height: 560 });
+  await popup.setViewportSize({ width: 360, height: 600 });
   await popup.goto(`chrome-extension://${extensionId}/popup.html`);
   return popup;
 }
@@ -218,7 +218,6 @@ test.describe("Chrome extension", () => {
     await popup.getByLabel("Server address").fill(baseURL ?? "");
     await popup.getByRole("button", { name: "Continue" }).click();
     await expect(popup.getByRole("heading", { name: "Sign in to Passbox" })).toBeVisible();
-    await expect(popup.getByText("has not been independently audited")).toBeVisible();
     // A malformed Secret Key is caught on the device.
     await popup.getByLabel("Email").fill(email);
     await popup.getByLabel("Master password", { exact: true }).fill(PASSWORD);

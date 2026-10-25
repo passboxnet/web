@@ -108,7 +108,8 @@ test("item types, attachments, share links, archive and moving", async ({ browse
   await page.getByTestId("ssh-generate").click();
   await expect(page.getByLabel("Public key")).toHaveValue(/^ssh-ed25519 AAAA/);
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText(/^SHA256:/)).toBeVisible();
+  // The fingerprint shows in the item (and in its list row).
+  await expect(page.getByRole("region", { name: "Deploy key" }).getByText(/^SHA256:/)).toBeVisible();
 
   // Archive and take out again.
   await page.getByRole("button", { name: "More actions" }).click();

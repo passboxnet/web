@@ -100,6 +100,32 @@ export async function desktopNotify(title: string, body: string): Promise<boolea
   return true;
 }
 
+/** Tray menu labels in the app's language (the shell starts with English ones). No-op in browsers. */
+export function setDesktopTrayLabels(labels: { open: string; lock: string; quit: string }): Promise<void> {
+  if (!isDesktop) return Promise.resolve();
+  return invokeDesktop("set_tray_labels", labels);
+}
+
+interface UaData {
+  getHighEntropyValues(hints: string[]): Promise<{ platformVersion?: string }>;
+}
+
+/**
+ * Windows 11 draws the Mica material behind the desktop window
+ * (apps/desktop/src-tauri/tauri.windows.conf.json); the page then lets it
+ * show through the canvas (`data-window-material` in styles.css). Windows
+ * 10 has no Mica, macOS and Linux get a solid surface: nothing changes there.
+ */
+export async function applyWindowMaterial(): Promise<void> {
+  if (!isDesktop || !/Windows/.test(navigator.userAgent)) return;
+  const data = (navigator as Navigator & { userAgentData?: UaData }).userAgentData;
+  const values = await data?.getHighEntropyValues(["platformVersion"]).catch(() => undefined);
+  // Windows 11 reports platform version 13 or later (Windows 10: 1 to 10).
+  if (Number(values?.platformVersion?.split(".")[0] ?? 0) >= 13) {
+    document.documentElement.dataset.windowMaterial = "mica";
+  }
+}
+
 /**
  * An AI agent waits for an approval: the desktop shell shows the window and
  * asks for attention. No-op in browsers.

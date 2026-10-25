@@ -158,6 +158,7 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
             category={route.filter.kind === "category" ? route.filter.category : undefined}
             banner={filterVault ? <VaultBanner vaultId={filterVault} /> : undefined}
             risky={risky}
+            implicitSelection={!route.itemId}
           />
         </div>
         <div className={showDetailOnMobile ? "flex min-w-0 flex-1" : "hidden min-w-0 flex-1 md:flex"}>{pane}</div>

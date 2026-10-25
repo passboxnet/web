@@ -6,7 +6,7 @@ import { KitProvider, useKit } from "./auth/KitProvider";
 import { UnlockScreen } from "./auth/UnlockScreen";
 import { WelcomeScreen } from "./auth/WelcomeScreen";
 import { errorMessage, loadClient } from "./core";
-import { onLockRequest, setDesktopLockSettings } from "./desktop";
+import { onLockRequest, setDesktopLockSettings, setDesktopTrayLabels } from "./desktop";
 import { clearPasswordDrafts } from "./items/ChangePasswordDialog";
 import { clearClipboardNow } from "./lib/clipboard";
 import { markUsedBefore } from "./lib/firstRun";
@@ -78,6 +78,15 @@ export function App() {
       console.error("Could not pass the lock settings to the desktop app", e),
     );
   }, [lockOnClose, autoLockMinutes]);
+
+  // The tray menu of the desktop app speaks the app's language.
+  useEffect(() => {
+    setDesktopTrayLabels({
+      open: t("desktop.tray.open"),
+      lock: t("shell.lockVault"),
+      quit: t("desktop.tray.quit"),
+    }).catch((e: unknown) => console.error("Could not translate the tray menu", e));
+  }, [t]);
 
   if (error) {
     return (

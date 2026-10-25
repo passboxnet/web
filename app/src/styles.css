@@ -13,6 +13,19 @@ body {
   font-size: 14px;
 }
 
+/*
+ * Desktop app on Windows 11: the Mica material shows through the canvas
+ * (src/desktop.ts applyWindowMaterial). Surfaces with text stay (nearly) solid.
+ */
+html[data-window-material="mica"],
+html[data-window-material="mica"] body {
+  background: transparent;
+}
+
+html[data-window-material="mica"] .bg-app {
+  background: color-mix(in oklch, var(--pb-canvas) 55%, transparent);
+}
+
 @media print {
   body {
     background: white;

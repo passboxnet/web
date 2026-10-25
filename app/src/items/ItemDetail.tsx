@@ -222,7 +222,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
 
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-4 pt-7 pb-10 sm:px-6 lg:px-10">
-            <div className="flex items-start gap-4">
+            <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
               <ItemIcon item={item} size="xl" className="shadow-card" />
               <div className="min-w-0 flex-1">
                 <h2 className="text-title-sm break-words text-text">{itemTitle(item, t)}</h2>
@@ -245,7 +245,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
                   )}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-0.5">
+              <div className="flex shrink-0 items-center gap-0.5 max-sm:order-last max-sm:-ml-2 max-sm:w-full">
                 {canEdit && (
                   <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
                     <Button

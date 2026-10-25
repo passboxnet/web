@@ -92,7 +92,7 @@ export function SettingsView() {
                   "radial-gradient(60% 120% at 0% 0%, color-mix(in oklch, var(--pb-accent) 14%, transparent), transparent 70%)",
               }}
             />
-            <Avatar name={email} size="lg" tone="signature" className="relative size-14 text-base" />
+            <Avatar name={email} size="lg" tone="signature" className="relative" />
             <div className="relative min-w-0 flex-1">
               <p className="truncate text-headline text-text" title={email}>
                 {email}

@@ -3,12 +3,14 @@ import { type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { ShareLinkViewer, shareLinkFromLocation } from "./comfort/ShareLinkViewer";
+import { applyWindowMaterial } from "./desktop";
 import { applyLocale, useI18n } from "./lib/i18n";
 import { applyTheme, getPreferences, subscribePreferences } from "./lib/preferences";
 import { captureOrgInvite } from "./lib/sharing";
 import "./styles.css";
 
 applyTheme(getPreferences().theme);
+void applyWindowMaterial();
 applyLocale();
 // An invitation link (`/invite/{token}#org=…`) is kept for this tab before routing starts.
 captureOrgInvite();

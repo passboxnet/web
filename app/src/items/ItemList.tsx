@@ -69,6 +69,8 @@ interface ItemListProps {
   banner?: ReactNode;
   /** Items with a security finding (weak, reused, insecure address): a shield badge on the row. */
   risky?: ReadonlySet<string>;
+  /** The selection is the first item by default, not one the user opened: not highlighted on phones, where only the list shows. */
+  implicitSelection?: boolean;
 }
 
 export function ItemList({
@@ -87,6 +89,7 @@ export function ItemList({
   category,
   banner,
   risky,
+  implicitSelection = false,
 }: ItemListProps) {
   const { t } = useI18n();
   const client = useClient();
@@ -314,6 +317,7 @@ export function ItemList({
                     item={item}
                     selected={item.id === selectedId}
                     risky={risky?.has(item.id) ?? false}
+                    implicit={implicitSelection}
                     checked={picked ? picked.includes(item.id) : undefined}
                     disabled={picked !== undefined && !writable.has(item.vaultId)}
                     onSelect={() => (picked ? writable.has(item.vaultId) && toggle(item.id) : onSelect(item.id))}
@@ -393,6 +397,7 @@ function ItemRow({
   item,
   selected,
   risky,
+  implicit = false,
   checked,
   disabled,
   onSelect,
@@ -400,6 +405,7 @@ function ItemRow({
   item: Item;
   selected: boolean;
   risky: boolean;
+  implicit?: boolean;
   /** Set in selection mode. */
   checked?: boolean | undefined;
   disabled?: boolean;
@@ -415,6 +421,10 @@ function ItemRow({
   const copyable = Boolean(username || password || totp);
   // The solid blue row: a single selected item; in selection mode the ticked rows are tinted instead.
   const solid = checked === undefined && selected;
+  // Phones show the list alone: a default selection is only highlighted from `md` up.
+  // (Literal class names, so Tailwind generates both variants.)
+  // `base` normally, `on` on the solid row, `base` + `onMd` for a default selection (highlighted from `md` up).
+  const tone = (base: string, on: string, onMd: string) => (solid ? (implicit ? `${base} ${onMd}` : on) : base);
 
   async function copyCode() {
     if (!totp) return;
@@ -438,7 +448,13 @@ function ItemRow({
       onKeyDown={(e) => (e.key === "Enter" || (checked !== undefined && e.key === " ")) && onSelect()}
       className={cn(
         "group flex min-h-14 cursor-default items-center gap-3 rounded-control px-2.5 py-2 transition-colors duration-150",
-        solid ? "bg-accent text-accent-contrast shadow-glow" : checked ? "bg-accent-soft" : "hover:bg-surface-raised",
+        checked
+          ? "bg-accent-soft"
+          : tone(
+              "hover:bg-surface-raised",
+              "bg-accent text-accent-contrast shadow-glow",
+              "md:bg-accent md:text-accent-contrast md:shadow-glow",
+            ),
         disabled && "opacity-50",
       )}
     >
@@ -455,10 +471,20 @@ function ItemRow({
       )}
       <ItemIcon item={item} size="lg" />
       <span className="min-w-0 flex-1">
-        <span className={cn("block truncate text-label", solid ? "text-accent-contrast" : "text-text")}>
+        <span
+          className={cn(
+            "block truncate text-label",
+            tone("text-text", "text-accent-contrast", "md:text-accent-contrast"),
+          )}
+        >
           {itemTitle(item, t)}
         </span>
-        <span className={cn("block truncate text-body-sm", solid ? "text-accent-contrast/85" : "text-text-muted")}>
+        <span
+          className={cn(
+            "block truncate text-body-sm",
+            tone("text-text-muted", "text-accent-contrast/85", "md:text-accent-contrast/85"),
+          )}
+        >
           {itemSubtitle(item, t)}
         </span>
       </span>
@@ -491,7 +517,7 @@ function ItemRow({
       <span
         className={cn(
           "flex items-center gap-1.5",
-          solid ? "text-accent-contrast" : "text-text-subtle",
+          tone("text-text-subtle", "text-accent-contrast", "md:text-accent-contrast"),
           copyable && "group-hover:hidden coarse:hidden",
         )}
       >
@@ -504,13 +530,16 @@ function ItemRow({
         {totp && <Timer className="size-3.5" aria-label={t("list.hasTotp")} />}
         {item.data.favorite && (
           <Star
-            className={cn("size-3.5", solid ? "fill-current" : "fill-warning text-warning")}
+            className={cn(
+              "size-3.5",
+              tone("fill-warning text-warning", "fill-current", "md:fill-current md:text-current"),
+            )}
             aria-label={t("list.favorite")}
           />
         )}
         {risky && (
           <ShieldAlert
-            className={cn("size-[18px]", solid ? "text-accent-contrast" : "text-warning")}
+            className={cn("size-[18px]", tone("text-warning", "text-accent-contrast", "md:text-accent-contrast"))}
             aria-label={t("list.risky")}
             data-testid="risky-badge"
           />
@@ -534,11 +563,10 @@ function RowButton({
   return (
     <Tooltip content={label}>
       <Button
-        variant="ghost"
+        variant={solid ? "onAccent" : "ghost"}
         size="icon-sm"
         tabIndex={-1}
         aria-label={label}
-        className={solid ? "text-accent-contrast hover:bg-accent-hover hover:text-accent-contrast" : undefined}
         onClick={(event) => {
           // Copying must not also select the row and open it on phones.
           event.stopPropagation();

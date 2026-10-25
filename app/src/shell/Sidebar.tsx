@@ -397,7 +397,7 @@ function NavGroup({ title, action, children }: { title?: string; action?: ReactN
 
 function CountBadge({ tone, label, children }: { tone: "warning" | "accent"; label: string; children: ReactNode }) {
   return (
-    <Badge tone={tone} variant="solid" aria-label={label} className="min-w-5 justify-center px-1.5">
+    <Badge tone={tone} variant="solid" aria-label={label} className="min-w-5 justify-center">
       {children}
     </Badge>
   );

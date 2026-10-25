@@ -29,6 +29,7 @@ import { type DragEvent, type FormEvent, type ReactNode, useEffect, useMemo, use
 import { errorMessage } from "../core";
 import { useClient, useSnapshot } from "../useClient";
 import { ColumnMappingTable } from "./ColumnMappingTable";
+import { MappingSuggestion, type Suggested } from "./MappingSuggestion";
 import { currentLocale, type MessageKey, plural, type Translate, translator } from "./messages";
 import { parseFile } from "./parse";
 import { formatSourceName, type ImportSource, SOURCES } from "./sources";
@@ -446,6 +447,7 @@ function MappingStep({
   onSubmit: () => void;
 }) {
   const problem = mappingProblem(step.mapping);
+  const [suggested, setSuggested] = useState<Suggested>(new Map());
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -454,7 +456,30 @@ function MappingStep({
           {t("import.mapping.description")} ({step.file.name}, {plural(t, "import.mapping.rows", step.preview.total)})
         </p>
       </div>
-      <ColumnMappingTable t={t} table={step.preview.table} mapping={step.mapping} onChange={onChange} />
+      <MappingSuggestion
+        t={t}
+        file={step.file}
+        detected={step.preview.mapping}
+        mapping={step.mapping}
+        onChange={onChange}
+        suggested={suggested}
+        onSuggested={setSuggested}
+      />
+      <ColumnMappingTable
+        t={t}
+        table={step.preview.table}
+        mapping={step.mapping}
+        onChange={(mapping) => {
+          // A column the user changes is no longer a suggestion.
+          const next = new Map(suggested);
+          mapping.forEach((target, i) => {
+            if (target !== step.mapping[i]) next.delete(i);
+          });
+          setSuggested(next);
+          onChange(mapping);
+        }}
+        suggested={suggested}
+      />
       {problem && (
         <p role="alert" className="text-sm text-danger">
           {t(problem === "no_columns" ? "import.mapping.noColumns" : "import.mapping.duplicate")}

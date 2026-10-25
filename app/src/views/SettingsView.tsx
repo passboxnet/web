@@ -13,6 +13,7 @@ import {
   ShieldEllipsis,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { AiPanel } from "../ai/AiPanel";
 import { useKit } from "../auth/KitProvider";
 import { ForgotPasswordDialog, SignOutDialog } from "../auth/SignOutDialog";
 import { isDesktop } from "../desktop";
@@ -195,6 +196,8 @@ export function SettingsView() {
         </Panel>
 
         <ImportExportPanel />
+
+        <AiPanel />
 
         <Panel id="appearance" title={t("settings.appearance")}>
           <Row label={t("settings.language")}>

@@ -2,6 +2,7 @@ import { breachCount, FIELD, fieldValue, type Item, type VaultHealth } from "@pa
 import { Badge, Button, cn, EmptyState, Monogram } from "@passbox/ui";
 import { ChevronRight, Copy, LockOpen, Search, ShieldCheck, Timer, TriangleAlert } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { SecurityPlan } from "../ai/SecurityPlan";
 import { ChangePasswordDialog } from "../items/ChangePasswordDialog";
 import { useI18n } from "../lib/i18n";
 import { itemSubtitle, itemTitle } from "../lib/items";
@@ -71,6 +72,8 @@ export function WatchtowerView({ health, navigate }: WatchtowerViewProps) {
             </p>
             <p className="mt-1 text-xs text-text-muted">{breaches ? t("security.scopeBreach") : t("security.scope")}</p>
           </section>
+
+          <SecurityPlan items={items} health={health} breaches={breaches?.counts} />
 
           {unsafe.size > 0 && (
             <p className="-mb-3 text-[0.8125rem] font-semibold text-text-muted">{t("security.priority")}</p>

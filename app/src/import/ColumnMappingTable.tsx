@@ -1,5 +1,6 @@
 import type { ColumnMapping, ColumnTarget, CsvTable } from "@passbox/client/import";
 import { SINGLE_TARGETS } from "@passbox/client/import";
+import { Badge } from "@passbox/ui";
 import type { MessageKey, Translate } from "./messages";
 
 const TARGETS: ColumnTarget[] = [...SINGLE_TARGETS, "field", "secret", "skip"];
@@ -14,11 +15,14 @@ export function ColumnMappingTable({
   table,
   mapping,
   onChange,
+  suggested,
 }: {
   t: Translate;
   table: CsvTable;
   mapping: ColumnMapping;
   onChange: (mapping: ColumnMapping) => void;
+  /** Columns whose target was suggested (K6), by source. */
+  suggested?: ReadonlyMap<number, "ai" | "patterns">;
 }) {
   return (
     <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
@@ -76,6 +80,13 @@ export function ColumnMappingTable({
                       </option>
                     ))}
                   </select>
+                  {suggested?.has(index) && (
+                    <span className="mt-1 block">
+                      <Badge tone="accent">
+                        {t(suggested.get(index) === "ai" ? "ai.import.badgeAi" : "ai.import.badgePatterns")}
+                      </Badge>
+                    </span>
+                  )}
                 </td>
               </tr>
             );

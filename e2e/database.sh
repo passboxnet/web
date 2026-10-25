@@ -5,11 +5,5 @@
 # postgres://postgres:postgres@localhost:5432/postgres. Needs psql.
 set -eu
 : "${PASSBOX_E2E_DATABASE_URL:?set PASSBOX_E2E_DATABASE_URL to a PostgreSQL superuser URL (see CONTRIBUTING.md)}"
-name="$1"
-roles="$(dirname "$0")/../crates/server/sql/roles.sql"
-psql "$PASSBOX_E2E_DATABASE_URL" -X -q -v ON_ERROR_STOP=1 \
-  -c "SET client_min_messages = warning" \
-  -c "DROP DATABASE IF EXISTS $name WITH (FORCE)" \
-  -c "CREATE DATABASE $name" \
-  -c "\\connect $name" \
-  -f "$roles" > /dev/null
+PASSBOX_TEST_DATABASE_URL="$PASSBOX_E2E_DATABASE_URL" \
+  exec sh "$(dirname "$0")/../scripts/test-database.sh" create "$1"

@@ -42,8 +42,8 @@ class Mcp {
   private pending = new Map<number, (value: Record<string, unknown>) => void>();
   private next = 0;
 
-  constructor(token: string) {
-    this.child = spawn(PBX, ["mcp"], {
+  constructor(token: string, args: string[] = []) {
+    this.child = spawn(PBX, ["mcp", ...args], {
       env: { ...process.env, PASSBOX_SERVER: SERVER, PASSBOX_SERVICE_ACCOUNT_TOKEN: token, PASSBOX_PASSWORD: "" },
     });
     createInterface({ input: this.child.stdout }).on("line", (line) => {
@@ -204,6 +204,83 @@ test("service accounts and AI agent approvals", async ({ page }) => {
     await page.getByText("Dienstkonten", { exact: true }).first().click();
     await expect(page.getByTestId("sa-row")).toContainText("Claude Code");
     await shot(page, "de-service-accounts");
+  } finally {
+    mcp.close();
+  }
+});
+
+test("revealing a value to an agent needs the explicit tick", async ({ page }) => {
+  test.setTimeout(180_000);
+  await createAccount(page, uniqueEmail("reveal"));
+  await page.getByRole("button", { name: "Developer" }).click();
+  await page.getByText("Service accounts", { exact: true }).first().click();
+  await expect(page.getByTestId("agent-usage")).toBeVisible();
+  await page.getByTestId("sa-new").click();
+  await page.getByLabel("Name").fill("Claude Code");
+  await page.getByLabel("Private").selectOption("write");
+  await page.getByTestId("sa-create").click();
+  const token = ((await page.getByTestId("sa-token").textContent()) ?? "").trim();
+  await page.getByTestId("sa-token-stored").check();
+  await page.getByRole("button", { name: "Done" }).click();
+  await shot(page, "en-service-accounts-fair-use");
+
+  execFileSync(PBX, ["item", "create", "--category", "login", "--title", "Webshop", "--password-stdin"], {
+    env: { ...process.env, PASSBOX_SERVER: SERVER, PASSBOX_SERVICE_ACCOUNT_TOKEN: token, PASSBOX_PASSWORD: "" },
+    input: "shop-secret-7\n",
+  });
+
+  // Without --allow-reveal there is no such tool.
+  const plain = new Mcp(token);
+  try {
+    await plain.call("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "agent" } });
+    const tools = (await plain.call("tools/list", {})) as { result: { tools: { name: string }[] } };
+    expect(tools.result.tools.map((t) => t.name)).not.toContain("passbox_reveal");
+  } finally {
+    plain.close();
+  }
+
+  const mcp = new Mcp(token, ["--allow-reveal"]);
+  try {
+    await mcp.call("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "claude-code" } });
+    const tools = (await mcp.call("tools/list", {})) as { result: { tools: { name: string }[] } };
+    expect(tools.result.tools.map((t) => t.name)).toContain("passbox_reveal");
+    const hits = await mcp.tool("passbox_search", { query: "webshop" });
+    const item = (hits.value.items as { reference: string }[])[0];
+    const reference = `${item?.reference}/password`;
+    const asked = await mcp.tool("passbox_reveal", { reference, reason: "Log in to the shop", wait_seconds: 0 });
+    expect(asked.isError).toBe(true);
+
+    // The dialog warns, and approving needs the tick.
+    const dialog = page.getByTestId("agent-approval");
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("agent-reveal")).toContainText("The agent wants to see the value");
+    await expect(page.getByTestId("agent-approve")).toBeDisabled();
+    await page.getByTestId("agent-allow-reveal").check();
+    await shot(page, "en-agent-reveal-approval");
+    await page.getByTestId("agent-approve").click();
+    await expect(dialog).toBeHidden();
+
+    const revealed = await mcp.tool("passbox_reveal", { reference, reason: "Log in to the shop", wait_seconds: 20 });
+    expect(revealed.isError, revealed.text).toBe(false);
+    expect(revealed.value.value).toBe("shop-secret-7");
+    await page.getByText("AI agents", { exact: true }).first().click();
+    await expect(page.getByText("Was shown a value").first()).toBeVisible({ timeout: 15_000 });
+    await shot(page, "en-agent-reveal-activity");
+
+    // German dialog.
+    await page.evaluate(() => {
+      const raw = localStorage.getItem("passbox.preferences");
+      localStorage.setItem("passbox.preferences", JSON.stringify({ ...(raw ? JSON.parse(raw) : {}), language: "de" }));
+    });
+    await page.reload();
+    await page.getByLabel("Master-Passwort", { exact: true }).fill(PASSWORD);
+    await page.getByRole("button", { name: "Entsperren" }).click();
+    await mcp.tool("passbox_reveal", { reference, reason: "Noch einmal", wait_seconds: 0 });
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("agent-reveal")).toContainText("Der Agent will den Wert sehen");
+    await shot(page, "de-agent-reveal-approval");
+    await page.getByRole("button", { name: "Ablehnen" }).click();
+    await expect(dialog).toBeHidden();
   } finally {
     mcp.close();
   }

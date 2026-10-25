@@ -275,10 +275,12 @@ export function AgentApprovalDialog({
           </span>
         </div>
 
-        <p className="flex gap-2 rounded-lg bg-warning-soft p-3 text-[0.8125rem]">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-          {t("agent.warning")}
-        </p>
+        {!onlyReveal && (
+          <p className="flex gap-2 rounded-lg bg-warning-soft p-3 text-[0.8125rem]">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+            {t("agent.warning")}
+          </p>
+        )}
 
         {error && (
           <p className="text-sm text-danger" role="alert">

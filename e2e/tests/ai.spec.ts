@@ -180,3 +180,40 @@ test("AI is off by default; import and security plan work without and with a mod
     await shot(page, "de-security-plan-ai");
   }
 });
+
+test("cloud provider presets show the region and where data goes", async ({ page }) => {
+  test.setTimeout(120_000);
+  await signUp(page);
+  await page.goto("/#/settings/ai");
+  await page.getByRole("switch", { name: "Use AI features" }).click();
+  await page.locator("label", { hasText: "Cloud provider" }).click();
+  await page.getByTestId("ai-preset").selectOption("ionos");
+  const note = page.getByTestId("ai-preset-note");
+  await expect(note).toContainText("IONOS AI Model Hub");
+  await expect(note).toContainText("Processed in: EU (DE)");
+  await expect(page.getByLabel("Address (OpenAI-compatible)")).toHaveValue(
+    "https://openai.inference.de-txl.ionos.com/v1",
+  );
+  await page.locator("#ai").scrollIntoViewIfNeeded();
+  await shot(page, "en-settings-ai-preset-ionos");
+  await page.getByTestId("ai-preset").selectOption("anthropic");
+  await expect(note).toContainText("Processed in: USA (US)");
+  await expect(page.getByLabel("Model")).toHaveValue("claude-opus-5-5");
+  await shot(page, "en-settings-ai-preset-anthropic");
+  // Typing another endpoint leaves the preset.
+  await page.getByLabel("Address (OpenAI-compatible)").fill("https://llm.example.com/v1");
+  await expect(note).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const raw = localStorage.getItem("passbox.preferences");
+    localStorage.setItem("passbox.preferences", JSON.stringify({ ...(raw ? JSON.parse(raw) : {}), language: "de" }));
+  });
+  await page.reload();
+  await page.getByLabel("Master-Passwort", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "Entsperren" }).click();
+  await page.goto("/#/settings/ai");
+  await page.getByTestId("ai-preset").selectOption("stackit");
+  await expect(page.getByTestId("ai-preset-note")).toContainText("Verarbeitung: EU (DE)");
+  await page.locator("#ai").scrollIntoViewIfNeeded();
+  await shot(page, "de-settings-ai-preset-stackit");
+});

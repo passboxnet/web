@@ -77,7 +77,7 @@ export function IntegrationsSection({ org }: { org: Org }) {
           {SIEMS.map((siem) => (
             <li
               key={siem.id}
-              className="flex items-center gap-2 rounded-lg border border-border bg-surface py-1.5 pr-3 pl-1.5 text-[0.8125rem] font-medium shadow-xs"
+              className="flex items-center gap-2 rounded-control border border-hairline bg-surface py-1.5 pr-3 pl-1.5 text-[0.8125rem] font-medium shadow-xs"
             >
               <BrandIcon service={siem.id} name={siem.name} size="sm" decorative />
               {siem.name}

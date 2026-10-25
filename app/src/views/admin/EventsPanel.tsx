@@ -1,11 +1,12 @@
 import type { AdminEvent, AdminEvents } from "@passbox/api-client";
 import type { Translate } from "@passbox/i18n";
 import { Badge, Button, Spinner } from "@passbox/ui";
+import { ScrollText } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage } from "../../core";
 import { useI18n } from "../../lib/i18n";
 import { useClient } from "../../useClient";
-import { Panel } from "../PageHeader";
+import { ConsolePanel } from "./console";
 
 const KNOWN = new Set([
   "instance_admin_bootstrap",
@@ -60,7 +61,12 @@ export function EventsPanel({ revision }: { revision: number }) {
   useEffect(load, [load]);
 
   return (
-    <Panel id="admin-events" title={t("admin.events.title")} description={t("admin.events.description")}>
+    <ConsolePanel
+      id="admin-events"
+      icon={<ScrollText />}
+      title={t("admin.events.title")}
+      description={t("admin.events.description")}
+    >
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-danger">
           {error}
@@ -85,7 +91,7 @@ export function EventsPanel({ revision }: { revision: number }) {
           {data.events.length === 0 ? (
             <p className="px-5 py-4 text-[0.8125rem] text-text-muted">{t("admin.events.none")}</p>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-hairline">
               {data.events.map((event) => (
                 <li key={event.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 py-3">
                   <span className="w-10 shrink-0 text-xs text-text-subtle tabular-nums">{`#${event.seq}`}</span>
@@ -105,6 +111,6 @@ export function EventsPanel({ revision }: { revision: number }) {
           )}
         </>
       )}
-    </Panel>
+    </ConsolePanel>
   );
 }

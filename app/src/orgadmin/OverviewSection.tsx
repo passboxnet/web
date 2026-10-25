@@ -1,11 +1,28 @@
 import type { ChainCheck } from "@passbox/api-client";
 import type { Org } from "@passbox/client";
-import { Badge, Button } from "@passbox/ui";
-import { AlertTriangle, CheckCircle2, ChevronRight, Info } from "lucide-react";
+import { Badge, Button, cn } from "@passbox/ui";
+import {
+  Activity,
+  AlertTriangle,
+  Bot,
+  CheckCircle2,
+  ChevronRight,
+  Gauge,
+  Info,
+  KeyRound,
+  ListChecks,
+  ScrollText,
+  ShieldAlert,
+  ShieldCheck,
+  UserRound,
+  Users,
+  Vault as VaultIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useI18n } from "../lib/i18n";
 import { awaitingConfirmation } from "../lib/sharing";
 import { useClient, useSnapshot } from "../useClient";
+import { ConsolePanel } from "../views/admin/console";
 import { Loading, Meter, Section, Stat } from "./common";
 import type { AdminSection, ReportState } from "./OrgAdminView";
 
@@ -144,12 +161,14 @@ export function OverviewSection({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label={t("orgAdmin.overview.members")}
+          icon={<Users />}
           value={report.memberCount ?? members.length}
           hint={t("orgAdmin.overview.membersHint", { invited: report.pendingInvitations, waiting })}
           onClick={() => go("members")}
         />
         <Stat
           label={t("orgAdmin.overview.twoFactor")}
+          icon={<ShieldCheck />}
           value={`${withTwoFactor}/${active.length}`}
           hint={<Meter value={share(withTwoFactor)} label={t("orgAdmin.overview.twoFactor")} />}
           tone={withTwoFactor === active.length ? "good" : "warn"}
@@ -157,6 +176,7 @@ export function OverviewSection({
         />
         <Stat
           label={t("orgAdmin.overview.recovery")}
+          icon={<KeyRound />}
           value={report.recoverySetUp ? `${enrolled}/${members.length}` : "–"}
           hint={
             report.recoverySetUp ? (
@@ -169,6 +189,7 @@ export function OverviewSection({
         />
         <Stat
           label={t("orgAdmin.overview.score")}
+          icon={<Gauge />}
           value={average ?? "–"}
           hint={t("orgAdmin.overview.scoreHint", { count: scores.length, total: active.length })}
           tone={average === undefined ? "neutral" : average >= 80 ? "good" : average >= 50 ? "warn" : "bad"}
@@ -176,15 +197,17 @@ export function OverviewSection({
         />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-5">
         <Stat
           label={t("orgAdmin.overview.guests")}
+          icon={<UserRound />}
           value={guests}
           hint={t("orgAdmin.overview.guestsHint")}
           onClick={() => go("members")}
         />
         <Stat
           label={t("orgAdmin.overview.agents")}
+          icon={<Bot />}
           value={report.serviceAccountCount ?? "–"}
           hint={
             !report.agentLimitPerMember
@@ -197,12 +220,14 @@ export function OverviewSection({
         />
         <Stat
           label={t("orgAdmin.overview.vaults")}
+          icon={<VaultIcon />}
           value={report.vaults.length}
           hint={t("orgAdmin.overview.vaultsHint", { pending: pendingRotation })}
           onClick={() => go("vaults")}
         />
         <Stat
           label={t("orgAdmin.overview.policy")}
+          icon={<ScrollText />}
           value={policy ? t("orgAdmin.overview.policyVersion", { version: policy.version }) : "–"}
           hint={
             policy ? (
@@ -219,6 +244,7 @@ export function OverviewSection({
         />
         <Stat
           label={t("orgAdmin.overview.audit")}
+          icon={<Activity />}
           value={chain ? chain.length : "–"}
           hint={
             chain ? (
@@ -233,35 +259,34 @@ export function OverviewSection({
         />
       </div>
 
-      <section aria-labelledby="attention-title" className="rounded-card border border-border bg-surface shadow-card">
-        <header className="border-b border-border px-5 py-4">
-          <h2 id="attention-title" className="text-sm font-semibold">
-            {t("orgAdmin.overview.attention")}
-          </h2>
-        </header>
+      <ConsolePanel id="attention" icon={<ListChecks />} title={t("orgAdmin.overview.attention")}>
         {attention.length === 0 ? (
-          <p className="flex items-center gap-2 px-5 py-4 text-[0.8125rem] text-text-muted">
-            <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+          <p className="flex items-center gap-3 px-5 py-4 text-[0.8125rem] text-text-muted">
+            <span className="flex size-8 items-center justify-center rounded-[9px] bg-success-soft text-success">
+              <CheckCircle2 className="size-4" aria-hidden="true" />
+            </span>
             {t("orgAdmin.overview.allGood")}
           </p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-hairline">
             {attention.map((entry) => {
-              const Icon = entry.tone === "info" ? Info : AlertTriangle;
+              const Icon = entry.tone === "info" ? Info : entry.tone === "bad" ? ShieldAlert : AlertTriangle;
               return (
                 <li key={entry.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                  <Icon
-                    className={
+                  <span
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-[9px] [&_svg]:size-4",
                       entry.tone === "bad"
-                        ? "size-4 shrink-0 text-danger"
+                        ? "bg-danger-soft text-danger"
                         : entry.tone === "warn"
-                          ? "size-4 shrink-0 text-warning"
-                          : "size-4 shrink-0 text-accent"
-                    }
-                    aria-hidden="true"
-                  />
+                          ? "bg-warning-soft text-warning"
+                          : "bg-accent-soft text-accent",
+                    )}
+                  >
+                    <Icon aria-hidden="true" />
+                  </span>
                   <p className="min-w-0 flex-1 text-[0.8125rem]">{entry.text}</p>
-                  <Button size="sm" variant="secondary" onClick={() => go(entry.section)}>
+                  <Button size="sm" variant="secondary" shape="pill" onClick={() => go(entry.section)}>
                     {entry.action}
                     <ChevronRight />
                   </Button>
@@ -270,7 +295,7 @@ export function OverviewSection({
             })}
           </ul>
         )}
-      </section>
+      </ConsolePanel>
     </Section>
   );
 }

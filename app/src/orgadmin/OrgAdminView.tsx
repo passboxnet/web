@@ -1,5 +1,5 @@
 import type { Org } from "@passbox/client";
-import { Button, cn, fieldClassName } from "@passbox/ui";
+import { Button, cn, fieldClassName, SidebarItem } from "@passbox/ui";
 import {
   Activity,
   ArrowLeft,
@@ -20,6 +20,7 @@ import type { Route } from "../lib/route";
 import { isOrgAdmin } from "../lib/sharing";
 import { OrgIcon, orgName } from "../sharing/common";
 import { useSnapshot } from "../useClient";
+import { ConsoleFrame, ConsoleIdentity, ConsoleNav } from "../views/admin/console";
 import { Page } from "../views/PageHeader";
 import { ActivitySection } from "./ActivitySection";
 import { useOrgReport } from "./common";
@@ -118,71 +119,62 @@ function Console({
   const name = orgName(org, t);
   const adminOrgs = useSnapshot().orgs.filter(isOrgAdmin);
 
+  const nav = (
+    <ConsoleNav
+      label={t("orgAdmin.sections")}
+      heading={
+        <div className="flex flex-col gap-3">
+          {adminOrgs.length > 1 && (
+            <label className="flex flex-col gap-1 px-1 text-xs text-text-muted">
+              {t("orgAdmin.switchOrg")}
+              <select
+                className={cn(fieldClassName, "h-9 px-2 text-[0.8125rem] text-text coarse:h-11")}
+                value={org.id}
+                onChange={(e) => navigate({ view: "org-admin", orgId: e.target.value, section: current })}
+              >
+                {adminOrgs.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {orgName(o, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <ConsoleIdentity tile={<OrgIcon kind={org.kind} />} name={name} caption={t("orgAdmin.title")} />
+        </div>
+      }
+      footer={
+        <button
+          type="button"
+          onClick={() => navigate({ view: "org", orgId: org.id })}
+          className="flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-text-muted hover:bg-surface-raised hover:text-text focus-visible:outline-2 focus-visible:outline-focus coarse:min-h-11"
+        >
+          <ArrowLeft className="size-3.5" aria-hidden="true" />
+          {t("orgAdmin.back", { name })}
+        </button>
+      }
+    >
+      {sections.map((id) => {
+        const Icon = ICONS[id];
+        return (
+          <SidebarItem
+            key={id}
+            icon={<Icon aria-hidden="true" />}
+            label={t(`orgAdmin.section.${id}`)}
+            active={id === current}
+            onClick={() => go(id)}
+          />
+        );
+      })}
+    </ConsoleNav>
+  );
+
   return (
-    <section aria-label={t("orgAdmin.titleFor", { name })} className="flex min-w-0 flex-1 overflow-hidden bg-canvas">
-      <nav
-        aria-label={t("orgAdmin.sections")}
-        className="hidden w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-surface px-3 py-6 md:flex"
-      >
-        {adminOrgs.length > 1 && (
-          <label className="mb-3 flex flex-col gap-1 px-2 text-xs text-text-muted">
-            {t("orgAdmin.switchOrg")}
-            <select
-              className={cn(fieldClassName, "h-9 px-2 text-[0.8125rem] text-text coarse:h-11")}
-              value={org.id}
-              onChange={(e) => navigate({ view: "org-admin", orgId: e.target.value, section: current })}
-            >
-              {adminOrgs.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {orgName(o, t)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <div className="mb-4 flex items-start gap-2.5 px-2">
-          <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
-            <OrgIcon kind={org.kind} />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-[0.8125rem] font-semibold" title={name}>
-              {name}
-            </p>
-            <p className="text-xs text-text-muted">{t("orgAdmin.title")}</p>
-          </div>
-        </div>
-        {sections.map((id) => {
-          const Icon = ICONS[id];
-          const active = id === current;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => go(id)}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex h-8 items-center gap-2.5 rounded-md px-2 text-[0.8125rem] font-medium transition-colors coarse:h-11",
-                active ? "bg-accent-soft text-accent" : "text-text-muted hover:bg-surface-sunken hover:text-text",
-              )}
-            >
-              <Icon className="size-4 shrink-0" aria-hidden="true" />
-              {t(`orgAdmin.section.${id}`)}
-            </button>
-          );
-        })}
-        <div className="mt-auto border-t border-border px-2 pt-3">
-          <button
-            type="button"
-            onClick={() => navigate({ view: "org", orgId: org.id })}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text"
-          >
-            <ArrowLeft className="size-3.5" aria-hidden="true" />
-            {t("orgAdmin.back", { name })}
-          </button>
-        </div>
-      </nav>
-      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        <div className="border-b border-border bg-surface px-4 py-3 md:hidden">
+    <ConsoleFrame
+      label={t("orgAdmin.titleFor", { name })}
+      nav={nav}
+      top={
+        <div className="border-b border-hairline bg-surface px-4 py-3 md:hidden">
           <label className="flex flex-col gap-1 text-xs text-text-muted">
             {t("orgAdmin.sectionsFor", { name })}
             <select
@@ -198,20 +190,19 @@ function Console({
             </select>
           </label>
         </div>
-        <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-10">
-          {current === "overview" && <OverviewSection org={org} data={report} go={go} />}
-          {current === "members" && <MembersSection org={org} data={report} navigate={navigate} />}
-          {current === "groups" && <GroupsSection org={org} />}
-          {current === "vaults" && <VaultsSection org={org} data={report} navigate={navigate} />}
-          {current === "policies" && <PoliciesSection org={org} data={report} />}
-          {current === "activity" && <ActivitySection org={org} />}
-          {current === "reports" && <ReportsSection org={org} data={report} />}
-          {current === "recovery" && <RecoverySection org={org} data={report} />}
-          {current === "integrations" && <IntegrationsSection org={org} />}
-          {current === "settings" && <SettingsSection org={org} navigate={navigate} />}
-        </div>
-      </div>
-    </section>
+      }
+    >
+      {current === "overview" && <OverviewSection org={org} data={report} go={go} />}
+      {current === "members" && <MembersSection org={org} data={report} navigate={navigate} />}
+      {current === "groups" && <GroupsSection org={org} />}
+      {current === "vaults" && <VaultsSection org={org} data={report} navigate={navigate} />}
+      {current === "policies" && <PoliciesSection org={org} data={report} />}
+      {current === "activity" && <ActivitySection org={org} />}
+      {current === "reports" && <ReportsSection org={org} data={report} />}
+      {current === "recovery" && <RecoverySection org={org} data={report} />}
+      {current === "integrations" && <IntegrationsSection org={org} />}
+      {current === "settings" && <SettingsSection org={org} navigate={navigate} />}
+    </ConsoleFrame>
   );
 }
 

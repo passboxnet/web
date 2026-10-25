@@ -90,7 +90,7 @@ function SecurityReport({ report }: { report: OrgReport }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-card border border-border bg-surface px-5 py-4 shadow-card">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-card border border-hairline bg-surface px-5 py-4 shadow-card">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-text-muted">{t("orgAdmin.overview.twoFactor")}</span>
           <Meter value={active.length ? twoFactor / active.length : 1} label={t("orgAdmin.overview.twoFactor")} />
@@ -238,7 +238,7 @@ function AccessReport({ org, report }: { org: Org; report: OrgReport }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs text-text-muted">{t("orgAdmin.access.legend")}</p>
-      <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
+      <div className="overflow-x-auto rounded-card border border-hairline bg-surface shadow-card">
         <table className="border-collapse text-left text-[0.8125rem]" aria-label={t("orgAdmin.reports.tab.access")}>
           <thead>
             <tr className="border-b border-border text-xs text-text-muted">

@@ -1,5 +1,5 @@
 import type { Invite, InviteCreated, RegistrationMode } from "@passbox/api-client";
-import { Badge, Button, ConfirmDialog, Input, toast } from "@passbox/ui";
+import { Badge, Button, ConfirmDialog, Input, Monogram, toast } from "@passbox/ui";
 import { Copy, Send, X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { FormError } from "../../auth/AuthLayout";
@@ -8,7 +8,7 @@ import { copyToClipboard } from "../../lib/clipboard";
 import { useI18n } from "../../lib/i18n";
 import { serverUrl } from "../../lib/server";
 import { useClient } from "../../useClient";
-import { Panel } from "../PageHeader";
+import { ConsolePanel } from "./console";
 
 const STATUS_TONE = { pending: "accent", used: "success", expired: "neutral" } as const;
 
@@ -70,8 +70,9 @@ export function InvitesPanel({ registration, onChange }: { registration: Registr
   }
 
   return (
-    <Panel
+    <ConsolePanel
       id="invites"
+      icon={<Send />}
       title={t("admin.invites.title")}
       description={registration === "open" ? t("admin.invites.descriptionOpen") : t("admin.invites.description")}
     >
@@ -95,7 +96,7 @@ export function InvitesPanel({ registration, onChange }: { registration: Registr
         </div>
       </form>
       {created?.link && (
-        <div className="flex flex-col gap-2 bg-accent-soft px-5 py-4 text-[0.8125rem]">
+        <div className="flex flex-col gap-2 bg-accent-soft/60 px-5 py-4 text-[0.8125rem]">
           <p>
             {created.mailConfigured
               ? t("admin.invites.linkSent", { email: created.email })
@@ -103,7 +104,7 @@ export function InvitesPanel({ registration, onChange }: { registration: Registr
           </p>
           <div className="flex items-center gap-2">
             <code
-              className="min-w-0 flex-1 truncate rounded-md bg-surface px-2 py-1.5 font-mono text-xs"
+              className="min-w-0 flex-1 truncate rounded-lg border border-hairline bg-surface px-2.5 py-1.5 font-mono text-xs"
               data-testid="invite-link"
             >
               {created.link}
@@ -120,9 +121,10 @@ export function InvitesPanel({ registration, onChange }: { registration: Registr
         </div>
       )}
       {invites.length > 0 && (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-hairline">
           {invites.map((invite) => (
             <li key={invite.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+              <Monogram name={invite.email} size="md" />
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium break-all">
                   {invite.email}
@@ -155,6 +157,6 @@ export function InvitesPanel({ registration, onChange }: { registration: Registr
         tone="danger"
         onConfirm={() => revoking && void revoke(revoking)}
       />
-    </Panel>
+    </ConsolePanel>
   );
 }

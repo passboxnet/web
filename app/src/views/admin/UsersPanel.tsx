@@ -1,11 +1,11 @@
 import type { AdminUser } from "@passbox/api-client";
-import { Badge, Button, ConfirmDialog, Input, Spinner, toast } from "@passbox/ui";
-import { Ban, CheckCircle2, Search } from "lucide-react";
+import { Badge, Button, ConfirmDialog, Input, Monogram, Spinner, toast } from "@passbox/ui";
+import { Ban, CheckCircle2, Search, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage } from "../../core";
 import { useI18n } from "../../lib/i18n";
 import { useClient, useSnapshot } from "../../useClient";
-import { Panel } from "../PageHeader";
+import { ConsolePanel } from "./console";
 
 const PAGE_SIZE = 25;
 
@@ -64,7 +64,7 @@ export function UsersPanel({ onChange }: { onChange: () => void }) {
   const lastPage = offset + PAGE_SIZE >= total;
 
   return (
-    <Panel id="users" title={t("admin.users.title")} description={t("admin.users.description")}>
+    <ConsolePanel id="users" icon={<Users />} title={t("admin.users.title")} description={t("admin.users.description")}>
       <div className="px-5 py-4">
         <Input
           label={t("admin.users.search")}
@@ -92,8 +92,8 @@ export function UsersPanel({ onChange }: { onChange: () => void }) {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-[0.8125rem]">
-            <thead className="text-xs text-text-muted">
-              <tr className="border-b border-border">
+            <thead className="bg-surface-raised/60 text-xs text-text-subtle">
+              <tr className="border-b border-hairline">
                 <th scope="col" className="px-5 py-2 font-medium">
                   {t("admin.users.email")}
                 </th>
@@ -114,13 +114,16 @@ export function UsersPanel({ onChange }: { onChange: () => void }) {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-hairline">
               {users.map((user) => (
-                <tr key={user.id}>
+                <tr key={user.id} className="transition-colors hover:bg-surface-raised/50">
                   <td className="px-5 py-3">
-                    <span className="flex flex-wrap items-center gap-2 break-all">
-                      {user.email}
-                      {user.instanceAdmin && <Badge tone="accent">{t("admin.users.admin")}</Badge>}
+                    <span className="flex items-center gap-3">
+                      <Monogram name={user.email} size="md" />
+                      <span className="flex min-w-0 flex-wrap items-center gap-2 font-medium break-all">
+                        {user.email}
+                        {user.instanceAdmin && <Badge tone="accent">{t("admin.users.admin")}</Badge>}
+                      </span>
                     </span>
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap text-text-muted" title={i18n.dateTime(user.createdAt)}>
@@ -200,6 +203,6 @@ export function UsersPanel({ onChange }: { onChange: () => void }) {
         tone={confirm?.action === "enable" ? "default" : "danger"}
         onConfirm={() => confirm && void apply(confirm.user, confirm.action)}
       />
-    </Panel>
+    </ConsolePanel>
   );
 }

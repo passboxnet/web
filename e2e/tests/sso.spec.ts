@@ -3,6 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { type Browser, expect, type Page, test } from "@playwright/test";
+import { createDatabase, databaseEnv, databaseName } from "../database";
 import { type MockIdp, startMockIdp } from "../fixtures/mock-idp";
 import { port } from "../ports";
 
@@ -25,13 +26,17 @@ test.beforeAll(async () => {
   test.setTimeout(300_000);
   idp = await startMockIdp({ email: (hint) => hint ?? signedInAs });
   const dataDir = mkdtempSync(join(tmpdir(), "passbox-e2e-sso-"));
+  const database = databaseName("sso", SSO_PORT);
+  createDatabase(database);
   server = spawn("cargo", ["run", "--quiet", "--package", "passbox-server"], {
     cwd: resolve(import.meta.dirname, "../.."),
-    stdio: "ignore",
+    // Server logs show up in CI output, as for the other servers.
+    stdio: process.env.CI ? "inherit" : "ignore",
     env: {
       ...process.env,
       PASSBOX_BIND: `127.0.0.1:${SSO_PORT}`,
-      PASSBOX_DATABASE_URL: `sqlite://${join(dataDir, "sso.db")}?mode=rwc`,
+      ...databaseEnv(database),
+      PASSBOX_BLOB_DIR: join(dataDir, "blobs"),
       PASSBOX_WEB_DIR: "apps/web/dist",
       PASSBOX_PUBLIC_URL: BASE,
       PASSBOX_SSO_ALLOW_HTTP_LOOPBACK: "1",

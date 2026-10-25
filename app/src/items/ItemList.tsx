@@ -3,6 +3,7 @@ import {
   Button,
   cn,
   EmptyState,
+  Fab,
   Kbd,
   Menu,
   MenuContent,
@@ -24,6 +25,7 @@ import {
   Plus,
   Search,
   SearchX,
+  ShieldAlert,
   Star,
   Timer,
   TimerReset,
@@ -39,6 +41,7 @@ import { CATEGORY_META, itemSubtitle, itemTitle } from "../lib/items";
 import type { Route } from "../lib/route";
 import { normalize } from "../lib/search";
 import { writableVaults } from "../lib/sharing";
+import { NewItemMenu } from "../shell/NewItemMenu";
 import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
 import { GettingStartedCard } from "../views/GettingStarted";
@@ -64,6 +67,8 @@ interface ItemListProps {
   category?: ItemCategory | undefined;
   /** Shown under the search field, for example who can see a shared vault. */
   banner?: ReactNode;
+  /** Items with a security finding (weak, reused, insecure address): a shield badge on the row. */
+  risky?: ReadonlySet<string>;
 }
 
 export function ItemList({
@@ -81,6 +86,7 @@ export function ItemList({
   navigate,
   category,
   banner,
+  risky,
 }: ItemListProps) {
   const { t } = useI18n();
   const client = useClient();
@@ -209,12 +215,12 @@ export function ItemList({
   }
 
   return (
-    <section aria-label={title} className="flex min-w-0 flex-1 flex-col bg-surface">
-      <header className="flex flex-col gap-3 border-b border-border px-4 pt-4 pb-3">
+    <section aria-label={title} className="relative flex min-w-0 flex-1 flex-col bg-surface/45 backdrop-blur-2xl">
+      <header className="flex flex-col gap-3 px-4 pt-4 pb-2">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="truncate text-[0.9375rem] font-semibold">
+          <h1 className="truncate text-headline text-text">
             {title}
-            <span className="ml-2 text-[0.8125rem] font-normal text-text-muted tabular-nums">{items.length}</span>
+            <span className="ml-2 text-body font-normal text-text-subtle tabular-nums">{items.length}</span>
           </h1>
           <span className="ml-auto" />
           {pickable.length > 0 && (
@@ -256,7 +262,7 @@ export function ItemList({
             </MenuContent>
           </Menu>
         </div>
-        <label className="flex h-9 items-center gap-2 rounded-lg border border-border bg-surface-raised px-2.5 text-text-muted transition focus-within:border-accent focus-within:bg-surface focus-within:ring-3 focus-within:ring-accent/20 coarse:h-11">
+        <label className="flex h-11 items-center gap-2.5 rounded-control border border-hairline bg-field px-3.5 text-text-subtle shadow-xs transition focus-within:border-accent focus-within:ring-4 focus-within:ring-focus/25 coarse:h-12">
           <Search className="size-4" aria-hidden="true" />
           <span className="sr-only">{t("list.search")}</span>
           <input
@@ -272,7 +278,7 @@ export function ItemList({
               if (e.key === "Escape") onQueryChange("");
             }}
             placeholder={t("list.searchPlaceholder")}
-            className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-text outline-none placeholder:text-text-muted"
+            className="min-w-0 flex-1 bg-transparent text-body text-text outline-none placeholder:text-text-subtle"
           />
           <Kbd>/</Kbd>
         </label>
@@ -286,29 +292,27 @@ export function ItemList({
           aria-label={t("list.items", { title })}
           tabIndex={0}
           onKeyDown={onListKey}
-          className="flex-1 overflow-y-auto px-2 pb-4 outline-none"
+          className="flex-1 overflow-y-auto px-2.5 pb-24 outline-none"
         >
           {fuzzy && (
-            <p role="status" className="px-2 pt-3 text-xs text-text-muted">
+            <p role="status" className="px-2 pt-3 text-caption text-text-muted">
               {t("list.fuzzy", { query })}
             </p>
           )}
           {groups.map(([heading, groupItems]) => (
             <div key={heading}>
               {heading && (
-                <p
-                  aria-hidden="true"
-                  className="sticky top-0 z-[1] bg-surface/95 px-2 pt-3 pb-1 text-2xs font-semibold tracking-wide text-text-muted uppercase backdrop-blur"
-                >
+                <p aria-hidden="true" className="px-2.5 pt-3 pb-1 text-overline text-text-subtle uppercase">
                   {heading}
                 </p>
               )}
-              <div className="flex flex-col gap-px">
+              <div className="flex flex-col gap-1">
                 {groupItems.map((item) => (
                   <ItemRow
                     key={item.id}
                     item={item}
                     selected={item.id === selectedId}
+                    risky={risky?.has(item.id) ?? false}
                     checked={picked ? picked.includes(item.id) : undefined}
                     disabled={picked !== undefined && !writable.has(item.vaultId)}
                     onSelect={() => (picked ? writable.has(item.vaultId) && toggle(item.id) : onSelect(item.id))}
@@ -320,11 +324,17 @@ export function ItemList({
         </div>
       )}
 
+      {!picked && !empty && (
+        <NewItemMenu align="end" side="top" onCreate={onCreate}>
+          <Fab label={t("list.fab")} icon={<Plus />} className="absolute right-5 bottom-5 z-(--pb-z-sticky)" />
+        </NewItemMenu>
+      )}
+
       {picked && (
         <div
           role="toolbar"
           aria-label={t("select.toolbar")}
-          className="flex flex-wrap items-center gap-2 border-t border-border bg-surface-raised px-3 py-2"
+          className="flex flex-wrap items-center gap-2 border-t border-hairline bg-surface-raised px-3 py-2"
           data-testid="bulk-bar"
         >
           <span className="min-w-0 flex-1 text-[0.8125rem] font-medium" aria-live="polite">
@@ -381,12 +391,14 @@ function groupItems(
 function ItemRow({
   item,
   selected,
+  risky,
   checked,
   disabled,
   onSelect,
 }: {
   item: Item;
   selected: boolean;
+  risky: boolean;
   /** Set in selection mode. */
   checked?: boolean | undefined;
   disabled?: boolean;
@@ -399,6 +411,9 @@ function ItemRow({
   const username = fieldValue(item.data, FIELD.username);
   const password = fieldValue(item.data, FIELD.password);
   const totp = fieldValue(item.data, FIELD.totp);
+  const copyable = Boolean(username || password || totp);
+  // The solid blue row: a single selected item; in selection mode the ticked rows are tinted instead.
+  const solid = checked === undefined && selected;
 
   async function copyCode() {
     if (!totp) return;
@@ -421,8 +436,8 @@ function ItemRow({
       onClick={onSelect}
       onKeyDown={(e) => (e.key === "Enter" || (checked !== undefined && e.key === " ")) && onSelect()}
       className={cn(
-        "group flex cursor-default items-center gap-3 rounded-lg px-2 py-2 transition-colors",
-        (checked ?? selected) ? "bg-accent-soft" : "hover:bg-surface-sunken",
+        "group flex min-h-14 cursor-default items-center gap-3 rounded-control px-2.5 py-2 transition-colors duration-150",
+        solid ? "bg-accent text-accent-contrast shadow-glow" : checked ? "bg-accent-soft" : "hover:bg-surface-raised",
         disabled && "opacity-50",
       )}
     >
@@ -431,7 +446,7 @@ function ItemRow({
           aria-hidden="true"
           className={cn(
             "flex size-4 shrink-0 items-center justify-center rounded border",
-            checked ? "border-accent bg-accent text-white" : "border-border-strong bg-surface",
+            checked ? "border-accent bg-accent text-accent-contrast" : "border-border-strong bg-surface",
           )}
         >
           {checked && <Check className="size-3" />}
@@ -439,38 +454,44 @@ function ItemRow({
       )}
       <ItemIcon item={item} size="lg" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.8125rem] font-medium text-text">{itemTitle(item, t)}</span>
-        <span className="block truncate text-xs text-text-muted">{itemSubtitle(item, t)}</span>
+        <span className={cn("block truncate text-label", solid ? "text-accent-contrast" : "text-text")}>
+          {itemTitle(item, t)}
+        </span>
+        <span className={cn("block truncate text-body-sm", solid ? "text-accent-contrast/85" : "text-text-muted")}>
+          {itemSubtitle(item, t)}
+        </span>
       </span>
-      {/* Quick copy: on hover or for the selected row with a mouse, always on touch screens. */}
-      <span
-        className={cn(
-          "hidden items-center gap-0.5 group-hover:flex coarse:flex",
-          selected && "flex",
-          !(username || password || totp) && "!hidden",
-        )}
-      >
+      {/* Quick copy: on hover with a mouse, always on touch screens. */}
+      <span className={cn("hidden items-center gap-0.5 group-hover:flex coarse:flex", !copyable && "!hidden")}>
         {username && (
-          <RowButton label={t("list.copyUsername")} onClick={() => copyToClipboard(username, t("field.username"))}>
+          <RowButton
+            solid={solid}
+            label={t("list.copyUsername")}
+            onClick={() => copyToClipboard(username, t("field.username"))}
+          >
             <AtSign />
           </RowButton>
         )}
         {password && (
-          <RowButton label={t("list.copyPassword")} onClick={() => copyToClipboard(password, t("field.password"))}>
+          <RowButton
+            solid={solid}
+            label={t("list.copyPassword")}
+            onClick={() => copyToClipboard(password, t("field.password"))}
+          >
             <KeyRound />
           </RowButton>
         )}
         {totp && (
-          <RowButton label={t("list.copyCode")} onClick={() => void copyCode()}>
+          <RowButton solid={solid} label={t("list.copyCode")} onClick={() => void copyCode()}>
             <TimerReset />
           </RowButton>
         )}
       </span>
       <span
         className={cn(
-          "flex items-center gap-1 text-text-muted",
-          (username || password || totp) && "group-hover:hidden coarse:hidden",
-          selected && (username || password || totp) && "hidden",
+          "flex items-center gap-1.5",
+          solid ? "text-accent-contrast" : "text-text-subtle",
+          copyable && "group-hover:hidden coarse:hidden",
         )}
       >
         {shared && (
@@ -480,13 +501,35 @@ function ItemRow({
           />
         )}
         {totp && <Timer className="size-3.5" aria-label={t("list.hasTotp")} />}
-        {item.data.favorite && <Star className="size-3.5 fill-warning text-warning" aria-label={t("list.favorite")} />}
+        {item.data.favorite && (
+          <Star
+            className={cn("size-3.5", solid ? "fill-current" : "fill-warning text-warning")}
+            aria-label={t("list.favorite")}
+          />
+        )}
+        {risky && (
+          <ShieldAlert
+            className={cn("size-[18px]", solid ? "text-accent-contrast" : "text-warning")}
+            aria-label={t("list.risky")}
+            data-testid="risky-badge"
+          />
+        )}
       </span>
     </div>
   );
 }
 
-function RowButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function RowButton({
+  label,
+  onClick,
+  solid,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  solid: boolean;
+  children: ReactNode;
+}) {
   return (
     <Tooltip content={label}>
       <Button
@@ -494,6 +537,7 @@ function RowButton({ label, onClick, children }: { label: string; onClick: () =>
         size="icon-sm"
         tabIndex={-1}
         aria-label={label}
+        className={solid ? "text-accent-contrast hover:bg-accent-hover hover:text-accent-contrast" : undefined}
         onClick={(event) => {
           // Copying must not also select the row and open it on phones.
           event.stopPropagation();

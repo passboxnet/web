@@ -1,5 +1,5 @@
 import type { ServerMeta } from "@passbox/api-client";
-import { Badge, Logo } from "@passbox/ui";
+import { GridFrame, Logo, Panel } from "@passbox/ui";
 import { EyeOff, Laptop, ServerCog, ShieldAlert, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useI18n } from "../lib/i18n";
@@ -12,98 +12,76 @@ const POINTS = [
   { icon: Laptop, title: "landing.point3.title", text: "landing.point3.text" },
 ];
 
+/**
+ * The brand moment: sign-up, sign-in, unlock and recovery sit in a bezelled
+ * panel on the signature backdrop (deep navy into electric blue, with grain).
+ * Wide screens show the dark brand half with the dotted grid frame next to
+ * the form; the form half follows the theme.
+ */
 export function AuthLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="relative isolate flex min-h-full flex-col overflow-x-hidden bg-backdrop">
+      <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 -z-10" />
       <InsecurePageBanner />
-      <div className="grid flex-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <aside className="relative hidden overflow-hidden bg-brand-950 text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-60"
-            style={{
-              background:
-                "radial-gradient(60% 50% at 20% 10%, oklch(0.45 0.2 262 / 0.6), transparent), radial-gradient(50% 40% at 90% 90%, oklch(0.45 0.18 300 / 0.35), transparent)",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-[0.07]"
-            style={{
-              backgroundImage:
-                "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-            }}
-          />
-          <Logo className="relative text-white" />
-          <div className="relative max-w-md">
-            <h2 className="text-3xl font-semibold tracking-tight text-balance">{t("landing.headline")}</h2>
-            <ul className="mt-10 flex flex-col gap-6">
-              {POINTS.map(({ icon: Icon, title, text }) => (
-                <li key={title} className="flex gap-4">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
-                    <Icon className="size-4" aria-hidden="true" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold">{t(title)}</span>
-                    <span className="mt-0.5 block text-sm text-white/75">{t(text)}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href={LINKS.design}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="mt-8 inline-block text-sm text-white/80 underline underline-offset-4 hover:text-white"
-            >
-              {t("landing.moreSecurity")}
-            </a>
-          </div>
-          <p className="relative flex items-center gap-2 text-xs text-white/70">
-            <ServerCog className="size-3.5" aria-hidden="true" />
-            {t("landing.footer")}
-          </p>
-        </aside>
-        <main className="flex flex-col items-center justify-center px-4 py-10 sm:px-6">
-          <div className="w-full max-w-[25rem]">
-            <div className="mb-8 flex items-center gap-2 lg:mb-6">
-              <Logo className="text-text lg:hidden" />
-              <PreviewBadge />
-            </div>
-            {children}
-            <ServerStatus />
-          </div>
-        </main>
-      </div>
-    </div>
-  );
-}
-
-/** "Preview" badge with the honest notice that Passbox is not audited yet. */
-export function PreviewBadge() {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  return (
-    <span className="relative">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="rounded-md focus-visible:outline-2 focus-visible:outline-accent"
-      >
-        <Badge tone="warning">{t("notice.previewBadge")}</Badge>
-      </button>
-      {open && (
-        <span
-          role="note"
-          className="absolute top-7 left-0 z-10 w-72 rounded-lg border border-border bg-surface p-3 text-xs text-text shadow-overlay"
+      <header className="flex items-center justify-between px-5 pt-5 sm:px-10 sm:pt-7">
+        <Logo className="text-white" />
+        <a
+          href={LINKS.design}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="hidden rounded-full px-3 py-1.5 text-label text-white/80 ring-1 ring-white/20 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
         >
-          {t("notice.preview")}
-        </span>
-      )}
-    </span>
+          {t("landing.moreSecurity")}
+        </a>
+      </header>
+      <main className="flex flex-1 items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
+        <Panel bezel className="w-full max-w-[60rem]">
+          <div className="grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+            <aside
+              data-theme="dark"
+              className="relative hidden flex-col justify-between overflow-hidden bg-canvas py-10 text-text lg:flex"
+            >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 opacity-90"
+                style={{
+                  background:
+                    "radial-gradient(70% 55% at 15% 0%, color-mix(in oklch, var(--pb-accent) 34%, transparent), transparent 70%), radial-gradient(60% 45% at 100% 100%, color-mix(in oklch, var(--color-tag-violet) 22%, transparent), transparent 70%)",
+                }}
+              />
+              <GridFrame edges="both" className="py-8">
+                <p className="text-overline text-accent uppercase">{t("landing.eyebrow")}</p>
+                <h2 className="mt-3 text-title text-balance text-text">{t("landing.headline")}</h2>
+                <ul className="mt-8 flex flex-col gap-5">
+                  {POINTS.map(({ icon: Icon, title, text }) => (
+                    <li key={title} className="flex gap-3.5">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-raised text-accent shadow-highlight ring-1 ring-hairline">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <span>
+                        <span className="block text-label text-text">{t(title)}</span>
+                        <span className="mt-0.5 block text-body-sm text-text-muted">{t(text)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </GridFrame>
+              <p className="relative mt-8 flex items-center gap-2 px-10 text-caption text-text-subtle">
+                <ServerCog className="size-3.5" aria-hidden="true" />
+                {t("landing.footer")}
+              </p>
+            </aside>
+            <div className="flex flex-col bg-surface px-5 py-8 sm:px-10 sm:py-10">
+              <div className="mx-auto w-full max-w-[25rem]">
+                {children}
+                <ServerStatus />
+              </div>
+            </div>
+          </div>
+        </Panel>
+      </main>
+    </div>
   );
 }
 
@@ -158,7 +136,7 @@ export function FormError({ message }: { message: string | undefined }) {
   return (
     <p
       role="alert"
-      className="rounded-lg border border-danger/20 bg-danger-soft px-3 py-2.5 text-[0.8125rem] text-danger"
+      className="rounded-control border border-danger/25 bg-danger-soft px-3.5 py-2.5 text-body text-danger"
     >
       {message}
     </p>

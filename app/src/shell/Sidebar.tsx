@@ -1,17 +1,19 @@
 import type { ItemCategory, VaultHealth } from "@passbox/client";
 import {
+  Avatar,
   Badge,
   Button,
   cn,
-  Logo,
   Menu,
   MenuContent,
   MenuItem,
   MenuLabel,
   MenuSeparator,
   MenuTrigger,
-  Monogram,
+  sidebarItemClassName,
+  type TagColor,
   Tooltip,
+  tagDotClassName,
 } from "@passbox/ui";
 import {
   Archive,
@@ -25,28 +27,28 @@ import {
   type LucideIcon,
   Plus,
   RefreshCw,
-  Search,
   Settings,
   ShieldCheck,
   ShieldEllipsis,
   Star,
   Trash2,
   Users,
-  Vault as VaultIcon,
   Wand2,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { SignOutDialog } from "../auth/SignOutDialog";
 import { usePendingAgentRequests } from "../developer/agentRequests";
-import { shortcut, useI18n } from "../lib/i18n";
+import { useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
-import { ALWAYS_LISTED, CATEGORY_META, CREATABLE, CREATABLE_GROUPS } from "../lib/items";
+import { ALWAYS_LISTED, CATEGORY_META, CREATABLE } from "../lib/items";
 import type { ItemFilter, Route } from "../lib/route";
 import { awaitingConfirmation, isOrgAdmin } from "../lib/sharing";
+import { vaultColor } from "../lib/vaultColor";
 import { orgName } from "../sharing/common";
 import { useClient, useSnapshot } from "../useClient";
 import { useChecklist } from "../views/GettingStarted";
 import { NewVaultDialog } from "../views/NewVaultDialog";
+import { NewItemMenu } from "./NewItemMenu";
 import type { SyncState } from "./useSyncStatus";
 
 interface SidebarProps {
@@ -55,7 +57,6 @@ interface SidebarProps {
   health: VaultHealth;
   syncState: SyncState;
   onSync: () => void;
-  onOpenPalette: () => void;
 }
 
 function sameFilter(route: Route, filter: ItemFilter): boolean {
@@ -72,7 +73,12 @@ export function affectedLogins(health: VaultHealth): number {
   return new Set([...health.weak, ...health.reused.flat(), ...health.insecureUrls]).size;
 }
 
-export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPalette }: SidebarProps) {
+/**
+ * The vault sidebar (desktop window and web): the account card, the main
+ * sections with counts, categories, vaults with colored dots, tools, and the
+ * full-width "Neuer Eintrag" pill at the bottom.
+ */
+export function Sidebar({ route, navigate, health, syncState, onSync }: SidebarProps) {
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;
@@ -90,30 +96,34 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
   const waiting = orgs.reduce((sum, org) => sum + (isOrgAdmin(org) ? awaitingConfirmation(org).length : 0), 0);
   const sharingActive = route.view === "sharing" || route.view === "org";
   const adminOrgs = orgs.filter(isOrgAdmin);
+  const caption = orgs[0] ? orgName(orgs[0], t) : t("shell.account.personal");
 
   return (
     <nav
       aria-label={t("shell.mainNavigation")}
-      className="flex h-full flex-col border-r border-border bg-surface-raised px-3 pt-3 pb-2"
+      className="flex h-full flex-col border-r border-hairline bg-surface/70 px-3 pt-3 pb-3 backdrop-blur-2xl"
     >
       <Menu>
         <MenuTrigger asChild>
           <button
             type="button"
-            className="flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left hover:bg-surface-sunken"
+            aria-label={t("shell.accountMenu", { email })}
+            className="flex w-full items-center gap-3 rounded-control p-2 text-left transition-colors hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
           >
-            <Logo withWordmark={false} />
+            <Avatar name={email} tone="signature" size="lg" />
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.8125rem] font-semibold">Passbox</span>
-              <span className="block truncate text-2xs text-text-muted">{email}</span>
+              <span className="block truncate text-label text-text" title={email}>
+                {email}
+              </span>
+              <span className="block truncate text-caption text-text-muted">{caption}</span>
             </span>
-            <ChevronsUpDown className="size-4 text-text-muted" aria-hidden="true" />
+            <ChevronsUpDown className="size-4 shrink-0 text-text-subtle" aria-hidden="true" />
           </button>
         </MenuTrigger>
-        <MenuContent align="start" className="w-60">
+        <MenuContent align="start" className="w-64">
           <MenuLabel>
             <span className="flex items-center gap-2">
-              <Monogram name={email} size="sm" />
+              <Avatar name={email} size="xs" tone="signature" />
               <span className="truncate">{email}</span>
             </span>
           </MenuLabel>
@@ -130,47 +140,6 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           </MenuItem>
         </MenuContent>
       </Menu>
-
-      <div className="mt-3 flex gap-2">
-        <Menu>
-          <MenuTrigger asChild>
-            <Button className="flex-1">
-              <Plus />
-              {t("shell.newItem")}
-            </Button>
-          </MenuTrigger>
-          <MenuContent align="start" className="max-h-[min(32rem,70vh)] w-56 overflow-y-auto">
-            {CREATABLE_GROUPS.map((group, index) => (
-              <div key={group[0]}>
-                {index > 0 && <MenuSeparator />}
-                {group.map((category) => {
-                  const { label, icon: Icon } = CATEGORY_META[category];
-                  return (
-                    <MenuItem
-                      key={category}
-                      icon={<Icon />}
-                      onSelect={() =>
-                        navigate({
-                          view: "items",
-                          filter: route.view === "items" ? route.filter : { kind: "all" },
-                          create: category,
-                        })
-                      }
-                    >
-                      {t(label)}
-                    </MenuItem>
-                  );
-                })}
-              </div>
-            ))}
-          </MenuContent>
-        </Menu>
-        <Tooltip content={t("shell.searchShortcut", { shortcut: shortcut(t, "K") })}>
-          <Button variant="secondary" size="icon" aria-label={t("shell.search")} onClick={onOpenPalette}>
-            <Search />
-          </Button>
-        </Tooltip>
-      </div>
 
       <div className="-mx-1 mt-4 flex-1 overflow-y-auto px-1">
         <NavGroup>
@@ -195,9 +164,9 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             onClick={() => navigate({ view: "watchtower" })}
             badge={
               affected > 0 ? (
-                <Badge tone="warning" aria-label={t("shell.affectedLogins", { count: affected })}>
+                <CountBadge tone="warning" label={t("shell.affectedLogins", { count: affected })}>
                   {affected}
-                </Badge>
+                </CountBadge>
               ) : undefined
             }
           />
@@ -208,15 +177,22 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
             onClick={() => navigate({ view: "sharing" })}
             badge={
               sharingWarnings.length > 0 ? (
-                <Badge tone="warning" aria-label={t("sharing.nav.warnings", { count: sharingWarnings.length })}>
+                <CountBadge tone="warning" label={t("sharing.nav.warnings", { count: sharingWarnings.length })}>
                   !
-                </Badge>
+                </CountBadge>
               ) : waiting > 0 ? (
-                <Badge tone="accent" aria-label={t("sharing.nav.waiting", { count: waiting })}>
+                <CountBadge tone="accent" label={t("sharing.nav.waiting", { count: waiting })}>
                   {waiting}
-                </Badge>
+                </CountBadge>
               ) : undefined
             }
+          />
+          <NavItem
+            icon={Trash2}
+            label={t("term.trash")}
+            count={trash.length}
+            active={route.view === "trash"}
+            onClick={() => navigate({ view: "trash" })}
           />
           {checklist.visible && (
             <NavItem
@@ -225,7 +201,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               active={route.view === "getting-started"}
               onClick={() => navigate({ view: "getting-started" })}
               badge={
-                <span className="text-2xs text-text-muted tabular-nums">
+                <span className="text-caption text-text-subtle tabular-nums">
                   {t("start.progressShort", { done: checklist.done, total: checklist.total })}
                 </span>
               }
@@ -267,7 +243,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           {personalVaults.map((vault) => (
             <NavItem
               key={vault.id}
-              icon={VaultIcon}
+              dot={vaultColor(vault)}
               label={vaultName(vault.name, t)}
               count={items.filter((i) => i.vaultId === vault.id).length}
               active={sameFilter(route, { kind: "vault", vaultId: vault.id })}
@@ -284,7 +260,7 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               {orgVaults.map((vault) => (
                 <NavItem
                   key={vault.id}
-                  icon={Users}
+                  dot={vaultColor(vault)}
                   label={vaultName(vault.name, t)}
                   ariaLabel={t("sharing.nav.sharedVault", { vault: vaultName(vault.name, t), org: orgName(org, t) })}
                   count={items.filter((i) => i.vaultId === vault.id).length}
@@ -312,13 +288,6 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
               onClick={() => navigate({ view: "archive" })}
             />
           ) : null}
-          <NavItem
-            icon={Trash2}
-            label={t("term.trash")}
-            count={trash.length}
-            active={route.view === "trash"}
-            onClick={() => navigate({ view: "trash" })}
-          />
           <DeveloperNavItem active={route.view === "developer"} onClick={() => navigate({ view: "developer" })} />
           <NavItem
             icon={Settings}
@@ -349,25 +318,30 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
         </NavGroup>
       </div>
 
-      <div className="mt-2 flex items-center justify-between border-t border-border px-1 pt-2">
+      <div className="mt-2 flex items-center justify-between gap-1 border-t border-hairline px-1 pt-2">
         <button
           type="button"
           onClick={onSync}
-          className="flex items-center gap-2 rounded-md px-1.5 py-1 text-2xs text-text-muted hover:bg-surface-sunken hover:text-text coarse:py-3"
+          className="flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-caption text-text-subtle transition-colors hover:bg-surface-raised hover:text-text coarse:py-3"
         >
           <span
             aria-hidden="true"
             className={cn(
-              "size-1.5 rounded-full",
+              "size-1.5 shrink-0 rounded-full",
               syncState.kind === "error" ? "bg-danger" : syncState.kind === "syncing" ? "bg-warning" : "bg-success",
             )}
           />
-          {syncState.kind === "syncing"
-            ? t("sync.syncing")
-            : syncState.kind === "error"
-              ? t("sync.offline")
-              : t("sync.synced", { time: i18n.relativeTime(syncState.at) })}
-          <RefreshCw className={cn("size-3", syncState.kind === "syncing" && "animate-spin")} aria-hidden="true" />
+          <span className="truncate">
+            {syncState.kind === "syncing"
+              ? t("sync.syncing")
+              : syncState.kind === "error"
+                ? t("sync.offline")
+                : t("sync.synced", { time: i18n.relativeTime(syncState.at) })}
+          </span>
+          <RefreshCw
+            className={cn("size-3 shrink-0", syncState.kind === "syncing" && "animate-spin")}
+            aria-hidden="true"
+          />
         </button>
         <Tooltip content={t("shell.lockVault")}>
           <Button variant="ghost" size="icon-sm" aria-label={t("shell.lockVault")} onClick={() => client.lock()}>
@@ -375,9 +349,22 @@ export function Sidebar({ route, navigate, health, syncState, onSync, onOpenPale
           </Button>
         </Tooltip>
       </div>
-      <p className="hidden px-2.5 pt-1 text-2xs text-text-muted lg:block coarse:hidden">
-        {t("shell.searchHint", { shortcut: shortcut(t, "K") })}
-      </p>
+
+      <NewItemMenu
+        side="top"
+        onCreate={(category) =>
+          navigate({
+            view: "items",
+            filter: route.view === "items" ? route.filter : { kind: "all" },
+            create: category,
+          })
+        }
+      >
+        <Button shape="pill" size="lg" className="mt-2 w-full">
+          {t("shell.newItem")}
+          <Plus />
+        </Button>
+      </NewItemMenu>
 
       <NewVaultDialog
         open={newVaultOpen}
@@ -396,20 +383,30 @@ export function vaultName(name: string, t: (key: string) => string): string {
 
 function NavGroup({ title, action, children }: { title?: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <div className="mb-4">
+    <div className="mb-5">
       {title && (
-        <div className="flex h-7 items-center justify-between px-2.5">
-          <p className="text-2xs font-semibold tracking-wide text-text-muted uppercase">{title}</p>
+        <div className="flex h-7 items-center justify-between pr-1 pl-3">
+          <p className="truncate text-overline text-text-subtle uppercase">{title}</p>
           {action}
         </div>
       )}
-      <ul className="flex flex-col gap-px">{children}</ul>
+      <ul className="flex flex-col gap-0.5">{children}</ul>
     </div>
   );
 }
 
+function CountBadge({ tone, label, children }: { tone: "warning" | "accent"; label: string; children: ReactNode }) {
+  return (
+    <Badge tone={tone} variant="solid" aria-label={label} className="min-w-5 justify-center px-1.5">
+      {children}
+    </Badge>
+  );
+}
+
 interface NavItemProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** A colored dot instead of an icon (vaults). */
+  dot?: TagColor;
   label: string;
   /** A fuller name for screen readers, for example with the organization. */
   ariaLabel?: string;
@@ -419,7 +416,7 @@ interface NavItemProps {
   onClick: () => void;
 }
 
-function NavItem({ icon: Icon, label, ariaLabel, count, badge, active, onClick }: NavItemProps) {
+function NavItem({ icon: Icon, dot, label, ariaLabel, count, badge, active = false, onClick }: NavItemProps) {
   return (
     <li>
       <button
@@ -427,16 +424,16 @@ function NavItem({ icon: Icon, label, ariaLabel, count, badge, active, onClick }
         onClick={onClick}
         title={ariaLabel}
         aria-current={active ? "page" : undefined}
-        className={cn(
-          "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[0.8125rem] transition-colors coarse:h-11",
-          active
-            ? "bg-surface font-medium text-text shadow-card ring-1 ring-border"
-            : "text-text-muted hover:bg-surface-sunken hover:text-text",
-        )}
+        className={sidebarItemClassName({ active, className: active ? "shadow-highlight" : undefined })}
       >
-        <Icon className={cn("size-4", active ? "text-accent" : "text-text-muted")} aria-hidden="true" />
+        {Icon && <Icon className={active ? "text-accent" : "text-text-subtle"} aria-hidden="true" />}
+        {dot && (
+          <span aria-hidden="true" className="flex size-4 shrink-0 items-center justify-center">
+            <span className={cn("size-2 rounded-full", tagDotClassName[dot])} />
+          </span>
+        )}
         <span className="min-w-0 flex-1 truncate">{label}</span>
-        {badge ?? (count !== undefined && <span className="text-2xs tabular-nums text-text-muted">{count}</span>)}
+        {badge ?? (count !== undefined && <span className="text-caption text-text-subtle tabular-nums">{count}</span>)}
       </button>
     </li>
   );

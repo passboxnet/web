@@ -9,6 +9,8 @@ import {
   type VaultHealth,
 } from "@passbox/client";
 import {
+  AlertCard,
+  Avatar,
   Badge,
   Button,
   ConfirmDialog,
@@ -20,10 +22,10 @@ import {
   MenuSeparator,
   MenuTrigger,
   Tooltip,
+  tagDotClassName,
   toast,
 } from "@passbox/ui";
 import {
-  AlertTriangle,
   Archive,
   ArchiveRestore,
   ArrowLeft,
@@ -57,8 +59,9 @@ import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
 import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
 import type { Route } from "../lib/route";
-import { isGuestVault } from "../lib/sharing";
-import { AudienceIcon, useAudience } from "../sharing/common";
+import { isGuestVault, vaultAudience as vaultAudienceIds } from "../lib/sharing";
+import { vaultColor } from "../lib/vaultColor";
+import { AudienceIcon, orgName, useAudience, useMyAccountId } from "../sharing/common";
 import { ShareItemDialog } from "../sharing/ShareItemDialog";
 import { VaultSharingDialog } from "../sharing/VaultSharingDialog";
 import { vaultName } from "../shell/Sidebar";
@@ -172,6 +175,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   const password = fieldValue(data, FIELD.password);
   const fields = data.fields.filter((field) => field.value);
   const warnings = canEdit ? securityWarnings(item.id, health, t) : [];
+  const dotColor = itemVault ? vaultColor(itemVault) : "blue";
 
   async function toggleFavorite() {
     if (!item) return;
@@ -204,140 +208,149 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
 
   return (
     <ItemUsageContext.Provider value={reportUsage}>
-      <section aria-label={itemTitle(item, t)} className="flex min-w-0 flex-1 flex-col bg-canvas" key={item.id}>
-        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-4 coarse:h-16">
-          <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-text-muted">
-            <Button variant="ghost" size="icon-sm" aria-label={t("detail.back")} onClick={onBack} className="md:hidden">
-              <ArrowLeft />
-            </Button>
-            <AudienceIcon shared={audience.shared !== undefined} className="hidden shrink-0 sm:inline" />
-            <span className="hidden truncate sm:inline">{vault}</span>
-            <ChevronRight className="hidden size-3.5 shrink-0 text-text-muted sm:inline" aria-hidden="true" />
-            <span className="truncate">{t(category.label)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            {canEdit && (
-              <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
-                  aria-pressed={data.favorite}
-                  onClick={toggleFavorite}
-                >
-                  <Star className={data.favorite ? "fill-warning text-warning" : undefined} />
-                </Button>
-              </Tooltip>
-            )}
-            {canEdit && (
-              <Button variant="secondary" size="sm" onClick={() => onEdit(item.id)}>
-                <Pencil />
-                {t("action.edit")}
-                <span className="ml-1 hidden sm:inline">
-                  <Kbd>E</Kbd>
-                </span>
-              </Button>
-            )}
-            <Menu>
-              <MenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label={t("detail.more")}>
-                  <MoreHorizontal />
-                </Button>
-              </MenuTrigger>
-              <MenuContent>
-                {username && (
-                  <MenuItem
-                    icon={<Copy />}
-                    onSelect={() => {
-                      reportUsage("item_copied", FIELD.username);
-                      void copyToClipboard(username, t("field.username"));
-                    }}
-                  >
-                    {t("list.copyUsername")}
-                  </MenuItem>
-                )}
-                {password && (
-                  <MenuItem
-                    icon={<Copy />}
-                    onSelect={() => {
-                      reportUsage("item_copied", FIELD.password);
-                      void copyToClipboard(password, t("field.password"));
-                    }}
-                  >
-                    {t("list.copyPassword")}
-                  </MenuItem>
-                )}
-                {url && safeHref(url) && (
-                  <MenuItem icon={<ExternalLink />} onSelect={() => window.open(safeHref(url), "_blank", "noopener")}>
-                    {t("change.openWebsite")}
-                  </MenuItem>
-                )}
-                {(username || password || url) && <MenuSeparator />}
-                {!guest && (
-                  <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
-                    {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
-                  </MenuItem>
-                )}
-                {!guest && (
-                  <MenuItem icon={<Link2 />} onSelect={() => setLinking(true)}>
-                    {t("shareLink.menu")}
-                  </MenuItem>
-                )}
-                {canEdit && (
-                  <MenuItem icon={<ArrowRightLeft />} onSelect={() => setMoving(true)}>
-                    {t("move.menu")}
-                  </MenuItem>
-                )}
-                {canEdit && !data.archivedAt && (
-                  <MenuItem icon={<Archive />} onSelect={() => void archive()}>
-                    {t("archive.action")}
-                  </MenuItem>
-                )}
-                {canEdit && (
-                  <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
-                    {t("action.moveToTrash")}
-                  </MenuItem>
-                )}
-              </MenuContent>
-            </Menu>
-          </div>
-        </header>
+      <section
+        aria-label={itemTitle(item, t)}
+        className="flex min-w-0 flex-1 flex-col bg-surface/85 backdrop-blur-2xl"
+        key={item.id}
+      >
+        <div className="flex h-12 shrink-0 items-center gap-1.5 border-b border-hairline px-3 md:hidden coarse:h-14">
+          <Button variant="ghost" size="icon-sm" aria-label={t("detail.back")} onClick={onBack}>
+            <ArrowLeft />
+          </Button>
+          <span className="truncate text-label text-text-muted">{vault}</span>
+        </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-10">
-            <div className="flex items-center gap-4">
-              <ItemIcon item={item} size="xl" />
-              <div className="min-w-0">
-                <h2 className="text-2xl font-semibold tracking-tight break-words">{itemTitle(item, t)}</h2>
-                {url && safeHref(url) ? (
-                  <a
-                    href={safeHref(url)}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="mt-0.5 inline-flex items-center gap-1 text-[0.8125rem] text-text-muted hover:text-accent"
-                  >
-                    {hostname(url)}
-                    <ExternalLink className="size-3" aria-hidden="true" />
-                  </a>
-                ) : (
-                  <p className="mt-0.5 text-[0.8125rem] text-text-muted">{t(category.label)}</p>
+          <div className="mx-auto max-w-3xl px-4 pt-7 pb-10 sm:px-6 lg:px-10">
+            <div className="flex items-start gap-4">
+              <ItemIcon item={item} size="xl" className="shadow-card" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-title-sm break-words text-text">{itemTitle(item, t)}</h2>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <Badge tone="accent">{t(category.label)}</Badge>
+                  <span className="inline-flex h-5 items-center gap-1.5 rounded-full bg-surface-raised px-2 text-2xs font-semibold text-text-muted ring-1 ring-hairline ring-inset">
+                    <span aria-hidden="true" className={`size-1.5 rounded-full ${tagDotClassName[dotColor]}`} />
+                    {vault}
+                  </span>
+                  {url && safeHref(url) && (
+                    <a
+                      href={safeHref(url)}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="ml-1 inline-flex items-center gap-1 rounded text-caption text-text-muted hover:text-accent"
+                    >
+                      {hostname(url)}
+                      <ExternalLink className="size-3" aria-hidden="true" />
+                    </a>
+                  )}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-0.5">
+                {canEdit && (
+                  <Tooltip content={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={data.favorite ? t("detail.unfavorite") : t("detail.favorite")}
+                      aria-pressed={data.favorite}
+                      onClick={toggleFavorite}
+                    >
+                      <Star className={data.favorite ? "fill-warning text-warning" : undefined} />
+                    </Button>
+                  </Tooltip>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setSharing(true)}
-                  className="mt-1.5 flex items-center gap-1.5 rounded-md text-xs text-text-muted hover:text-accent coarse:py-2"
-                  data-testid="item-audience"
-                >
-                  <AudienceIcon shared={audience.shared !== undefined} />
-                  {audience.shared ? t("sharing.audience.visibleFor", { audience: audience.label }) : audience.label}
-                </button>
+                {canEdit && (
+                  <Tooltip
+                    content={
+                      <span className="flex items-center gap-2">
+                        {t("action.edit")} <Kbd>E</Kbd>
+                      </span>
+                    }
+                  >
+                    <Button variant="ghost" size="icon" aria-label={t("action.edit")} onClick={() => onEdit(item.id)}>
+                      <Pencil />
+                    </Button>
+                  </Tooltip>
+                )}
+                {!guest && (
+                  <Tooltip content={audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
+                      onClick={() => setSharing(true)}
+                    >
+                      <Share2 />
+                    </Button>
+                  </Tooltip>
+                )}
+                <Menu>
+                  <MenuTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label={t("detail.more")}>
+                      <MoreHorizontal />
+                    </Button>
+                  </MenuTrigger>
+                  <MenuContent>
+                    {username && (
+                      <MenuItem
+                        icon={<Copy />}
+                        onSelect={() => {
+                          reportUsage("item_copied", FIELD.username);
+                          void copyToClipboard(username, t("field.username"));
+                        }}
+                      >
+                        {t("list.copyUsername")}
+                      </MenuItem>
+                    )}
+                    {password && (
+                      <MenuItem
+                        icon={<Copy />}
+                        onSelect={() => {
+                          reportUsage("item_copied", FIELD.password);
+                          void copyToClipboard(password, t("field.password"));
+                        }}
+                      >
+                        {t("list.copyPassword")}
+                      </MenuItem>
+                    )}
+                    {url && safeHref(url) && (
+                      <MenuItem
+                        icon={<ExternalLink />}
+                        onSelect={() => window.open(safeHref(url), "_blank", "noopener")}
+                      >
+                        {t("change.openWebsite")}
+                      </MenuItem>
+                    )}
+                    {(username || password || url) && <MenuSeparator />}
+                    {!guest && (
+                      <MenuItem icon={<Link2 />} onSelect={() => setLinking(true)}>
+                        {t("shareLink.menu")}
+                      </MenuItem>
+                    )}
+                    {canEdit && (
+                      <MenuItem icon={<ArrowRightLeft />} onSelect={() => setMoving(true)}>
+                        {t("move.menu")}
+                      </MenuItem>
+                    )}
+                    {canEdit && !data.archivedAt && (
+                      <MenuItem icon={<Archive />} onSelect={() => void archive()}>
+                        {t("archive.action")}
+                      </MenuItem>
+                    )}
+                    {canEdit && (
+                      <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => void moveToTrash()}>
+                        {t("action.moveToTrash")}
+                      </MenuItem>
+                    )}
+                  </MenuContent>
+                </Menu>
               </div>
             </div>
 
             {data.archivedAt !== undefined && (
               <div
                 role="note"
-                className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
+                className="mt-6 flex flex-wrap items-center gap-3 rounded-control bg-surface-raised px-4 py-3 text-body ring-1 ring-hairline ring-inset"
                 data-testid="archived-note"
               >
                 <Archive className="size-4 shrink-0 text-text-muted" aria-hidden="true" />
@@ -357,7 +370,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
             {!canEdit && (
               <div
                 role="note"
-                className="mt-6 flex items-start gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
+                className="mt-6 flex items-start gap-3 rounded-control bg-surface-raised px-4 py-3 text-body ring-1 ring-hairline ring-inset"
               >
                 <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
                 <p data-testid={guest ? "guest-view-only" : undefined}>
@@ -372,21 +385,32 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
             )}
 
             {warnings.length > 0 && (
-              <div className="mt-6 flex flex-col gap-2">
-                {warnings.map(({ text, canChange }) => (
-                  <div
-                    key={text}
-                    className="flex flex-wrap items-start gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[0.8125rem]"
-                  >
-                    <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-                    <span className="min-w-0 flex-1">{text}</span>
-                    {canChange && password && (
-                      <Button size="xs" variant="secondary" onClick={() => setChanging(true)}>
+              <div className="mt-6" data-testid="item-alert">
+                <AlertCard
+                  tone="warning"
+                  variant="banner"
+                  title={warnings.some((w) => w.canChange) ? t("detail.alert.title") : t("detail.alert.insecure")}
+                  action={
+                    warnings.some((w) => w.canChange) && password ? (
+                      <button
+                        type="button"
+                        onClick={() => setChanging(true)}
+                        className="inline-flex items-center gap-1.5 rounded-md underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-current"
+                      >
                         {t("change.action")}
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                        <ExternalLink className="size-3.5" aria-hidden="true" />
+                      </button>
+                    ) : undefined
+                  }
+                />
+                <ul className="mt-2.5 flex flex-col gap-1 px-1">
+                  {warnings.map(({ text }) => (
+                    <li key={text} className="flex gap-2 text-body-sm text-text-muted">
+                      <span aria-hidden="true" className="mt-[0.45rem] size-1 shrink-0 rounded-full bg-warning" />
+                      {text}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -440,7 +464,9 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
               <PasswordHistorySection item={item} history={data.passwordHistory} canRestore={canEdit} />
             )}
 
-            <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-4 text-xs">
+            <SharedWith audience={audience} onManage={guest ? undefined : () => setSharing(true)} />
+
+            <dl className="mt-8 grid grid-cols-2 gap-4 border-t border-hairline pt-4 text-caption">
               <Meta
                 label={t("detail.modified")}
                 value={i18n.relativeTime(item.updatedAt)}
@@ -485,10 +511,87 @@ function securityWarnings(
 function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <div
-      className={`divide-y divide-border rounded-card border border-border bg-surface shadow-card ${className ?? ""}`}
+      className={`divide-y divide-hairline rounded-card border border-hairline bg-surface shadow-card ${className ?? ""}`}
     >
       {children}
     </div>
+  );
+}
+
+/** "Geteilt mit": the people who can see the item's vault, or "only you" with a way to share. */
+function SharedWith({
+  audience,
+  onManage,
+}: {
+  audience: ReturnType<typeof useAudience>;
+  onManage: (() => void) | undefined;
+}) {
+  const { t } = useI18n();
+  const { orgs } = useSnapshot();
+  const myId = useMyAccountId();
+  const shared = audience.shared;
+  const org = audience.org ?? orgs.find((o) => o.id === shared?.orgId);
+  const ids = shared && org ? vaultAudienceIds(shared, org) : undefined;
+  const people =
+    ids && org
+      ? org.members.filter((m) => m.accountId !== myId && m.status === "confirmed" && ids.has(m.accountId))
+      : [];
+  const shown = people.slice(0, 4);
+  return (
+    <section aria-labelledby="shared-with" className="mt-6">
+      <h3 id="shared-with" className="mb-2 px-1 text-caption font-semibold text-text-muted">
+        {t("detail.sharedWith")}
+      </h3>
+      <div className="flex flex-wrap items-center gap-3 rounded-card border border-hairline bg-surface px-4 py-3 shadow-card">
+        {shown.length > 0 ? (
+          <ul className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2">
+            {shown.map((m) => (
+              <li key={m.accountId} className="flex min-w-0 items-center gap-2.5">
+                <Avatar name={m.email ?? m.accountId} size="sm" />
+                <span className="min-w-0">
+                  <span className="block truncate text-label text-text">
+                    {m.email ?? t("detail.sharedWith.unknown")}
+                  </span>
+                  <span className="block truncate text-caption text-text-subtle">{orgName(org, t)}</span>
+                </span>
+              </li>
+            ))}
+            {people.length > shown.length && (
+              <li className="text-caption text-text-muted">
+                {t("detail.sharedWith.more", { count: people.length - shown.length })}
+              </li>
+            )}
+          </ul>
+        ) : (
+          <span className="flex min-w-0 flex-1 items-center gap-2.5 text-body text-text-muted">
+            <span className="flex size-8 items-center justify-center rounded-full bg-surface-raised text-text-subtle">
+              <AudienceIcon shared={audience.shared !== undefined} className="size-4" />
+            </span>
+            {audience.shared ? t("sharing.audience.visibleFor", { audience: audience.label }) : audience.label}
+          </span>
+        )}
+        {onManage && (
+          <button
+            type="button"
+            onClick={onManage}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-label text-accent hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-focus coarse:py-3"
+            data-testid="item-audience"
+          >
+            {audience.shared ? (
+              <>
+                <span className="sr-only">{t("sharing.audience.visibleFor", { audience: audience.label })} · </span>
+                {t("detail.sharedWith.manage")}
+              </>
+            ) : (
+              <>
+                <span className="sr-only">{audience.label} · </span>
+                {t("detail.share")}
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -709,7 +812,7 @@ function FieldActions({ field, label }: { field: ItemField; label: string }) {
   const reportUsage = useItemUsage();
   if (field.type === "totp" || field.type === "concealed") return null;
   return (
-    <span className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 coarse:opacity-100">
+    <span>
       <Tooltip content={t("detail.copy", { label })}>
         <Button
           variant="ghost"

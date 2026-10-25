@@ -74,6 +74,9 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
               t,
             ) || t("term.vault");
 
+  // Rows with a security finding get a shield badge.
+  const risky = useMemo(() => new Set([...health.weak, ...health.reused.flat(), ...health.insecureUrls]), [health]);
+
   const selected = route.create ? undefined : (snapshot.items.find((item) => item.id === route.itemId) ?? items[0]);
   // New items go to the vault shown, unless it is view-only; then to the personal vault.
   const writable = writableVaults(snapshot.vaults);
@@ -135,8 +138,8 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
         <div
           className={
             showDetailOnMobile
-              ? "hidden w-[22rem] shrink-0 border-r border-border md:flex"
-              : "flex w-full shrink-0 border-r border-border md:w-[22rem]"
+              ? "hidden w-[22rem] shrink-0 border-r border-hairline md:flex xl:w-[24rem]"
+              : "flex w-full shrink-0 border-r border-hairline md:w-[22rem] xl:w-[24rem]"
           }
         >
           <ItemList
@@ -154,6 +157,7 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
             navigate={navigate}
             category={route.filter.kind === "category" ? route.filter.category : undefined}
             banner={filterVault ? <VaultBanner vaultId={filterVault} /> : undefined}
+            risky={risky}
           />
         </div>
         <div className={showDetailOnMobile ? "flex min-w-0 flex-1" : "hidden min-w-0 flex-1 md:flex"}>{pane}</div>

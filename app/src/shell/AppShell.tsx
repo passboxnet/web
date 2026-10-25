@@ -1,6 +1,6 @@
 import { clampAutoLock } from "@passbox/client";
 import { Button, Logo, toast } from "@passbox/ui";
-import { KeyRound, Menu as MenuIcon, X } from "lucide-react";
+import { KeyRound, Menu as MenuIcon, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InsecurePageBanner } from "../auth/AuthLayout";
 import { useKit } from "../auth/KitProvider";
@@ -84,43 +84,36 @@ export function AppShell() {
     if (route.view === "watchtower") setChecklist({ securityCheck: true });
   }, [route.view]);
 
-  const sidebar = (
-    <Sidebar
-      route={route}
-      navigate={navigate}
-      health={health}
-      syncState={syncState}
-      onSync={syncNow}
-      onOpenPalette={() => setPaletteOpen(true)}
-    />
-  );
+  const sidebar = <Sidebar route={route} navigate={navigate} health={health} syncState={syncState} onSync={syncNow} />;
 
   return (
     // relative + overflow-hidden: screen-reader-only text deep in a scrolled pane must not
     // stretch the document, which would let the whole window scroll.
-    <div className="relative flex h-full flex-col overflow-hidden bg-canvas">
+    <div className="relative flex h-full flex-col overflow-hidden bg-app">
       <InsecurePageBanner />
       <KitReminder />
       <SharingWarningsBanner />
       <PolicyBanner navigate={navigate} />
       <BreachAlertBanner navigate={navigate} />
       <div className="flex min-h-0 flex-1">
-        <div className="hidden w-64 shrink-0 lg:block">{sidebar}</div>
+        <div className="hidden w-[16.5rem] shrink-0 lg:block">{sidebar}</div>
 
         {drawerOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
             <button
               type="button"
               aria-label={t("shell.closeNavigation")}
-              className="absolute inset-0 animate-fade-in bg-black/40"
+              className="absolute inset-0 animate-fade-in bg-scrim backdrop-blur-sm"
               onClick={() => setDrawerOpen(false)}
             />
-            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] animate-scale-in shadow-overlay">{sidebar}</div>
+            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] animate-scale-in bg-surface shadow-overlay">
+              {sidebar}
+            </div>
           </div>
         )}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-surface px-3 lg:hidden coarse:h-14">
+          <header className="flex h-12 shrink-0 items-center justify-between border-b border-hairline bg-surface/80 px-3 backdrop-blur-xl lg:hidden coarse:h-14">
             <Button
               variant="ghost"
               size="icon"
@@ -130,7 +123,9 @@ export function AppShell() {
               {drawerOpen ? <X /> : <MenuIcon />}
             </Button>
             <Logo className="text-text" />
-            <span className="size-9" />
+            <Button variant="ghost" size="icon" aria-label={t("shell.search")} onClick={() => setPaletteOpen(true)}>
+              <Search />
+            </Button>
           </header>
           <main className="flex min-h-0 flex-1">
             {route.view === "items" && <ItemsView route={route} navigate={navigate} health={health} />}

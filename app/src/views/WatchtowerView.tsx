@@ -1,7 +1,17 @@
 import type { CategorySummary, Finding, FindingKind, FixAction, Item, SecurityReport, Severity } from "@passbox/client";
-import { Badge, type BadgeTone, Button, cn, EmptyState, toast } from "@passbox/ui";
+import { AlertCard, Badge, type BadgeTone, Button, cn, EmptyState, StatTile, toast } from "@passbox/ui";
 import { BrandIcon } from "@passbox/ui/brand-icon";
-import { ArrowLeft, ChevronRight, ExternalLink, EyeOff, RotateCcw, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  EyeOff,
+  RotateCcw,
+  ShieldAlert,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { SecurityPlan } from "../ai/SecurityPlan";
 import { ChangePasswordDialog } from "../items/ChangePasswordDialog";
@@ -95,10 +105,15 @@ export function WatchtowerView({ navigate }: WatchtowerViewProps) {
   const category = selected ? report.categories.find((c) => c.kind === selected) : undefined;
 
   return (
-    <Page title={t("term.watchtower")} description={t("security.description")}>
+    <Page
+      title={t("term.watchtower")}
+      eyebrow={t("security.eyebrow")}
+      description={t("security.description")}
+      width="wide"
+    >
       <DecryptionErrors />
       {report.items === 0 ? (
-        <div className="rounded-card border border-border bg-surface shadow-card">
+        <div className="rounded-card border border-hairline bg-surface shadow-card">
           <EmptyState icon={<ShieldCheck />} title={t("security.none.title")} description={t("security.none.text")} />
         </div>
       ) : category ? (
@@ -113,6 +128,7 @@ export function WatchtowerView({ navigate }: WatchtowerViewProps) {
         />
       ) : (
         <div className="flex flex-col gap-6">
+          <Overview report={report} onSelect={setSelected} />
           <ScoreCard
             report={report}
             breach={
@@ -151,25 +167,110 @@ function ScoreRing({ score, rating }: { score: number; rating: SecurityReport["r
     <div
       role="img"
       aria-label={t("security.score.label", { score, rating: t(`security.rating.${rating}`) })}
-      className="relative size-32 shrink-0"
+      className="relative size-36 shrink-0"
     >
-      <svg viewBox="0 0 120 120" className="size-full -rotate-90" aria-hidden="true">
-        <circle cx="60" cy="60" r={radius} className="fill-none stroke-surface-sunken" strokeWidth="10" />
+      <svg viewBox="0 0 120 120" className={cn("size-full -rotate-90", tone)} aria-hidden="true">
+        <circle cx="60" cy="60" r={radius} className="fill-none stroke-surface-sunken" strokeWidth="9" />
         <circle
           cx="60"
           cy="60"
           r={radius}
-          className={cn("fill-none stroke-current transition-[stroke-dashoffset] duration-700", tone)}
-          strokeWidth="10"
+          className="fill-none stroke-current transition-[stroke-dashoffset] duration-700 [filter:drop-shadow(0_0_6px_currentColor)]"
+          strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - score / 100)}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
-        <span className="text-3xl font-semibold tabular-nums tracking-tight">{score}</span>
-        <span className="text-xs text-text-muted">{t("security.score.of100")}</span>
+        <span className="text-stat text-text tabular-nums">{score}</span>
+        <span className="mt-1 text-caption text-text-muted">{t("security.score.of100")}</span>
       </div>
+    </div>
+  );
+}
+
+/** Items with an active finding of these kinds. */
+function affected(report: SecurityReport, kinds: FindingKind[]): number {
+  return new Set(report.findings.filter((f) => !f.dismissed && kinds.includes(f.kind)).map((f) => f.itemId)).size;
+}
+
+const COMPROMISED: FindingKind[] = ["breached", "breached_site", "exposed_email"];
+
+/**
+ * The signature security overview: the alert card for leaks and four
+ * big-number tiles (Gefährdet / Mehrfach / Schwach / Sicher). The tiles
+ * with problems open their category.
+ */
+function Overview({ report, onSelect }: { report: SecurityReport; onSelect: (kind: FindingKind) => void }) {
+  const i18n = useI18n();
+  const { t } = i18n;
+  const breached = affected(report, ["breached"]);
+  const sites = affected(report, ["breached_site"]);
+  const compromised = affected(report, COMPROMISED);
+  const reused = affected(report, ["reused"]);
+  const weak = affected(report, ["weak"]);
+  const atRisk = new Set(
+    report.findings
+      .filter((f) => !f.dismissed && (f.severity === "critical" || f.severity === "high" || f.severity === "medium"))
+      .map((f) => f.itemId),
+  ).size;
+  const safe = Math.max(report.scored - atRisk, 0);
+  const firstCompromised = breached > 0 ? "breached" : sites > 0 ? "breached_site" : "exposed_email";
+  const detailsButton = (kind: FindingKind) => (
+    <button
+      type="button"
+      onClick={() => onSelect(kind)}
+      className="inline-flex items-center gap-1 rounded-md hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+    >
+      {t("security.alert.details")}
+      <ChevronRight className="size-4" aria-hidden="true" />
+    </button>
+  );
+  return (
+    <div className="flex flex-col gap-4">
+      {breached > 0 ? (
+        <AlertCard
+          tone="danger"
+          title={t("security.alert.breached", { count: breached })}
+          description={t("security.alert.breachedText")}
+          action={detailsButton("breached")}
+        />
+      ) : sites > 0 ? (
+        <AlertCard
+          tone="warning"
+          title={t("security.alert.breachedSites", { count: sites })}
+          description={t("security.alert.breachedSitesText")}
+          action={detailsButton("breached_site")}
+        />
+      ) : null}
+      <section aria-label={t("security.tiles.label")} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile
+          tone="danger"
+          icon={<ShieldAlert />}
+          value={i18n.number(compromised)}
+          label={t("security.tiles.compromised")}
+          interactive={compromised > 0}
+          onClick={() => onSelect(firstCompromised)}
+        />
+        <StatTile
+          tone="warning"
+          icon={<Copy />}
+          value={i18n.number(reused)}
+          label={t("security.tiles.reused")}
+          interactive={reused > 0}
+          onClick={() => onSelect("reused")}
+        />
+        <StatTile
+          tone="warning"
+          icon={<TriangleAlert />}
+          value={i18n.number(weak)}
+          label={t("security.tiles.weak")}
+          interactive={weak > 0}
+          onClick={() => onSelect("weak")}
+        />
+        <StatTile tone="success" icon={<ShieldCheck />} value={i18n.number(safe)} label={t("security.tiles.safe")} />
+      </section>
     </div>
   );
 }
@@ -182,12 +283,13 @@ function ScoreCard({ report, breach }: { report: SecurityReport; breach: ReactNo
   return (
     <section
       aria-labelledby="score-title"
-      className="rounded-card border border-border bg-surface p-5 shadow-card sm:p-6"
+      className="rounded-card border border-hairline bg-surface p-5 shadow-card sm:p-7"
     >
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-7 sm:flex-row sm:items-center">
         <ScoreRing score={report.score} rating={report.rating} />
         <div className="min-w-0 flex-1">
-          <h2 id="score-title" className="text-lg font-semibold tracking-tight">
+          <p className="text-overline text-text-subtle uppercase">{t("security.score.title")}</p>
+          <h2 id="score-title" className="mt-1 text-title-sm text-text">
             {t(`security.rating.${report.rating}`)}
           </h2>
           <p className="mt-1 text-[0.8125rem] text-text-muted">
@@ -197,9 +299,7 @@ function ScoreCard({ report, breach }: { report: SecurityReport; breach: ReactNo
           </p>
           {costs.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                {t("security.score.why")}
-              </h3>
+              <h3 className="text-overline text-text-subtle uppercase">{t("security.score.why")}</h3>
               <ul className="mt-2 flex flex-wrap gap-1.5">
                 {costs.slice(0, 6).map((c) => (
                   <li key={c.kind}>
@@ -214,7 +314,7 @@ function ScoreCard({ report, breach }: { report: SecurityReport; breach: ReactNo
           )}
         </div>
       </div>
-      <div className="mt-5 border-t border-border pt-5">{breach}</div>
+      <div className="mt-6 border-t border-hairline pt-6">{breach}</div>
     </section>
   );
 }
@@ -304,14 +404,14 @@ function FixFirst({
   });
   if (entries.length === 0) return null;
   return (
-    <section aria-labelledby="fix-first-title" className="rounded-card border border-border bg-surface shadow-card">
-      <header className="border-b border-border px-5 py-4">
+    <section aria-labelledby="fix-first-title" className="rounded-card border border-hairline bg-surface shadow-card">
+      <header className="border-b border-hairline px-5 py-4">
         <h2 id="fix-first-title" className="text-sm font-semibold">
           {t("security.fixFirst.title")}
         </h2>
         <p className="mt-0.5 text-[0.8125rem] text-text-muted">{t("security.fixFirst.text")}</p>
       </header>
-      <ol className="divide-y divide-border">
+      <ol className="divide-y divide-hairline">
         {entries.map(({ priority, item }, index) => {
           const docs = report.findings.find(
             (f) => f.itemId === item.id && f.kind === priority.kinds[0],
@@ -387,7 +487,7 @@ function CategoryCard({ category, onSelect }: { category: CategorySummary; onSel
         count: category.count,
       })}
       className={cn(
-        "flex h-full w-full flex-col gap-2 rounded-card border border-border bg-surface p-4 text-left shadow-card transition",
+        "flex h-full w-full flex-col gap-2 rounded-card border border-hairline bg-surface p-4 text-left shadow-card transition",
         "enabled:hover:border-border-strong enabled:hover:bg-surface-raised disabled:cursor-default",
       )}
     >
@@ -567,8 +667,8 @@ function CategoryDetail({
           {t("security.back")}
         </Button>
       </div>
-      <section aria-labelledby="category-title" className="rounded-card border border-border bg-surface shadow-card">
-        <header className="border-b border-border px-5 py-4">
+      <section aria-labelledby="category-title" className="rounded-card border border-hairline bg-surface shadow-card">
+        <header className="border-b border-hairline px-5 py-4">
           <h2 id="category-title" className="flex flex-wrap items-center gap-2 text-base font-semibold">
             {t(`security.kind.${category.kind}.title`)}
             <Badge tone={SEVERITY_TONE[category.severity]}>{t(`security.severity.${category.severity}`)}</Badge>
@@ -591,10 +691,10 @@ function CategoryDetail({
         {active.length === 0 ? (
           <p className="px-5 py-4 text-[0.8125rem] text-text-muted">{t("security.categories.allDismissed")}</p>
         ) : (
-          <ul className="divide-y divide-border">{active.map(row)}</ul>
+          <ul className="divide-y divide-hairline">{active.map(row)}</ul>
         )}
         {category.kind === "breached_site" && (
-          <div className="border-t border-border px-5 py-3">
+          <div className="border-t border-hairline px-5 py-3">
             <NotificationPermission />
           </div>
         )}
@@ -603,12 +703,12 @@ function CategoryDetail({
       {dismissed.length > 0 && (
         <section
           aria-labelledby="category-dismissed"
-          className="rounded-card border border-border bg-surface shadow-card"
+          className="rounded-card border border-hairline bg-surface shadow-card"
         >
-          <h3 id="category-dismissed" className="border-b border-border px-5 py-3 text-[0.8125rem] font-semibold">
+          <h3 id="category-dismissed" className="border-b border-hairline px-5 py-3 text-[0.8125rem] font-semibold">
             {t("security.dismissed.title", { count: dismissed.length })}
           </h3>
-          <ul className="divide-y divide-border">{dismissed.map(row)}</ul>
+          <ul className="divide-y divide-hairline">{dismissed.map(row)}</ul>
         </section>
       )}
     </div>
@@ -630,7 +730,7 @@ function DismissedList({
   const dismissed = report.findings.filter((f) => f.dismissed && byId.has(f.itemId));
   if (dismissed.length === 0) return null;
   return (
-    <details className="group rounded-card border border-border bg-surface shadow-card">
+    <details className="group rounded-card border border-hairline bg-surface shadow-card">
       <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 coarse:py-5">
         <EyeOff className="size-4 text-text-muted" aria-hidden="true" />
         <span className="flex-1 text-sm font-semibold">
@@ -638,7 +738,7 @@ function DismissedList({
         </span>
         <ChevronRight className="size-4 text-text-muted transition-transform group-open:rotate-90" aria-hidden="true" />
       </summary>
-      <ul className="divide-y divide-border border-t border-border">
+      <ul className="divide-y divide-hairline border-t border-hairline">
         {dismissed.map((finding) => {
           const item = byId.get(finding.itemId) as Item;
           return (

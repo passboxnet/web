@@ -81,7 +81,11 @@ test("turn on an authenticator app and sign in with it", async ({ page, browser 
   await dialog.getByLabel("Enter the 6-digit code").fill("000000" === totp(secret) ? "111111" : "000000");
   await dialog.getByRole("button", { name: "Turn on" }).click();
   await expect(dialog.getByRole("alert")).toContainText("isn't correct");
-  await dialog.getByLabel("Enter the 6-digit code").fill(totp(secret));
+  // Remember which code (and time step) turned 2FA on: the server never
+  // accepts it or an earlier one again, even after the 30 s window changes.
+  const enableStep = Math.floor(Date.now() / 30_000);
+  const enableCode = totp(secret);
+  await dialog.getByLabel("Enter the 6-digit code").fill(enableCode);
   await dialog.getByRole("button", { name: "Turn on" }).click();
 
   // Recovery codes are shown once.
@@ -109,11 +113,11 @@ test("turn on an authenticator app and sign in with it", async ({ page, browser 
   await phone.getByRole("button", { name: "Sign in" }).click();
   await expect(phone.getByRole("heading", { name: "Confirm it's you" })).toBeVisible({ timeout: 30_000 });
   await shot(phone, "sign-in-step");
-  await phone.getByLabel("Code from the app").fill(totp(secret));
+  await phone.getByLabel("Code from the app").fill(enableCode);
   await phone.getByRole("button", { name: "Confirm" }).click();
   // The code that turned 2FA on was used already.
   await expect(phone.getByRole("alert")).toContainText("isn't correct");
-  await phone.getByLabel("Code from the app").fill(totp(secret, 1));
+  await phone.getByLabel("Code from the app").fill(totp(secret, enableStep + 1 - Math.floor(Date.now() / 30_000)));
   await phone.getByRole("switch", { name: "Remember this device for 30 days" }).click();
   await phone.getByRole("button", { name: "Confirm" }).click();
   await expect(phone.getByText("No passwords saved yet")).toBeVisible();

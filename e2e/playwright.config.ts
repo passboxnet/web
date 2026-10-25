@@ -20,6 +20,7 @@ function server(listen: number, database: string) {
       PASSBOX_BIND: `127.0.0.1:${listen}`,
       PASSBOX_DATABASE_URL: `sqlite://${join(dataDir, database)}?mode=rwc`,
       PASSBOX_WEB_DIR: "apps/web/dist",
+      PASSBOX_BLOB_DIR: join(dataDir, `${database}.blobs`),
       // Every test signs in from 127.0.0.1; the default of 60 per minute
       // is meant for real clients, not a whole test suite.
       PASSBOX_AUTH_RATE_LIMIT: "1000",

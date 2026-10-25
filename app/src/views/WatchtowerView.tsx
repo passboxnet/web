@@ -1,9 +1,11 @@
 import type { CategorySummary, Finding, FindingKind, FixAction, Item, SecurityReport, Severity } from "@passbox/client";
-import { Badge, type BadgeTone, Button, cn, EmptyState, Monogram, toast } from "@passbox/ui";
-import { ArrowLeft, ChevronRight, ExternalLink, EyeOff, RotateCcw, Search, ShieldCheck } from "lucide-react";
+import { Badge, type BadgeTone, Button, cn, EmptyState, toast } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
+import { ArrowLeft, ChevronRight, ExternalLink, EyeOff, RotateCcw, ShieldCheck } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { SecurityPlan } from "../ai/SecurityPlan";
 import { ChangePasswordDialog } from "../items/ChangePasswordDialog";
+import { ItemIcon } from "../items/ItemIcon";
 import { describeError } from "../lib/errors";
 import { useI18n } from "../lib/i18n";
 import { itemSubtitle, itemTitle } from "../lib/items";
@@ -236,9 +238,7 @@ function BreachCheck({
   const { breachMode } = useSecuritySettings();
   return (
     <div className="flex flex-wrap items-start gap-4">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-text-muted">
-        <Search className="size-4" aria-hidden="true" />
-      </span>
+      <BrandIcon service="hibp" size="lg" decorative />
       <div className="min-w-0 flex-1">
         <h3 className="text-sm font-semibold">{t("security.breach.title")}</h3>
         <p className="mt-1 text-[0.8125rem] text-text-muted">
@@ -275,7 +275,7 @@ function ItemCell({ item, children }: { item: Item; children?: ReactNode }) {
   const { t } = useI18n();
   return (
     <>
-      <Monogram name={item.data.title} />
+      <ItemIcon item={item} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[0.8125rem] font-medium">{itemTitle(item, t)}</span>
         <span className="block truncate text-xs text-text-muted">{itemSubtitle(item, t)}</span>
@@ -473,6 +473,14 @@ function FindingDetail({ finding, byId }: { finding: Finding; byId: Map<string, 
   return parts.length > 0 ? <span className="mt-0.5 block text-xs text-text-muted">{parts.join(" · ")}</span> : null;
 }
 
+/** Where a finding's data comes from (bundled icons, see `@passbox/brand-icons`). */
+const DATA_SOURCES: Partial<Record<FindingKind, { icon: string; name: string }>> = {
+  breached: { icon: "hibp", name: "Have I Been Pwned" },
+  exposed_email: { icon: "hibp", name: "Have I Been Pwned" },
+  missing_two_factor: { icon: "2fa-directory", name: "2FA Directory (2fa.directory)" },
+  passkey_available: { icon: "2fa-directory", name: "Passkeys Directory (passkeys.2fa.directory)" },
+};
+
 function CategoryDetail({
   category,
   report,
@@ -561,6 +569,12 @@ function CategoryDetail({
             <Badge tone={SEVERITY_TONE[category.severity]}>{t(`security.severity.${category.severity}`)}</Badge>
           </h2>
           <p className="mt-1 text-[0.8125rem] text-text-muted">{t(`security.kind.${category.kind}.text`)}</p>
+          {DATA_SOURCES[category.kind] && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
+              <BrandIcon service={DATA_SOURCES[category.kind]?.icon ?? ""} size="sm" decorative />
+              {t("security.dataSource", { name: DATA_SOURCES[category.kind]?.name ?? "" })}
+            </p>
+          )}
           <p className="mt-2 text-[0.8125rem]">
             <span className="font-medium">{t("security.whatToDo")}</span> {t(`security.kind.${category.kind}.fix`)}
           </p>

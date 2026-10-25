@@ -9,7 +9,6 @@ import {
   MenuItem,
   MenuLabel,
   MenuTrigger,
-  Monogram,
   Tooltip,
   toast,
 } from "@passbox/ui";
@@ -43,6 +42,7 @@ import { writableVaults } from "../lib/sharing";
 import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
 import { GettingStartedCard } from "../views/GettingStarted";
+import { ItemIcon } from "./ItemIcon";
 
 export type SortOrder = "name" | "modified";
 
@@ -396,7 +396,6 @@ function ItemRow({
   const { vaults } = useSnapshot();
   const vault = vaults.find((v) => v.id === item.vaultId);
   const shared = vault?.orgId !== undefined;
-  const Icon = CATEGORY_META[item.data.category].icon;
   const username = fieldValue(item.data, FIELD.username);
   const password = fieldValue(item.data, FIELD.password);
   const totp = fieldValue(item.data, FIELD.totp);
@@ -438,7 +437,7 @@ function ItemRow({
           {checked && <Check className="size-3" />}
         </span>
       )}
-      <Monogram name={item.data.title} size="lg" icon={item.data.category === "login" ? undefined : <Icon />} />
+      <ItemIcon item={item} size="lg" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[0.8125rem] font-medium text-text">{itemTitle(item, t)}</span>
         <span className="block truncate text-xs text-text-muted">{itemSubtitle(item, t)}</span>

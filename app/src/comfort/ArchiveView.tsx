@@ -1,10 +1,11 @@
 import type { Item } from "@passbox/client";
-import { Button, EmptyState, Monogram, toast } from "@passbox/ui";
+import { Button, EmptyState, toast } from "@passbox/ui";
 import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { errorMessage } from "../core";
 import { trashWithUndo } from "../items/ItemDetail";
+import { ItemIcon } from "../items/ItemIcon";
 import { useI18n } from "../lib/i18n";
-import { CATEGORY_META, itemSubtitle, itemTitle } from "../lib/items";
+import { itemSubtitle, itemTitle } from "../lib/items";
 import { writableVaults } from "../lib/sharing";
 import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
@@ -38,15 +39,10 @@ export function ArchiveView() {
         ) : (
           <ul className="divide-y divide-border" data-testid="archive-list">
             {archive.map((item) => {
-              const Icon = CATEGORY_META[item.data.category].icon;
               const vault = vaults.find((v) => v.id === item.vaultId);
               return (
                 <li key={item.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-                  <Monogram
-                    name={item.data.title}
-                    size="lg"
-                    icon={item.data.category === "login" ? undefined : <Icon />}
-                  />
+                  <ItemIcon item={item} size="lg" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[0.8125rem] font-medium">{itemTitle(item, t)}</p>
                     <p className="truncate text-xs text-text-muted">

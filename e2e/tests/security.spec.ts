@@ -59,5 +59,10 @@ test("security check dashboard with drill-down, dismiss and restore", async ({ p
   // Email aliases in the generator.
   await page.getByRole("button", { name: "Password generator" }).click();
   await expect(page.getByRole("heading", { name: "Email alias" })).toBeVisible();
-  await expect(page.getByLabel("Alias service")).toHaveValue("simplelogin");
+  const providers = page.getByRole("radiogroup", { name: "Alias service" });
+  await expect(providers.getByRole("radio", { name: "SimpleLogin" })).toBeChecked();
+  await providers.getByRole("radio", { name: "addy.io" }).click();
+  await expect(providers.getByRole("radio", { name: "addy.io" })).toBeChecked();
+  // The services' own icons are bundled with the app.
+  await expect(providers.locator("img").first()).toHaveAttribute("src", /^data:image\/png|simplelogin.*\.png$/);
 });

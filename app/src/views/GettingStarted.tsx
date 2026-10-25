@@ -1,4 +1,5 @@
 import { Button, cn } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import { CheckCircle2, Circle, ExternalLink, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useKit } from "../auth/KitProvider";
@@ -15,6 +16,8 @@ interface Step {
   text: string;
   done: boolean;
   action?: ReactNode;
+  /** Platforms the step is for, by bundled icon. */
+  platforms?: Array<{ icon: string; name: string }>;
 }
 
 /** Progress of the first-run checklist, for the sidebar entry. */
@@ -63,6 +66,11 @@ function useSteps(navigate: (route: Route) => void): Step[] {
       title: t("start.extension.title"),
       text: t("start.extension.text"),
       done: checklist.extension,
+      platforms: [
+        { icon: "chrome", name: "Google Chrome" },
+        { icon: "edge", name: "Microsoft Edge" },
+        { icon: "brave", name: "Brave" },
+      ],
       action: (
         <>
           {link(LINKS.extension, t("start.extension.action"), true)}
@@ -93,6 +101,10 @@ function useSteps(navigate: (route: Route) => void): Step[] {
       title: t("start.phone.title"),
       text: t("start.phone.text"),
       done: checklist.phone,
+      platforms: [
+        { icon: "app-store", name: "iPhone (App Store)" },
+        { icon: "google-play", name: "Android (Google Play)" },
+      ],
       action: markDone("phone"),
     },
     {
@@ -169,6 +181,19 @@ export function GettingStartedCard({
               {!step.done && (
                 <>
                   <p className="mt-0.5 text-xs text-text-muted">{step.text}</p>
+                  {step.platforms && (
+                    <p className="mt-1.5 flex items-center gap-1">
+                      {step.platforms.map((platform) => (
+                        <BrandIcon
+                          key={platform.icon}
+                          service={platform.icon}
+                          name={platform.name}
+                          size="sm"
+                          className="!size-5 !rounded-md"
+                        />
+                      ))}
+                    </p>
+                  )}
                   {step.action && <div className="mt-2 flex flex-wrap gap-2">{step.action}</div>}
                 </>
               )}

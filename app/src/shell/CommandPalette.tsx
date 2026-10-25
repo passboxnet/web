@@ -1,9 +1,10 @@
 import { FIELD, fieldValue, type Item } from "@passbox/client";
-import { Kbd, Monogram } from "@passbox/ui";
+import { Kbd } from "@passbox/ui";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import { Lock, Moon, Search, Settings, ShieldCheck, Sun, Trash2, Wand2 } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useState } from "react";
+import { ItemIcon } from "../items/ItemIcon";
 import { copyToClipboard } from "../lib/clipboard";
 import { modifierKey, useI18n } from "../lib/i18n";
 import { CATEGORY_META, CREATABLE, itemSubtitle, itemTitle, safeHref, searchText } from "../lib/items";
@@ -110,7 +111,7 @@ export function CommandPalette({ open, onOpenChange, navigate }: CommandPaletteP
                       value={`${ITEM_PREFIX}${item.id}`}
                       keywords={[searchText(item)]}
                       onSelect={() => primary(item)}
-                      icon={<Monogram name={item.data.title} size="sm" />}
+                      icon={<ItemIcon item={item} size="sm" />}
                       hint={t(CATEGORY_META[item.data.category].label)}
                     >
                       <span className="truncate">{itemTitle(item, t)}</span>

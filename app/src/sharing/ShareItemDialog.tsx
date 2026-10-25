@@ -3,6 +3,7 @@ import { Button, cn, Dialog, fieldClassName, toast } from "@passbox/ui";
 import { ArrowRight, Info, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
+import { ItemIcon } from "../items/ItemIcon";
 import { useI18n } from "../lib/i18n";
 import { itemTitle } from "../lib/items";
 import type { Route } from "../lib/route";
@@ -87,6 +88,7 @@ export function ShareItemDialog({
   return (
     <Dialog
       open={open}
+      icon={<ItemIcon item={item} size="lg" />}
       onOpenChange={onOpenChange}
       title={t("sharing.shareItem.title", { name: itemTitle(item, t) })}
       description={t("sharing.shareItem.text")}

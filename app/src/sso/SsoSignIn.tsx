@@ -9,6 +9,7 @@ import { useI18n } from "../lib/i18n";
 import { useClient } from "../useClient";
 import { loadTrustedDevice } from "./deviceStore";
 import { startSsoSignIn } from "./flow";
+import { ProviderIcon } from "./ProviderIcon";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -63,7 +64,11 @@ export function SsoSignInOption({ email }: { email: string }) {
           data-testid="sso-option"
         >
           <p className="flex items-start gap-2 text-[0.8125rem]">
-            <Building2 className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+            {option.provider === "generic" ? (
+              <Building2 className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+            ) : (
+              <ProviderIcon provider={option.provider} size="sm" />
+            )}
             <span>
               {option.required
                 ? t("sso.signIn.required", { name: option.displayName })

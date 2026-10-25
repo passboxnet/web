@@ -8,6 +8,7 @@ import { itemTitle } from "../lib/items";
 import { useClient, useSnapshot } from "../useClient";
 import { Panel } from "../views/PageHeader";
 import { AgentApprovalDialog } from "./AgentApproval";
+import { AgentSetupSnippets } from "./AgentSetupSnippets";
 import { refreshAgentRequests, usePendingAgentRequests } from "./agentRequests";
 
 const STATUS_TONE: Record<AgentRequest["status"], BadgeTone> = {
@@ -193,12 +194,7 @@ export function AgentsSection({ onShowServiceAccounts }: { onShowServiceAccounts
             <li>{t("agent.setup.step2")}</li>
             <li>{t("agent.setup.step3")}</li>
           </ol>
-          <pre className="overflow-x-auto rounded-md bg-surface-sunken px-3 py-2 font-mono text-xs">
-            {`claude mcp add passbox \\
-  --env PASSBOX_SERVER=${window.location.origin} \\
-  --env PASSBOX_SERVICE_ACCOUNT_TOKEN=pbx_sa_… \\
-  -- pbx mcp`}
-          </pre>
+          <AgentSetupSnippets server={window.location.origin} />
           <p className="text-xs text-text-muted">{t("agent.setup.more")}</p>
         </div>
       </Panel>

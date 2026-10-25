@@ -13,7 +13,8 @@ import {
   mergeItem,
   previewCsv,
 } from "@passbox/client/import";
-import { Button, cn, Input, PasswordInput, SegmentedControl, Spinner } from "@passbox/ui";
+import { Button, cn, Input, Logo, PasswordInput, SegmentedControl, Spinner } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import {
   ArrowLeft,
   CircleCheck,
@@ -275,12 +276,7 @@ function SourceStep({
                   : "border-border hover:border-border-strong",
               )}
             >
-              <span
-                aria-hidden="true"
-                className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-xs font-semibold text-text-muted"
-              >
-                {s.monogram}
-              </span>
+              <SourceIcon source={s} />
               <span>{s.name}</span>
             </button>
           ))}
@@ -293,7 +289,8 @@ function SourceStep({
             className="rounded-card border border-border bg-surface p-5 shadow-card"
             aria-labelledby="import-howto"
           >
-            <h2 id="import-howto" className="text-sm font-semibold">
+            <h2 id="import-howto" className="flex items-center gap-2 text-sm font-semibold">
+              <SourceIcon source={source} size="sm" />
               {t("import.howTo", { source: source.name })}
             </h2>
             <ol className="mt-3 flex list-none flex-col gap-3">
@@ -1002,8 +999,9 @@ function DoneStep({
         </section>
       )}
       {source?.browser && (
-        <p className="rounded-card border border-border bg-surface p-4 text-[13px] text-text-muted">
-          {t("import.done.browserTip", { source: source.name })}
+        <p className="flex items-start gap-3 rounded-card border border-border bg-surface p-4 text-[13px] text-text-muted">
+          <SourceIcon source={source} size="sm" />
+          <span>{t("import.done.browserTip", { source: source.name })}</span>
         </p>
       )}
       <div className="flex flex-wrap gap-2">
@@ -1013,5 +1011,24 @@ function DoneStep({
         </Button>
       </div>
     </div>
+  );
+}
+
+/** The source's own icon (bundled, never loaded from the service), the Passbox mark or its two letters. */
+function SourceIcon({ source, size = "md" }: { source: ImportSource; size?: "sm" | "md" }) {
+  if (source.brand) return <BrandIcon service={source.brand} name={source.name} size={size} decorative />;
+  if (source.id === "passbox") {
+    return <Logo withWordmark={false} className={size === "sm" ? "[&_svg]:size-6" : "[&_svg]:size-8"} />;
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-lg bg-surface-sunken font-semibold text-text-muted",
+        size === "sm" ? "size-6 rounded-md text-2xs" : "size-8 text-xs",
+      )}
+    >
+      {source.monogram}
+    </span>
   );
 }

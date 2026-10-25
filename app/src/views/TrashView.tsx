@@ -1,10 +1,11 @@
 import { type Item, TRASH_RETENTION_MS } from "@passbox/client";
-import { Button, ConfirmDialog, EmptyState, Monogram, toast } from "@passbox/ui";
+import { Button, ConfirmDialog, EmptyState, toast } from "@passbox/ui";
 import { RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { errorMessage } from "../core";
+import { ItemIcon } from "../items/ItemIcon";
 import { useI18n } from "../lib/i18n";
-import { CATEGORY_META, itemSubtitle, itemTitle } from "../lib/items";
+import { itemSubtitle, itemTitle } from "../lib/items";
 import { writableVaults } from "../lib/sharing";
 import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
@@ -66,16 +67,11 @@ export function TrashView() {
         ) : (
           <ul className="divide-y divide-border">
             {trash.map((item) => {
-              const Icon = CATEGORY_META[item.data.category].icon;
               const purgeAt = (item.data.trashedAt ?? Date.now()) + TRASH_RETENTION_MS;
               const vault = vaults.find((v) => v.id === item.vaultId);
               return (
                 <li key={item.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
-                  <Monogram
-                    name={item.data.title}
-                    size="lg"
-                    icon={item.data.category === "login" ? undefined : <Icon />}
-                  />
+                  <ItemIcon item={item} size="lg" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[0.8125rem] font-medium">{itemTitle(item, t)}</p>
                     <p className="truncate text-xs text-text-muted">

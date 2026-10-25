@@ -3,6 +3,7 @@ import { Button, cn, Dialog, fieldClassName, PasswordInput, Switch } from "@pass
 import { Check, Copy, Info, Link2, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
+import { ItemIcon } from "../items/ItemIcon";
 import { copyToClipboard } from "../lib/clipboard";
 import { useI18n } from "../lib/i18n";
 import { fieldLabel, itemTitle } from "../lib/items";
@@ -114,6 +115,7 @@ export function ShareLinkDialog({
   return (
     <Dialog
       open={open}
+      icon={<ItemIcon item={item} size="lg" />}
       onOpenChange={onOpenChange}
       title={t("shareLink.title", { name: itemTitle(item, t) })}
       description={t("shareLink.text")}

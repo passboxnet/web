@@ -19,8 +19,10 @@ export type SourceId =
 export interface ImportSource {
   id: SourceId;
   name: string;
-  /** Two letters for the tile. */
+  /** Two letters for the tile when there is no brand icon. */
   monogram: string;
+  /** The bundled icon of the source (`@passbox/brand-icons`). */
+  brand?: string;
   /** File picker filter. */
   accept: string;
   /** Read the file in this format instead of detecting it. */
@@ -35,6 +37,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "chrome",
     name: "Chrome",
     monogram: "Ch",
+    brand: "chrome",
     accept: ".csv",
     browser: true,
     steps: {
@@ -54,6 +57,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "edge",
     name: "Edge",
     monogram: "Ed",
+    brand: "edge",
     accept: ".csv",
     browser: true,
     steps: {
@@ -73,6 +77,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "firefox",
     name: "Firefox",
     monogram: "Fx",
+    brand: "firefox",
     accept: ".csv",
     browser: true,
     steps: {
@@ -92,6 +97,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "safari",
     name: "Safari / Apple Passwords",
     monogram: "Sa",
+    brand: "apple-passwords",
     accept: ".csv",
     browser: true,
     steps: {
@@ -111,6 +117,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "1password",
     name: "1Password",
     monogram: "1P",
+    brand: "1password",
     accept: ".1pux,.csv",
     steps: {
       en: [
@@ -131,6 +138,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "bitwarden",
     name: "Bitwarden",
     monogram: "Bw",
+    brand: "bitwarden",
     accept: ".json,.csv",
     steps: {
       en: [
@@ -149,6 +157,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "keepass",
     name: "KeePass / KeePassXC",
     monogram: "KP",
+    brand: "keepassxc",
     accept: ".xml,.csv",
     steps: {
       en: [
@@ -167,6 +176,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "passbolt",
     name: "Passbolt",
     monogram: "Pb",
+    brand: "passbolt",
     accept: ".csv",
     forceFormat: "passbolt-csv",
     steps: {
@@ -186,6 +196,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "lastpass",
     name: "LastPass",
     monogram: "LP",
+    brand: "lastpass",
     accept: ".csv",
     steps: {
       en: [
@@ -204,6 +215,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "dashlane",
     name: "Dashlane",
     monogram: "Da",
+    brand: "dashlane",
     accept: ".zip,.csv",
     steps: {
       en: [
@@ -222,6 +234,7 @@ export const SOURCES: readonly ImportSource[] = [
     id: "protonpass",
     name: "Proton Pass",
     monogram: "PP",
+    brand: "protonpass",
     accept: ".zip,.json,.csv",
     steps: {
       en: [

@@ -226,6 +226,17 @@ export function SettingsView() {
               ]}
             />
           </Row>
+          <div className="px-5 py-4">
+            <Switch
+              label={t("settings.websiteIcons")}
+              description={
+                meta?.icons === false ? t("settings.websiteIconsOff") : t("settings.websiteIconsDescription")
+              }
+              checked={preferences.showWebsiteIcons && meta?.icons !== false}
+              disabled={meta?.icons === false}
+              onCheckedChange={(showWebsiteIcons) => setPreferences({ showWebsiteIcons })}
+            />
+          </div>
         </Panel>
 
         <Panel id="about" title={t("settings.about")}>

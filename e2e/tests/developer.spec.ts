@@ -241,7 +241,11 @@ test("revealing a value to an agent needs the explicit tick", async ({ page }) =
 
   const mcp = new Mcp(token, ["--allow-reveal"]);
   try {
-    await mcp.call("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "claude-code" } });
+    await mcp.call("initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "claude-code" },
+    });
     const tools = (await mcp.call("tools/list", {})) as { result: { tools: { name: string }[] } };
     expect(tools.result.tools.map((t) => t.name)).toContain("passbox_reveal");
     const hits = await mcp.tool("passbox_search", { query: "webshop" });

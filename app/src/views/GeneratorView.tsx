@@ -7,6 +7,7 @@ import { PasswordStrength } from "../items/PasswordStrength";
 import { copyToClipboard } from "../lib/clipboard";
 import { useI18n } from "../lib/i18n";
 import { Page } from "./PageHeader";
+import { AliasPanel } from "./security/AliasPanel";
 
 /**
  * - password: random characters, the strongest per character.
@@ -194,6 +195,7 @@ export function GeneratorView() {
             </>
           )}
         </div>
+        <AliasPanel />
       </div>
     </Page>
   );

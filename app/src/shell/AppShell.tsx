@@ -130,7 +130,7 @@ export function AppShell() {
           </header>
           <main className="flex min-h-0 flex-1">
             {route.view === "items" && <ItemsView route={route} navigate={navigate} health={health} />}
-            {route.view === "watchtower" && <WatchtowerView health={health} navigate={navigate} />}
+            {route.view === "watchtower" && <WatchtowerView navigate={navigate} />}
             {route.view === "trash" && <TrashView />}
             {route.view === "archive" && <ArchiveView />}
             {route.view === "getting-started" && <GettingStartedView navigate={navigate} />}

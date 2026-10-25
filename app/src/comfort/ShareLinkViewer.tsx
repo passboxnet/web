@@ -6,9 +6,9 @@ import {
   shareLinkInfo,
   WrongPassphraseError,
 } from "@passbox/client";
-import { Button, Logo, PasswordInput, Spinner } from "@passbox/ui";
+import { Badge, Button, cn, GridFrame, Logo, Panel, PasswordInput, Spinner } from "@passbox/ui";
 import { Clock, Copy, Eye, EyeOff, Link2Off, LockKeyhole, ShieldCheck } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
 import { errorMessage, loadCore } from "../core";
 import { copyToClipboard } from "../lib/clipboard";
@@ -27,6 +27,10 @@ export function shareLinkFromLocation(location: Pick<Location, "pathname" | "has
  * needs no sign-in: the key is in the link's fragment (never sent to the
  * server), the copy is decrypted in this browser. Opening counts a view, so
  * the page asks before it opens.
+ *
+ * Often the first thing someone sees of Passbox, so it carries the brand
+ * line: the backdrop gradient, a bezelled panel with the dotted grid frame,
+ * the logo and a pill button.
  */
 export function ShareLinkViewer({ link }: { link: { id: string; key: string } }) {
   const i18n = useI18n();
@@ -63,76 +67,117 @@ export function ShareLinkViewer({ link }: { link: { id: string; key: string } })
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center bg-canvas px-4 py-10">
-      <div className="w-full max-w-lg">
-        <Logo className="text-text" />
-        <main className="mt-8 rounded-card border border-border bg-surface p-6 shadow-card">
-          {state === "loading" ? (
-            <Spinner label={t("app.loading")} />
-          ) : state === "failed" ? (
-            <Message icon={<Link2Off />} title={t("shareLink.viewer.failed")} text={t("shareLink.viewer.failedText")} />
-          ) : state.status === "gone" ? (
-            <Message icon={<Link2Off />} title={t("shareLink.viewer.gone")} text={t("shareLink.viewer.goneText")} />
-          ) : opened ? (
-            <Snapshot snapshot={opened.snapshot} viewsLeft={opened.viewsLeft} expiresAt={opened.expiresAt} />
-          ) : (
-            <form onSubmit={open} className="flex flex-col gap-4">
-              <div className="flex items-start gap-3">
-                <LockKeyhole className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
-                <div>
-                  <h1 className="text-lg font-semibold">{t("shareLink.viewer.title")}</h1>
-                  <p className="mt-1 text-[0.8125rem] text-text-muted">{t("shareLink.viewer.text")}</p>
+    <div className="relative isolate flex min-h-full flex-col items-center bg-backdrop px-4 py-10 sm:py-16">
+      <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 -z-10" />
+      <div className="w-full max-w-xl">
+        <Panel bezel>
+          <GridFrame edges="both" className="mt-5 py-8 sm:mt-6 sm:py-10">
+            <div className="px-5 sm:px-6">
+              <Logo className="text-text" />
+            </div>
+            <main className="mt-8 px-5 sm:px-6">
+              {state === "loading" ? (
+                <div className="flex justify-center py-8 text-text-muted">
+                  <Spinner label={t("app.loading")} />
                 </div>
-              </div>
-              <ul className="flex flex-col gap-1 text-xs text-text-muted">
-                <li className="flex items-center gap-1.5">
-                  <Clock className="size-3.5" aria-hidden="true" />
-                  {t("shareLink.viewer.expires", { date: i18n.dateTime(state.expiresAt) })}
-                </li>
-                {state.viewsLeft !== null && (
-                  <li className="flex items-center gap-1.5">
-                    <Eye className="size-3.5" aria-hidden="true" />
-                    {t("shareLink.viewer.viewsLeft", { count: state.viewsLeft })}
-                  </li>
-                )}
-              </ul>
-              {state.needsPassphrase && (
-                <PasswordInput
-                  label={t("shareLink.viewer.passphrase")}
-                  value={passphrase}
-                  onChange={(e) => setPassphrase(e.target.value)}
-                  autoComplete="off"
-                  autoFocus
+              ) : state === "failed" ? (
+                <Message
+                  icon={<Link2Off />}
+                  title={t("shareLink.viewer.failed")}
+                  text={t("shareLink.viewer.failedText")}
                 />
+              ) : state.status === "gone" ? (
+                <Message icon={<Link2Off />} title={t("shareLink.viewer.gone")} text={t("shareLink.viewer.goneText")} />
+              ) : opened ? (
+                <Snapshot snapshot={opened.snapshot} viewsLeft={opened.viewsLeft} expiresAt={opened.expiresAt} />
+              ) : (
+                <form onSubmit={open} className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-4">
+                    <Tile tone="accent">
+                      <LockKeyhole />
+                    </Tile>
+                    <div>
+                      <h1 className="text-title-sm text-text">{t("shareLink.viewer.title")}</h1>
+                      <p className="mt-1.5 text-sm text-text-muted">{t("shareLink.viewer.text")}</p>
+                    </div>
+                  </div>
+                  <ul className="flex flex-wrap gap-2">
+                    <li>
+                      <Badge tone="neutral" className="gap-1.5 [&_svg]:size-3.5">
+                        <Clock aria-hidden="true" />
+                        {t("shareLink.viewer.expires", { date: i18n.dateTime(state.expiresAt) })}
+                      </Badge>
+                    </li>
+                    {state.viewsLeft !== null && (
+                      <li>
+                        <Badge tone="accent" className="gap-1.5 [&_svg]:size-3.5">
+                          <Eye aria-hidden="true" />
+                          {t("shareLink.viewer.viewsLeft", { count: state.viewsLeft })}
+                        </Badge>
+                      </li>
+                    )}
+                  </ul>
+                  {state.needsPassphrase && (
+                    <PasswordInput
+                      label={t("shareLink.viewer.passphrase")}
+                      value={passphrase}
+                      onChange={(e) => setPassphrase(e.target.value)}
+                      autoComplete="off"
+                      autoFocus
+                    />
+                  )}
+                  <FormError message={error} />
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      shape="pill"
+                      className="w-full sm:w-auto sm:self-start sm:px-8"
+                      loading={busy}
+                      disabled={state.needsPassphrase && !passphrase}
+                    >
+                      {t("shareLink.viewer.open")}
+                    </Button>
+                    {state.viewsLeft !== null && (
+                      <p className="text-xs text-text-muted">{t("shareLink.viewer.countsView")}</p>
+                    )}
+                  </div>
+                </form>
               )}
-              <FormError message={error} />
-              <Button type="submit" loading={busy} disabled={state.needsPassphrase && !passphrase}>
-                {t("shareLink.viewer.open")}
-              </Button>
-              {state.viewsLeft !== null && (
-                <p className="text-xs text-text-muted">{t("shareLink.viewer.countsView")}</p>
-              )}
-            </form>
-          )}
-        </main>
-        <p className="mt-6 flex items-start gap-2 text-xs text-text-muted">
-          <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          {t("shareLink.viewer.privacy")}
-        </p>
+            </main>
+          </GridFrame>
+          <p className="flex items-start gap-2.5 px-11 py-5 text-xs text-text-muted sm:px-16">
+            <ShieldCheck className="mt-px size-4 shrink-0 text-success" aria-hidden="true" />
+            {t("shareLink.viewer.privacy")}
+          </p>
+        </Panel>
       </div>
     </div>
   );
 }
 
-function Message({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+/** An icon tile (28 % radius), the shape every Passbox surface shares. */
+function Tile({ tone, children }: { tone: "accent" | "neutral"; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3" role="status">
-      <span className="mt-0.5 text-text-muted [&>svg]:size-5" aria-hidden="true">
-        {icon}
-      </span>
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex size-12 items-center justify-center rounded-[13px] shadow-highlight [&_svg]:size-6",
+        tone === "accent" ? "bg-accent-soft text-accent" : "bg-surface-raised text-text-muted",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Message({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="flex flex-col gap-4" role="status">
+      <Tile tone="neutral">{icon}</Tile>
       <div>
-        <h1 className="text-lg font-semibold">{title}</h1>
-        <p className="mt-1 text-[0.8125rem] text-text-muted">{text}</p>
+        <h1 className="text-title-sm text-text">{title}</h1>
+        <p className="mt-1.5 text-sm text-text-muted">{text}</p>
       </div>
     </div>
   );
@@ -150,26 +195,30 @@ function Snapshot({
   const i18n = useI18n();
   const { t } = i18n;
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-lg font-semibold break-words">{snapshot.title || t("item.untitled")}</h1>
-        <p className="mt-1 text-xs text-text-muted">
+        <h1 className="text-title-sm break-words text-text">{snapshot.title || t("item.untitled")}</h1>
+        <p className="mt-1.5 text-xs text-text-muted">
           {viewsLeft === 0
             ? t("shareLink.viewer.lastView")
             : t("shareLink.viewer.expires", { date: i18n.dateTime(expiresAt) })}
         </p>
       </div>
       {snapshot.fields.length > 0 && (
-        <dl className="divide-y divide-border rounded-lg border border-border">
+        <dl className="rounded-card border border-hairline bg-surface px-4 shadow-card">
           {snapshot.fields.map((field, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: the snapshot never changes
-            <Field key={index} field={field} />
+            <Field
+              // biome-ignore lint/suspicious/noArrayIndexKey: the snapshot never changes
+              key={index}
+              field={field}
+              last={index === snapshot.fields.length - 1}
+            />
           ))}
         </dl>
       )}
       {snapshot.notes && (
-        <div className="rounded-lg border border-border px-4 py-3">
-          <p className="text-xs font-medium text-text-muted">{t("field.notes")}</p>
+        <div className="rounded-card border border-hairline bg-surface px-4 py-3 shadow-card">
+          <p className="text-xs font-medium text-text-subtle">{t("field.notes")}</p>
           <p className="mt-1.5 text-sm whitespace-pre-wrap">{snapshot.notes}</p>
         </div>
       )}
@@ -178,16 +227,19 @@ function Snapshot({
   );
 }
 
-function Field({ field }: { field: ShareSnapshot["fields"][number] }) {
+function Field({ field, last }: { field: ShareSnapshot["fields"][number]; last: boolean }) {
   const { t } = useI18n();
   const secret = field.type === "concealed";
   const [revealed, setRevealed] = useState(!secret);
   return (
-    <div className="flex items-start gap-3 px-4 py-3">
+    <div className={cn("flex items-center gap-3 py-3", !last && "border-b border-hairline")}>
       <div className="min-w-0 flex-1">
-        <dt className="text-xs font-medium text-text-muted">{field.label}</dt>
+        <dt className="text-xs font-medium text-text-subtle">{field.label}</dt>
         <dd
-          className={`mt-1 text-sm break-all ${secret || field.format === "multiline" ? "font-mono whitespace-pre-wrap" : ""}`}
+          className={cn(
+            "mt-1 text-[0.9375rem] break-all text-text",
+            (secret || field.format === "multiline") && "font-mono text-sm whitespace-pre-wrap",
+          )}
         >
           {revealed ? field.value : "••••••••••••"}
         </dd>

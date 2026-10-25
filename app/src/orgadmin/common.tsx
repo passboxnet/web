@@ -1,6 +1,6 @@
 import type { OrgReport } from "@passbox/api-client";
 import type { Org } from "@passbox/client";
-import { Button, cn, Spinner } from "@passbox/ui";
+import { AlertCard, Button, cn, Spinner, StatTile } from "@passbox/ui";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage } from "../core";
@@ -8,6 +8,7 @@ import { useI18n } from "../lib/i18n";
 import { memberLabel } from "../lib/sharing";
 import { displayVaultName } from "../sharing/common";
 import { useClient, useSnapshot } from "../useClient";
+import { ConsoleHeader } from "../views/admin/console";
 
 /** Loads the organization's report (members, vaults, access); reloads on demand and when the roster changes. */
 export function useOrgReport(org: Org): {
@@ -79,58 +80,46 @@ export function Section({
   actions?: ReactNode;
   children: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          {description && <p className="mt-1.5 max-w-2xl text-sm text-text-muted">{description}</p>}
-        </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      </header>
+      <ConsoleHeader eyebrow={t("orgAdmin.title")} title={title} description={description} actions={actions} />
       {children}
     </div>
   );
 }
 
-/** A number with a label, for the overview. */
+const STAT_TONE = { neutral: "neutral", good: "success", warn: "warning", bad: "danger" } as const;
+
+/** A big number with a label (`StatTile`), for the overview. */
 export function Stat({
   label,
   value,
   hint,
   tone = "neutral",
+  icon,
   onClick,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   tone?: "neutral" | "good" | "warn" | "bad";
+  icon?: ReactNode;
   onClick?: () => void;
 }) {
-  const body = (
-    <>
-      <span className="text-xs font-medium text-text-muted">{label}</span>
-      <span
-        className={cn(
-          "text-2xl font-semibold tracking-tight tabular-nums",
-          tone === "good" && "text-success-text",
-          tone === "warn" && "text-warning-text",
-          tone === "bad" && "text-danger",
-        )}
-      >
-        {value}
-      </span>
-      {hint && <span className="text-xs text-text-muted">{hint}</span>}
-    </>
-  );
-  const className =
-    "flex min-w-0 flex-col gap-1 rounded-card border border-border bg-surface px-4 py-3.5 text-left shadow-card";
-  return onClick ? (
-    <button type="button" onClick={onClick} className={cn(className, "transition-colors hover:border-border-strong")}>
-      {body}
-    </button>
-  ) : (
-    <div className={className}>{body}</div>
+  // Words ("Version 2") get a smaller size than numbers so they fit the tile.
+  const wordy = typeof value === "string" && !/^[\d\s/–.,%]+$/.test(value);
+  return (
+    <StatTile
+      value={wordy ? <span className="text-[1.75rem] leading-10">{value}</span> : value}
+      label={label}
+      detail={hint}
+      tone={STAT_TONE[tone]}
+      icon={icon}
+      interactive={onClick !== undefined}
+      onClick={onClick}
+      className="min-w-0"
+    />
   );
 }
 
@@ -158,17 +147,17 @@ export function Loading({ error, onRetry }: { error: string | undefined; onRetry
   const { t } = useI18n();
   if (error) {
     return (
-      <div
-        role="alert"
-        className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-danger/30 bg-surface px-5 py-4 text-[0.8125rem] text-danger"
-      >
-        {error}
-        {onRetry && (
-          <Button size="sm" variant="secondary" onClick={onRetry}>
-            {t("action.retry")}
-          </Button>
-        )}
-      </div>
+      <AlertCard
+        tone="danger"
+        title={error}
+        action={
+          onRetry && (
+            <Button size="sm" variant="secondary" onClick={onRetry}>
+              {t("action.retry")}
+            </Button>
+          )
+        }
+      />
     );
   }
   return (
@@ -181,10 +170,10 @@ export function Loading({ error, onRetry }: { error: string | undefined; onRetry
 /** A table that scrolls sideways on small screens instead of squeezing its columns. */
 export function Table({ label, head, children }: { label: string; head: ReactNode[]; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-card">
+    <div className="overflow-x-auto rounded-card border border-hairline bg-surface shadow-card">
       <table className="w-full min-w-[40rem] border-collapse text-left text-[0.8125rem]" aria-label={label}>
-        <thead>
-          <tr className="border-b border-border text-xs text-text-muted">
+        <thead className="bg-surface-raised/60">
+          <tr className="border-b border-hairline text-xs text-text-subtle">
             {head.map((cell, index) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: fixed columns
               <th key={index} scope="col" className="px-4 py-2.5 font-medium whitespace-nowrap">
@@ -193,7 +182,9 @@ export function Table({ label, head, children }: { label: string; head: ReactNod
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">{children}</tbody>
+        <tbody className="divide-y divide-hairline [&>tr]:transition-colors [&>tr:hover]:bg-surface-raised/50">
+          {children}
+        </tbody>
       </table>
     </div>
   );

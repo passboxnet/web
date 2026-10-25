@@ -1,19 +1,42 @@
 import type { AdminSettings, InstanceSettings, MailLocale, RegistrationMode } from "@passbox/api-client";
 import { LOCALE_NAMES } from "@passbox/i18n";
-import { Badge, Button, cn, fieldClassName, Input, SegmentedControl, Spinner, Textarea, toast } from "@passbox/ui";
-import { Mail, Save, ShieldAlert } from "lucide-react";
+import {
+  AlertCard,
+  Badge,
+  Button,
+  cn,
+  EmptyState,
+  fieldClassName,
+  Input,
+  SegmentedControl,
+  SidebarItem,
+  Spinner,
+  StatTile,
+  Textarea,
+  toast,
+} from "@passbox/ui";
+import { Building2, Inbox, Mail, Save, ScrollText, Send, Server, ShieldAlert, UserCheck, Users } from "lucide-react";
 import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
 import { FormError } from "../../auth/AuthLayout";
 import { errorMessage } from "../../core";
 import { useI18n } from "../../lib/i18n";
 import { parseDomains, refreshServerMeta, useIsInstanceAdmin } from "../../lib/instance";
 import { useClient } from "../../useClient";
-import { Page, Panel } from "../PageHeader";
+import { ConsoleFrame, ConsoleHeader, ConsoleIdentity, ConsoleNav, ConsolePanel, StatGrid } from "./console";
 import { EventsPanel } from "./EventsPanel";
 import { InvitesPanel } from "./InvitesPanel";
 import { UsersPanel } from "./UsersPanel";
 
 const selectClass = cn(fieldClassName, "h-10 px-2.5 coarse:h-12");
+
+const SECTIONS = [
+  { id: "instance", icon: <Server />, title: "admin.settings.title" },
+  { id: "mail", icon: <Mail />, title: "admin.mail.title" },
+  { id: "invites", icon: <Send />, title: "admin.invites.title" },
+  { id: "users", icon: <Users />, title: "admin.users.title" },
+  { id: "admin-events", icon: <ScrollText />, title: "admin.events.title" },
+] as const;
+const SECTION_IDS = SECTIONS.map((section) => section.id);
 
 /** Instance administration for self-hosters (A7, D1). Only instance admins see it. */
 export function AdminView() {
@@ -25,6 +48,7 @@ export function AdminView() {
   // Bumped after changes so the audit log reloads.
   const [revision, setRevision] = useState(0);
   const changed = useCallback(() => setRevision((r) => r + 1), []);
+  const active = useActiveSection(SECTION_IDS, data !== undefined);
 
   const load = useCallback(() => {
     setError(undefined);
@@ -40,24 +64,58 @@ export function AdminView() {
 
   if (!isAdmin) {
     return (
-      <Page title={t("admin.title")}>
-        <p className="flex items-center gap-2 text-sm text-text-muted">
-          <ShieldAlert className="size-4" aria-hidden="true" />
-          {t("admin.notAdmin")}
-        </p>
-      </Page>
+      <ConsoleFrame label={t("admin.title")} nav={null}>
+        <ConsoleHeader title={t("admin.title")} />
+        <EmptyState
+          icon={<ShieldAlert />}
+          title={t("admin.notAdmin")}
+          className="rounded-card border border-hairline bg-surface"
+        />
+      </ConsoleFrame>
     );
   }
 
+  const nav = (
+    <ConsoleNav
+      label={t("admin.console.sections")}
+      heading={
+        <ConsoleIdentity
+          tile={<Server />}
+          name={data?.settings.instanceName ?? t("admin.title")}
+          caption={t("admin.console.eyebrow")}
+        />
+      }
+    >
+      {SECTIONS.map((section) => (
+        <SidebarItem
+          key={section.id}
+          icon={section.icon}
+          label={t(section.title)}
+          active={active === section.id}
+          disabled={!data}
+          onClick={() => document.getElementById(section.id)?.scrollIntoView({ block: "start" })}
+        />
+      ))}
+    </ConsoleNav>
+  );
+
   return (
-    <Page title={t("admin.title")} description={t("admin.description")}>
+    <ConsoleFrame label={t("admin.title")} nav={nav}>
+      <ConsoleHeader
+        eyebrow={t("admin.console.eyebrow")}
+        title={t("admin.title")}
+        description={t("admin.description")}
+      />
       {error && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-card border border-danger/30 bg-surface px-5 py-4 text-[0.8125rem] text-danger">
-          {error}
-          <Button size="sm" variant="secondary" onClick={load}>
-            {t("action.retry")}
-          </Button>
-        </div>
+        <AlertCard
+          tone="danger"
+          title={error}
+          action={
+            <Button size="sm" variant="secondary" onClick={load}>
+              {t("action.retry")}
+            </Button>
+          }
+        />
       )}
       {!data ? (
         !error && (
@@ -66,7 +124,8 @@ export function AdminView() {
           </div>
         )
       ) : (
-        <div className="flex flex-col gap-6">
+        <>
+          <Overview data={data} />
           <SettingsPanel
             data={data}
             onSaved={(next) => {
@@ -85,9 +144,78 @@ export function AdminView() {
           <InvitesPanel registration={data.settings.registration} onChange={changed} />
           <UsersPanel onChange={changed} />
           <EventsPanel revision={revision} />
-        </div>
+        </>
       )}
-    </Page>
+    </ConsoleFrame>
+  );
+}
+
+/** The section in view, for the navigation's current item. */
+function useActiveSection(ids: readonly string[], ready: boolean): string | undefined {
+  const [active, setActive] = useState<string | undefined>(ids[0]);
+  useEffect(() => {
+    if (!ready || typeof IntersectionObserver === "undefined") return;
+    const visible = new Map<string, boolean>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) visible.set(entry.target.id, entry.isIntersecting);
+        const first = ids.find((id) => visible.get(id));
+        if (first) setActive(first);
+      },
+      { rootMargin: "0px 0px -55% 0px" },
+    );
+    for (const id of ids) {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    }
+    return () => observer.disconnect();
+  }, [ids, ready]);
+  return active;
+}
+
+/** Big-number tiles: who is on the server and how mail delivery is doing. */
+function Overview({ data }: { data: AdminSettings }) {
+  const i18n = useI18n();
+  const { t } = i18n;
+  const { usage, mail } = data;
+  return (
+    <StatGrid>
+      {usage && (
+        <>
+          <StatTile
+            tone="accent"
+            icon={<Users />}
+            value={i18n.number(usage.accounts)}
+            label={t("admin.overview.accounts")}
+            detail={t("admin.overview.accountsDetail")}
+          />
+          <StatTile
+            tone="accent"
+            icon={<Building2 />}
+            value={i18n.number(usage.organizations)}
+            label={t("admin.overview.organizations")}
+            detail={t("admin.overview.organizationsDetail")}
+          />
+          <StatTile
+            tone="success"
+            icon={<UserCheck />}
+            value={i18n.number(usage.members)}
+            label={t("admin.overview.members")}
+            detail={t("admin.overview.membersDetail", {
+              guests: usage.guests,
+              serviceAccounts: usage.serviceAccounts,
+            })}
+          />
+        </>
+      )}
+      <StatTile
+        tone={mail.failed > 0 || !mail.configured ? "warning" : "neutral"}
+        icon={<Inbox />}
+        value={i18n.number(mail.pending)}
+        label={t("admin.overview.mailQueue")}
+        detail={t("admin.overview.mailQueueDetail", { failed: mail.failed })}
+      />
+    </StatGrid>
   );
 }
 
@@ -123,7 +251,12 @@ function SettingsPanel({ data, onSaved }: { data: AdminSettings; onSaved: (next:
   }
 
   return (
-    <Panel id="instance" title={t("admin.settings.title")} description={t("admin.settings.description")}>
+    <ConsolePanel
+      id="instance"
+      icon={<Server />}
+      title={t("admin.settings.title")}
+      description={t("admin.settings.description")}
+    >
       <form onSubmit={submit} className="flex flex-col gap-5 px-5 py-5">
         <Input
           label={t("admin.settings.name")}
@@ -211,17 +344,6 @@ function SettingsPanel({ data, onSaved }: { data: AdminSettings; onSaved: (next:
             set({ agentLimitPerMember: e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value))) })
           }
         />
-        {data.usage && (
-          <p className="text-xs text-text-muted" data-testid="admin-usage">
-            {t("admin.settings.usage", {
-              accounts: data.usage.accounts,
-              organizations: data.usage.organizations,
-              members: data.usage.members,
-              guests: data.usage.guests,
-              serviceAccounts: data.usage.serviceAccounts,
-            })}
-          </p>
-        )}
         <FormError message={error} />
         <div>
           <Button type="submit" loading={busy}>
@@ -230,7 +352,7 @@ function SettingsPanel({ data, onSaved }: { data: AdminSettings; onSaved: (next:
           </Button>
         </div>
       </form>
-    </Panel>
+    </ConsolePanel>
   );
 }
 
@@ -266,17 +388,29 @@ function MailPanel({ data, onSent }: { data: AdminSettings; onSent: () => void }
   }
 
   return (
-    <Panel id="mail" title={t("admin.mail.title")} description={t("admin.mail.description")}>
+    <ConsolePanel
+      id="mail"
+      icon={<Mail />}
+      title={t("admin.mail.title")}
+      description={t("admin.mail.description")}
+      actions={
+        <Button variant="secondary" size="sm" loading={busy} onClick={() => void sendTest()}>
+          <Send />
+          {t("admin.mail.sendTest")}
+        </Button>
+      }
+    >
       {!mail.configured && (
-        <div role="status" className="flex items-start gap-3 bg-warning-soft px-5 py-4 text-[0.8125rem]">
-          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-          <div>
-            <p className="font-semibold">{t("admin.mail.notConfigured")}</p>
-            <p className="mt-0.5">{t("admin.mail.notConfiguredHint")}</p>
-          </div>
+        <div className="px-5 py-4">
+          <AlertCard
+            tone="warning"
+            title={t("admin.mail.notConfigured")}
+            description={t("admin.mail.notConfiguredHint")}
+            className="shadow-none"
+          />
         </div>
       )}
-      <dl className="grid gap-x-6 gap-y-3 px-5 py-4 text-[0.8125rem] sm:grid-cols-[auto_1fr]">
+      <dl className="grid gap-x-8 gap-y-3 px-5 py-4 text-[0.8125rem] sm:grid-cols-[auto_1fr]">
         <dt className="text-text-muted">{t("admin.mail.status")}</dt>
         <dd>
           {mail.configured ? (
@@ -296,7 +430,7 @@ function MailPanel({ data, onSent }: { data: AdminSettings; onSent: () => void }
         <dt className="text-text-muted">{t("admin.mail.publicUrl")}</dt>
         <dd className="break-all">{mail.publicUrl ?? t("admin.mail.publicUrlMissing")}</dd>
         <dt className="text-text-muted">{t("admin.mail.queue")}</dt>
-        <dd>
+        <dd className="tabular-nums">
           {t("admin.mail.queueValue", { pending: mail.pending, failed: mail.failed })}
           {mail.lastSentAt ? ` · ${t("admin.mail.lastSent", { time: i18n.relativeTime(mail.lastSentAt) })}` : ""}
         </dd>
@@ -307,12 +441,6 @@ function MailPanel({ data, onSent }: { data: AdminSettings; onSent: () => void }
           </>
         )}
       </dl>
-      <div className="px-5 py-4">
-        <Button variant="secondary" size="sm" loading={busy} onClick={() => void sendTest()}>
-          <Mail />
-          {t("admin.mail.sendTest")}
-        </Button>
-      </div>
-    </Panel>
+    </ConsolePanel>
   );
 }

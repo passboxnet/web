@@ -362,7 +362,7 @@ function InvitationsList({ org, revision }: { org: Org; revision: number }) {
       </h2>
       {error && <p className="text-[0.8125rem] text-danger">{error}</p>}
       {invitations && invitations.length > 0 && (
-        <ul className="divide-y divide-border rounded-card border border-border bg-surface shadow-card">
+        <ul className="divide-y divide-border rounded-card border border-hairline bg-surface shadow-card">
           {invitations.map((invitation) => (
             <li key={invitation.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
               <Monogram name={invitation.email} size="sm" />

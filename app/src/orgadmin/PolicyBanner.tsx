@@ -115,7 +115,7 @@ export function PolicySummary({ org }: { org: Org }) {
   if (!policy) return null;
   const lines = activeRules(policy.rules, t);
   return (
-    <section aria-labelledby="policy-summary" className="rounded-card border border-border bg-surface shadow-card">
+    <section aria-labelledby="policy-summary" className="rounded-card border border-hairline bg-surface shadow-card">
       <header className="border-b border-border px-5 py-4">
         <h2 id="policy-summary" className="text-sm font-semibold">
           {t("orgAdmin.summary.title")}

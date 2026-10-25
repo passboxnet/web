@@ -181,7 +181,10 @@ export function OffboardDialog({
                 const mine = sharedVaults.find((v) => v.vaultId === vault.vaultId);
                 const canHandOver = Boolean(mine?.hasKey && mine.verified);
                 return (
-                  <li key={vault.vaultId} className="flex flex-col gap-1.5 rounded-lg border border-border px-3 py-2.5">
+                  <li
+                    key={vault.vaultId}
+                    className="flex flex-col gap-1.5 rounded-control border border-hairline px-3 py-2.5"
+                  >
                     <span className="flex items-center gap-2 text-[0.8125rem] font-medium">
                       <VaultIcon className="size-4 text-text-muted" aria-hidden="true" />
                       {names.vault(vault.vaultId)}
@@ -216,7 +219,7 @@ export function OffboardDialog({
         )}
 
         {team && (
-          <label className="flex items-start gap-3 rounded-lg border border-border px-3 py-2.5 text-[0.8125rem]">
+          <label className="flex items-start gap-3 rounded-control border border-hairline px-3 py-2.5 text-[0.8125rem]">
             <input
               type="checkbox"
               className="mt-0.5 size-4 accent-[var(--color-accent)]"

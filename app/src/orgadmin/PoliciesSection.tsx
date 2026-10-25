@@ -221,7 +221,7 @@ export function PoliciesSection({ org, data }: { org: Org; data: ReportState }) 
         </div>
       </form>
 
-      <div className="flex gap-3 rounded-card border border-border bg-surface px-5 py-4 text-[0.8125rem] shadow-card">
+      <div className="flex gap-3 rounded-card border border-hairline bg-surface px-5 py-4 text-[0.8125rem] shadow-card">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
         <div className="flex flex-col gap-1">
           <p className="font-medium">{t("orgAdmin.policy.howTitle")}</p>
@@ -276,13 +276,13 @@ function PolicyStatus({
   const { t } = i18n;
   if (!policy) {
     return (
-      <div className="rounded-card border border-border bg-surface px-5 py-4 text-[0.8125rem] text-text-muted shadow-card">
+      <div className="rounded-card border border-hairline bg-surface px-5 py-4 text-[0.8125rem] text-text-muted shadow-card">
         {t("orgAdmin.policy.none")}
       </div>
     );
   }
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-border bg-surface px-5 py-4 shadow-card">
+    <div className="flex flex-col gap-3 rounded-card border border-hairline bg-surface px-5 py-4 shadow-card">
       <div className="flex flex-wrap items-center gap-2 text-[0.8125rem]">
         <span className="font-medium">{t("orgAdmin.overview.policyVersion", { version: policy.version })}</span>
         {policy.source === "verified" && !policy.needsResign ? (
@@ -350,7 +350,7 @@ function HistoryDialog({
       <ol className="flex flex-col gap-3">
         {entries?.map((entry) =>
           "problem" in entry ? (
-            <li key={entry.version} className="rounded-lg border border-border px-4 py-3 text-[0.8125rem]">
+            <li key={entry.version} className="rounded-control border border-hairline px-4 py-3 text-[0.8125rem]">
               <p className="flex items-center gap-2 font-medium">
                 {t("orgAdmin.overview.policyVersion", { version: entry.version })}
                 <Badge tone="warning">{t("orgAdmin.policy.historyUnverified")}</Badge>
@@ -358,7 +358,7 @@ function HistoryDialog({
               <p className="mt-1 text-xs text-text-muted">{t("orgAdmin.policy.historyUnverifiedHint")}</p>
             </li>
           ) : (
-            <li key={entry.version} className="rounded-lg border border-border px-4 py-3 text-[0.8125rem]">
+            <li key={entry.version} className="rounded-control border border-hairline px-4 py-3 text-[0.8125rem]">
               <p className="flex flex-wrap items-center gap-2 font-medium">
                 {t("orgAdmin.overview.policyVersion", { version: entry.version })}
                 <Badge tone="success">{t("orgAdmin.policy.verified")}</Badge>
@@ -384,7 +384,7 @@ function HistoryDialog({
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <fieldset className="flex flex-col gap-5 rounded-card border border-border bg-surface px-5 py-5 shadow-card">
+    <fieldset className="flex flex-col gap-5 rounded-card border border-hairline bg-surface px-5 py-5 shadow-card">
       <legend className="float-left mb-0 text-sm font-semibold">{title}</legend>
       {children}
     </fieldset>

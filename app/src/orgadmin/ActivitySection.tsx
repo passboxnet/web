@@ -210,12 +210,12 @@ export function ActivitySection({ org }: { org: Org }) {
       {!events ? (
         <Loading error={error} onRetry={() => void load().catch((e: unknown) => setError(errorMessage(e)))} />
       ) : events.length === 0 ? (
-        <p className="rounded-card border border-border bg-surface px-5 py-6 text-center text-[0.8125rem] text-text-muted shadow-card">
+        <p className="rounded-card border border-hairline bg-surface px-5 py-6 text-center text-[0.8125rem] text-text-muted shadow-card">
           {filtered ? t("orgAdmin.audit.noneFiltered") : t("orgAdmin.audit.none")}
         </p>
       ) : (
         <ol
-          className="divide-y divide-border rounded-card border border-border bg-surface shadow-card"
+          className="divide-y divide-border rounded-card border border-hairline bg-surface shadow-card"
           aria-label={t("orgAdmin.section.activity")}
         >
           {events.map((entry) => (

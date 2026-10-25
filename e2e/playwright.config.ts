@@ -27,6 +27,9 @@ function server(listen: number, label: string) {
       // Every test signs in from 127.0.0.1; the default of 60 per minute
       // is meant for real clients, not a whole test suite.
       PASSBOX_AUTH_RATE_LIMIT: "1000",
+      // The breach catalogue would be fetched from Have I Been Pwned; tests
+      // that need one answer the catalogue requests in the browser.
+      PASSBOX_BREACH_CATALOG: "off",
     },
   };
 }

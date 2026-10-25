@@ -91,6 +91,16 @@ export function setDesktopLockSettings(settings: { lockOnClose: boolean; autoLoc
 }
 
 /**
+ * A system notification of the desktop app (breached websites). Resolves to
+ * false in browsers, so callers fall back to the Notification API.
+ */
+export async function desktopNotify(title: string, body: string): Promise<boolean> {
+  if (!isDesktop) return false;
+  await invokeDesktop("breach_notify", { title, body });
+  return true;
+}
+
+/**
  * An AI agent waits for an approval: the desktop shell shows the window and
  * asks for attention. No-op in browsers.
  */

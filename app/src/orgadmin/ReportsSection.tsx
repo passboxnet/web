@@ -1,6 +1,7 @@
 import type { OrgReport } from "@passbox/api-client";
 import type { Org } from "@passbox/client";
 import { Badge, Button, SegmentedControl, Switch } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import { Check, Download, Minus } from "lucide-react";
 import { useState } from "react";
 import { downloadFile } from "../export/download";
@@ -163,8 +164,60 @@ function SecurityReport({ report }: { report: OrgReport }) {
           </tr>
         ))}
       </Table>
+      <BreachedSitesReport report={report} />
       <p className="text-xs text-text-muted">{t("orgAdmin.reports.privacy")}</p>
     </div>
+  );
+}
+
+/**
+ * Breached websites (Have I Been Pwned) of logins in this organization's
+ * vaults: per breach, how many members still have affected logins and how
+ * many changed them. Numbers only, from the members' apps.
+ */
+function BreachedSitesReport({ report }: { report: OrgReport }) {
+  const { t } = useI18n();
+  const sites = report.siteBreaches ?? [];
+  return (
+    <section aria-labelledby="org-breached-sites" className="flex flex-col gap-2">
+      <h3 id="org-breached-sites" className="text-sm font-semibold">
+        {t("orgAdmin.reports.breaches.title")}
+      </h3>
+      <p className="text-xs text-text-muted">{t("orgAdmin.reports.breaches.hint")}</p>
+      <Table
+        label={t("orgAdmin.reports.breaches.title")}
+        head={[t("orgAdmin.reports.breaches.col.site"), t("orgAdmin.reports.breaches.col.status")]}
+      >
+        {sites.length === 0 && (
+          <tr>
+            <Cell colSpan={2} className="text-text-muted">
+              {t("orgAdmin.reports.breaches.none")}
+            </Cell>
+          </tr>
+        )}
+        {sites.map((site) => (
+          <tr key={site.name} data-testid="breach-row">
+            <Cell className="font-medium">{site.title}</Cell>
+            <Cell className="text-xs">
+              {site.affectedMembers > 0 ? (
+                <Badge tone="danger">
+                  {t("orgAdmin.reports.breaches.status", {
+                    affected: site.affectedMembers + site.fixedMembers,
+                    fixed: site.fixedMembers,
+                  })}
+                </Badge>
+              ) : (
+                <Badge tone="success">{t("orgAdmin.reports.breaches.allFixed", { fixed: site.fixedMembers })}</Badge>
+              )}
+            </Cell>
+          </tr>
+        ))}
+      </Table>
+      <p className="flex items-center gap-1.5 text-xs text-text-muted">
+        <BrandIcon service="hibp" size="sm" decorative />
+        {t("orgAdmin.reports.breaches.source")}
+      </p>
+    </section>
   );
 }
 

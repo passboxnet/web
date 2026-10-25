@@ -14,6 +14,7 @@ import { useSecuritySettings } from "../lib/securitySettings";
 import { useClient, useSnapshot } from "../useClient";
 import { DecryptionErrors } from "./DecryptionErrors";
 import { Page } from "./PageHeader";
+import { Attribution, BreachFacts, breachedSiteText, NotificationPermission } from "./security/BreachedSites";
 import { SecuritySettingsPanel } from "./security/SecuritySettingsPanel";
 
 interface WatchtowerViewProps {
@@ -462,6 +463,9 @@ function FindingDetail({ finding, byId }: { finding: Finding; byId: Map<string, 
         t("security.detail.exposed", { email: finding.email ?? "", breaches: (finding.breaches ?? []).join(", ") }),
       );
       break;
+    case "breached_site":
+      parts.push(breachedSiteText(i18n, finding, (finding.breaches ?? []).join(", ") || (finding.domain ?? "")));
+      break;
     case "missing_two_factor":
     case "passkey_available":
     case "insecure_url":
@@ -477,6 +481,7 @@ function FindingDetail({ finding, byId }: { finding: Finding; byId: Map<string, 
 const DATA_SOURCES: Partial<Record<FindingKind, { icon: string; name: string }>> = {
   breached: { icon: "hibp", name: "Have I Been Pwned" },
   exposed_email: { icon: "hibp", name: "Have I Been Pwned" },
+  breached_site: { icon: "hibp", name: "Have I Been Pwned" },
   missing_two_factor: { icon: "2fa-directory", name: "2FA Directory (2fa.directory)" },
   passkey_available: { icon: "2fa-directory", name: "Passkeys Directory (passkeys.2fa.directory)" },
 };
@@ -524,7 +529,7 @@ function CategoryDetail({
               rel="noopener noreferrer"
               className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-accent hover:underline"
             >
-              {t("security.howTo")}
+              {finding.kind === "breached_site" ? t("security.breachedSite.openSite") : t("security.howTo")}
               <ExternalLink className="size-3" aria-hidden="true" />
               <span className="sr-only">{t("security.opensNewTab")}</span>
             </a>
@@ -569,11 +574,15 @@ function CategoryDetail({
             <Badge tone={SEVERITY_TONE[category.severity]}>{t(`security.severity.${category.severity}`)}</Badge>
           </h2>
           <p className="mt-1 text-[0.8125rem] text-text-muted">{t(`security.kind.${category.kind}.text`)}</p>
-          {DATA_SOURCES[category.kind] && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
-              <BrandIcon service={DATA_SOURCES[category.kind]?.icon ?? ""} size="sm" decorative />
-              {t("security.dataSource", { name: DATA_SOURCES[category.kind]?.name ?? "" })}
-            </p>
+          {category.kind === "breached_site" ? (
+            <Attribution className="mt-2" />
+          ) : (
+            DATA_SOURCES[category.kind] && (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
+                <BrandIcon service={DATA_SOURCES[category.kind]?.icon ?? ""} size="sm" decorative />
+                {t("security.dataSource", { name: DATA_SOURCES[category.kind]?.name ?? "" })}
+              </p>
+            )
           )}
           <p className="mt-2 text-[0.8125rem]">
             <span className="font-medium">{t("security.whatToDo")}</span> {t(`security.kind.${category.kind}.fix`)}
@@ -584,7 +593,13 @@ function CategoryDetail({
         ) : (
           <ul className="divide-y divide-border">{active.map(row)}</ul>
         )}
+        {category.kind === "breached_site" && (
+          <div className="border-t border-border px-5 py-3">
+            <NotificationPermission />
+          </div>
+        )}
       </section>
+      {category.kind === "breached_site" && <BreachFacts report={report} />}
       {dismissed.length > 0 && (
         <section
           aria-labelledby="category-dismissed"

@@ -28,6 +28,7 @@ import { GettingStartedView } from "../views/GettingStarted";
 import { ItemsView } from "../views/ItemsView";
 import { RecoveryRequestsView } from "../views/RecoveryRequestsView";
 import { SettingsView } from "../views/SettingsView";
+import { BreachAlertBanner, useBreachCatalogRefresh } from "../views/security/BreachedSites";
 import { TrashView } from "../views/TrashView";
 import { WatchtowerView } from "../views/WatchtowerView";
 import { CommandPalette } from "./CommandPalette";
@@ -52,6 +53,8 @@ export function AppShell() {
   // Organization policies can cap the auto-lock time (D2).
   useAutoLock(lock, clampAutoLock(snapshot.effectivePolicy, preferences.autoLockMinutes));
   usePendingRotations();
+  // Breached websites: a newer catalogue, matched on this device.
+  useBreachCatalogRefresh();
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -100,6 +103,7 @@ export function AppShell() {
       <KitReminder />
       <SharingWarningsBanner />
       <PolicyBanner navigate={navigate} />
+      <BreachAlertBanner navigate={navigate} />
       <div className="flex min-h-0 flex-1">
         <div className="hidden w-64 shrink-0 lg:block">{sidebar}</div>
 

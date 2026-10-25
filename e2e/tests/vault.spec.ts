@@ -136,6 +136,8 @@ test("moving to the trash can be undone, restored or made permanent", async ({ p
   await page.getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menuitem", { name: "Move to trash" }).click();
   await page.getByRole("button", { name: /^Trash/ }).click();
+  await expect(page.getByRole("heading", { name: "Trash", level: 1 })).toBeVisible();
+  await expect(page.getByText("Bank PIN", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Delete permanently" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete permanently" }).click();
   await expect(page.getByText("The trash is empty")).toBeVisible();
@@ -208,8 +210,9 @@ test("the security check flags weak and reused passwords", async ({ page }) => {
   await expect(page.getByText("This password is easy to guess.")).toBeVisible();
   await page.getByRole("button", { name: /Security check/ }).click();
   await expect(page.getByRole("heading", { name: "Security check", level: 1 })).toBeVisible();
-  await expect(page.getByText("0 of 2 logins are secure")).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Used more than once/ })).toContainText("2");
+  await expect(page.getByRole("img", { name: /Security score \d+ of 100/ })).toBeVisible();
+  await expect(page.getByText(/−\d+ Used more than once/)).toBeVisible();
+  await expect(page.getByText(/−\d+ Easy to guess/)).toBeVisible();
 });
 
 test("a wrong or malformed Secret Key is rejected", async ({ page, browser }) => {

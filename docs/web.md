@@ -65,11 +65,15 @@ The UI for [organizations and shared vaults](architecture/sharing.md) lives in `
 
 The former Watchtower. It shows "X of Y logins are secure" with a bar instead of a score, then the problems in priority order (used more than once, found in breaches, easy to guess, unsecured connection) with plain labels. Logins without 2FA are under "More tips". Each problem row has **Change now**, a three-step dialog: open the website and copy the current password, copy a new generated one, then "Did it work?" → save or keep the old one. The new password is kept as an in-memory draft per item until it is saved or discarded and is forgotten on lock.
 
+**Your plan** above the findings orders the work: up to five steps (breached, reused, easy to guess, unsecured connection, two-factor sign-in for email, finance, developer and government accounts) with a priority and the first three websites, built by rules on the device with translated texts. With the AI feature "Security check: explain and prioritise" switched on, **Explain with AI** lets the configured model write the titles and explanations from finding kinds, counts and domains only (see [architecture/ai-gateway.md](architecture/ai-gateway.md)).
+
 "Check for leaked passwords" is opt-in per session: it explains k-anonymity and then calls `breachCount` (Have I Been Pwned range API; only the first 5 characters of the SHA-1 hash leave the device). Results stay in memory.
 
 ## Settings
 
 Account (Emergency Kit, masked Secret Key `P1-•••••-…`, change master password, forgot password), **Devices** (`client.sessions()`, this device marked, sign out one or all others, with confirmations), **Activity** (last 50 events; failed attempts are called sign-in attempts, with the note that wrong master passwords are detected on the device and may not appear), security on this device, language and theme, About (audit status, server, license) and **Technical details** (account ID, algorithms, KDF parameters, server version). The web app names its device "Chrome on Windows" and so on from the user agent; the desktop app reports "Passbox Desktop on …".
+
+**AI features (optional)** (`apps/web/src/ai`): off by default, per account and browser. Where the model runs (the browser's built-in model or a model server on this computer, your own server, a cloud provider with an API key from a vault item), one switch per feature that says what it sends, a confirmation before data goes to a cloud provider, and the local AI log. Details: [architecture/ai-gateway.md](architecture/ai-gateway.md).
 
 ## Account recovery and emergency access
 

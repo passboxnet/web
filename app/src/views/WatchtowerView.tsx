@@ -2,6 +2,7 @@ import type { CategorySummary, Finding, FindingKind, FixAction, Item, SecurityRe
 import { Badge, type BadgeTone, Button, cn, EmptyState, Monogram, toast } from "@passbox/ui";
 import { ArrowLeft, ChevronRight, ExternalLink, EyeOff, RotateCcw, Search, ShieldCheck } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
+import { SecurityPlan } from "../ai/SecurityPlan";
 import { ChangePasswordDialog } from "../items/ChangePasswordDialog";
 import { describeError } from "../lib/errors";
 import { useI18n } from "../lib/i18n";
@@ -121,6 +122,7 @@ export function WatchtowerView({ navigate }: WatchtowerViewProps) {
               />
             }
           />
+          <SecurityPlan items={snapshot.items} report={report} />
           <FixFirst report={report} byId={byId} onOpen={open} onFix={fix} />
           <CategoryGrid report={report} onSelect={setSelected} />
           <DismissedList report={report} byId={byId} onRestore={(f) => void dismiss(f, false)} />

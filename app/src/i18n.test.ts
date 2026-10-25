@@ -5,12 +5,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { FINDING_KINDS } from "@passbox/client";
+import deAi from "@passbox/i18n/messages/de/ai.json";
 import deComfort from "@passbox/i18n/messages/de/comfort.json";
 import deCommon from "@passbox/i18n/messages/de/common.json";
 import deDeveloper from "@passbox/i18n/messages/de/developer.json";
 import deOrgAdmin from "@passbox/i18n/messages/de/orgadmin.json";
 import deSso from "@passbox/i18n/messages/de/sso.json";
 import deWeb from "@passbox/i18n/messages/de/web.json";
+import enAi from "@passbox/i18n/messages/en/ai.json";
 import enComfort from "@passbox/i18n/messages/en/comfort.json";
 import enCommon from "@passbox/i18n/messages/en/common.json";
 import enDeveloper from "@passbox/i18n/messages/en/developer.json";
@@ -28,6 +30,7 @@ const en: Record<string, string> = {
   ...enOrgAdmin,
   ...enDeveloper,
   ...enComfort,
+  ...enAi,
 };
 const de: Record<string, string> = {
   ...deCommon,
@@ -36,6 +39,7 @@ const de: Record<string, string> = {
   ...deOrgAdmin,
   ...deDeveloper,
   ...deComfort,
+  ...deAi,
 };
 
 /** Text that is the same in every language: the brand, key names, formats. */

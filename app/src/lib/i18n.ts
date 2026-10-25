@@ -5,12 +5,14 @@
  * German is the default on German systems.
  */
 import { createTranslator, detectLocale, type Locale, mergeCatalogs, type Translator } from "@passbox/i18n";
+import deAi from "@passbox/i18n/messages/de/ai.json";
 import deComfort from "@passbox/i18n/messages/de/comfort.json";
 import deCommon from "@passbox/i18n/messages/de/common.json";
 import deDeveloper from "@passbox/i18n/messages/de/developer.json";
 import deOrgAdmin from "@passbox/i18n/messages/de/orgadmin.json";
 import deSso from "@passbox/i18n/messages/de/sso.json";
 import deWeb from "@passbox/i18n/messages/de/web.json";
+import enAi from "@passbox/i18n/messages/en/ai.json";
 import enComfort from "@passbox/i18n/messages/en/comfort.json";
 import enCommon from "@passbox/i18n/messages/en/common.json";
 import enDeveloper from "@passbox/i18n/messages/en/developer.json";
@@ -23,8 +25,8 @@ import { getPreferences, type LanguagePreference, usePreferences } from "./prefe
 export type { Locale, Translator } from "@passbox/i18n";
 
 const CATALOGS = {
-  en: mergeCatalogs(enCommon, enWeb, enSso, enOrgAdmin, enDeveloper, enComfort),
-  de: mergeCatalogs(deCommon, deWeb, deSso, deOrgAdmin, deDeveloper, deComfort),
+  en: mergeCatalogs(enCommon, enWeb, enSso, enOrgAdmin, enDeveloper, enComfort, enAi),
+  de: mergeCatalogs(deCommon, deWeb, deSso, deOrgAdmin, deDeveloper, deComfort, deAi),
 };
 
 export function resolveLocale(

@@ -2,13 +2,16 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { defineConfig } from "@playwright/test";
+import { createDatabaseCommand, databaseEnv, databaseName } from "./database";
 import { adminPort, port } from "./ports";
 
 const dataDir = mkdtempSync(join(tmpdir(), "passbox-e2e-"));
 
-function server(listen: number, database: string) {
+function server(listen: number, label: string) {
+  const database = databaseName(label, listen);
   return {
-    command: "cargo run --quiet --package passbox-server",
+    // A fresh database per run; the server migrates it on start.
+    command: `${createDatabaseCommand(database)} && cargo run --quiet --package passbox-server`,
     cwd: "..",
     url: `http://127.0.0.1:${listen}/health`,
     timeout: 300_000,
@@ -18,7 +21,7 @@ function server(listen: number, database: string) {
     env: {
       RUST_LOG: "info,tower_http=debug",
       PASSBOX_BIND: `127.0.0.1:${listen}`,
-      PASSBOX_DATABASE_URL: `sqlite://${join(dataDir, database)}?mode=rwc`,
+      ...databaseEnv(database),
       PASSBOX_WEB_DIR: "apps/web/dist",
       PASSBOX_BLOB_DIR: join(dataDir, `${database}.blobs`),
       // Every test signs in from 127.0.0.1; the default of 60 per minute
@@ -40,5 +43,5 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
     trace: "retain-on-failure",
   },
-  webServer: [server(port, "passbox.db"), server(adminPort, "admin.db")],
+  webServer: [server(port, "main"), server(adminPort, "admin")],
 });

@@ -13,6 +13,7 @@ import {
 } from "@passbox/ai";
 import type { Item } from "@passbox/client";
 import { Badge, Button, ConfirmDialog, cn, fieldClassName, Input, SegmentedControl, Switch } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { useI18n } from "../lib/i18n";
@@ -191,6 +192,7 @@ export function AiPanel() {
                 data-testid="ai-preset-note"
               >
                 <p className="flex flex-wrap items-center gap-2">
+                  {preset.domain && <BrandIcon service={preset.domain} name={preset.name} size="sm" decorative />}
                   <strong className="font-semibold">{preset.name}</strong>
                   <Badge tone={preset.jurisdiction === "EU" ? "success" : "warning"}>
                     {t("ai.preset.region", { region: t(`ai.region.${preset.jurisdiction}`), country: preset.country })}

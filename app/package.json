@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@passbox/ai": "workspace:*",
     "@passbox/api-client": "workspace:*",
     "@passbox/client": "workspace:*",
     "@passbox/core-wasm": "workspace:*",

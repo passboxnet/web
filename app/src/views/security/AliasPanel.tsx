@@ -1,5 +1,6 @@
 import { ALIAS_KEY_HELP, ALIAS_PROVIDER_NAMES, ALIAS_PROVIDERS, AliasError, type AliasProvider } from "@passbox/client";
 import { Button, cn, fieldClassName, Input, PasswordInput } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import { AtSign, Copy, ExternalLink } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { copyToClipboard } from "../../lib/clipboard";
@@ -7,6 +8,15 @@ import { describeError } from "../../lib/errors";
 import { useI18n } from "../../lib/i18n";
 import { defaultVault } from "../../lib/sharing";
 import { useClient, useSnapshot } from "../../useClient";
+
+/** Bundled icons of the alias services (`@passbox/brand-icons`). */
+const PROVIDER_ICONS: Record<AliasProvider, string> = {
+  simplelogin: "simplelogin",
+  addy: "addy",
+  fastmail: "fastmail",
+  duckduckgo: "duckduckgo",
+  firefox_relay: "firefox-relay",
+};
 
 /** Email aliases in the generator ("Alias erstellen"): set up a provider once, then create aliases per website. */
 export function AliasPanel() {
@@ -101,7 +111,8 @@ export function AliasPanel() {
               {t("alias.create")}
             </Button>
           </div>
-          <p className="text-xs text-text-muted">
+          <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-text-muted">
+            {service && <BrandIcon service={PROVIDER_ICONS[service.provider]} size="sm" decorative />}
             {t("alias.privacy", { provider: service?.providerName ?? "" })}{" "}
             <button type="button" className="font-medium text-accent hover:underline" onClick={() => setSetup(true)}>
               {t("alias.addService")}
@@ -170,20 +181,34 @@ function AliasSetup({
 
   return (
     <form onSubmit={(e) => void save(e)} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1.5 text-[0.8125rem] font-medium">
-        {t("alias.provider")}
-        <select
-          className={cn(fieldClassName, "h-10 px-2.5 font-normal coarse:h-12")}
-          value={provider}
-          onChange={(e) => setProvider(e.target.value as AliasProvider)}
+      <div className="flex flex-col gap-1.5">
+        <span id="alias-provider-label" className="text-[0.8125rem] font-medium">
+          {t("alias.provider")}
+        </span>
+        <div
+          role="radiogroup"
+          aria-labelledby="alias-provider-label"
+          className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3"
         >
           {ALIAS_PROVIDERS.map((p) => (
-            <option key={p} value={p}>
-              {ALIAS_PROVIDER_NAMES[p]}
-            </option>
+            // biome-ignore lint/a11y/useSemanticElements: tiles are styled radio buttons
+            <button
+              key={p}
+              type="button"
+              role="radio"
+              aria-checked={provider === p}
+              onClick={() => setProvider(p)}
+              className={cn(
+                "flex min-h-11 items-center gap-2 rounded-lg border bg-surface px-2.5 py-2 text-left text-[0.8125rem] font-medium transition-colors coarse:min-h-12",
+                provider === p ? "border-accent ring-2 ring-accent/30" : "border-border hover:border-border-strong",
+              )}
+            >
+              <BrandIcon service={PROVIDER_ICONS[p]} size="sm" decorative />
+              <span className="min-w-0 [overflow-wrap:anywhere]">{ALIAS_PROVIDER_NAMES[p]}</span>
+            </button>
           ))}
-        </select>
-      </label>
+        </div>
+      </div>
       <PasswordInput
         label={t("alias.apiKey")}
         value={apiKey}

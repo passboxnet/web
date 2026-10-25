@@ -1,5 +1,6 @@
 import type { BreachMode, EmailMonitoring, FindingKind, MonitoredEmail } from "@passbox/client";
 import { Badge, Button, ConfirmDialog, cn, fieldClassName, Input, SegmentedControl, Switch, toast } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import { Mail, RefreshCw, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { describeError } from "../../lib/errors";
@@ -42,8 +43,12 @@ export function SecuritySettingsPanel() {
               { value: "direct", label: t("security.settings.routeDirect") },
             ]}
           />
-          <p className="text-xs text-text-muted">
-            {t(`security.settings.routeHint.${settings.breachMode}`)} {meta && !proxy && t("security.settings.noProxy")}
+          <p className="flex items-start gap-2 text-xs text-text-muted">
+            <BrandIcon service="hibp" size="sm" decorative />
+            <span>
+              {t(`security.settings.routeHint.${settings.breachMode}`)}{" "}
+              {meta && !proxy && t("security.settings.noProxy")}
+            </span>
           </p>
         </div>
         <div className="flex flex-wrap gap-4 px-5 py-4">

@@ -25,6 +25,7 @@ import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "../views/PageHeader";
 import { runSsoTest } from "./flow";
 import { ssoErrorMessage } from "./messages";
+import { ProviderIcon } from "./ProviderIcon";
 import { EMPTY_SETTINGS, PROVIDERS, preset } from "./providers";
 import { ScimPanel } from "./ScimPanel";
 
@@ -233,24 +234,40 @@ function OidcPanel({ orgId }: { orgId: string }) {
       }
     >
       <form onSubmit={save} className="flex flex-col gap-5 px-5 py-5" aria-label={t("sso.settings.oidcTitle")}>
+        <div className="flex flex-col gap-1.5 text-[0.8125rem]">
+          <span id="sso-provider-label" className="font-medium">
+            {t("sso.settings.provider")}
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby="sso-provider-label"
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
+          >
+            {PROVIDERS.map((p) => (
+              // biome-ignore lint/a11y/useSemanticElements: tiles are styled radio buttons
+              <button
+                key={p.id}
+                type="button"
+                role="radio"
+                aria-checked={settings.provider === p.id}
+                onClick={() => {
+                  const next = preset(p.id);
+                  update({ provider: next.id, ...(config ? {} : next.defaults) });
+                }}
+                className={cn(
+                  "flex min-h-11 items-center gap-2.5 rounded-lg border bg-surface px-2.5 py-2 text-left font-medium transition-colors coarse:min-h-12",
+                  settings.provider === p.id
+                    ? "border-accent ring-2 ring-accent/30"
+                    : "border-border hover:border-border-strong",
+                )}
+              >
+                <ProviderIcon provider={p.id} size="sm" />
+                <span className="min-w-0">{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t("sso.settings.provider")}>
-            <select
-              aria-label={t("sso.settings.provider")}
-              className={selectClass}
-              value={settings.provider}
-              onChange={(event) => {
-                const next = preset(event.target.value as SsoSettings["provider"]);
-                update({ provider: next.id, ...(config ? {} : next.defaults) });
-              }}
-            >
-              {PROVIDERS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </Field>
           <Input
             label={t("sso.settings.displayName")}
             value={settings.displayName}

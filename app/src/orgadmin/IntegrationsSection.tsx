@@ -1,6 +1,7 @@
 import type { EventToken, Webhook } from "@passbox/api-client";
 import type { Org } from "@passbox/client";
 import { Badge, Button, ConfirmDialog, Dialog, Input, Switch, toast } from "@passbox/ui";
+import { BrandIcon } from "@passbox/ui/brand-icon";
 import { Copy, KeyRound, Plus, Trash2, Webhook as WebhookIcon } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
@@ -10,6 +11,15 @@ import { useI18n } from "../lib/i18n";
 import { useClient } from "../useClient";
 import { Panel } from "../views/PageHeader";
 import { Section, useNames } from "./common";
+
+/** SIEMs with a guide in docs/architecture/administration.md, by bundled icon. */
+const SIEMS = [
+  { id: "splunk", name: "Splunk" },
+  { id: "sentinel", name: "Microsoft Sentinel" },
+  { id: "elastic", name: "Elastic" },
+  { id: "graylog", name: "Graylog" },
+  { id: "wazuh", name: "Wazuh" },
+] as const;
 
 /** SIEM integration (D5): tokens for the events API (pull) and webhooks (push). */
 export function IntegrationsSection({ org }: { org: Org }) {
@@ -61,6 +71,20 @@ export function IntegrationsSection({ org }: { org: Org }) {
   return (
     <Section title={t("orgAdmin.section.integrations")} description={t("orgAdmin.integrations.description")}>
       {error && <p className="text-[0.8125rem] text-danger">{error}</p>}
+      <div className="flex flex-col gap-2" data-testid="siem-list">
+        <p className="text-xs text-text-muted">{t("orgAdmin.integrations.worksWith")}</p>
+        <ul className="flex flex-wrap gap-2">
+          {SIEMS.map((siem) => (
+            <li
+              key={siem.id}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface py-1.5 pr-3 pl-1.5 text-[0.8125rem] font-medium shadow-xs"
+            >
+              <BrandIcon service={siem.id} name={siem.name} size="sm" decorative />
+              {siem.name}
+            </li>
+          ))}
+        </ul>
+      </div>
       <Panel
         id="event-tokens"
         title={t("orgAdmin.integrations.tokens")}
@@ -272,6 +296,21 @@ function NewTokenDialog({
           autoFocus
           onChange={(e) => setName(e.target.value)}
         />
+        <fieldset className="-mt-2 flex flex-wrap gap-1.5">
+          <legend className="sr-only">{t("orgAdmin.integrations.nameSuggestions")}</legend>
+          {SIEMS.map((siem) => (
+            <button
+              key={siem.id}
+              type="button"
+              onClick={() => setName(siem.name)}
+              aria-pressed={name === siem.name}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-surface py-0.5 pr-2.5 pl-0.5 text-xs font-medium transition-colors hover:border-border-strong aria-pressed:border-accent aria-pressed:bg-accent-soft coarse:py-1.5"
+            >
+              <BrandIcon service={siem.id} name={siem.name} size="sm" decorative className="!size-5 !rounded-full" />
+              {siem.name}
+            </button>
+          ))}
+        </fieldset>
         <FormError message={error} />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>

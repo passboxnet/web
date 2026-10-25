@@ -90,7 +90,7 @@ test("an admin sets up SSO, signs in with it and unlocks a trusted browser witho
   // Open the SSO settings and configure the provider.
   await page.getByRole("button", { name: "Set up" }).click();
   await expect(page.getByRole("heading", { name: "Single sign-on", level: 1 })).toBeVisible();
-  await page.getByLabel("Provider", { exact: true }).selectOption("keycloak");
+  await page.getByRole("radiogroup", { name: "Provider" }).getByRole("radio", { name: "Keycloak" }).click();
   await page.getByLabel("Name on the sign-in button", { exact: true }).fill("Acme Identity");
   await page.getByLabel("Issuer URL", { exact: true }).fill(idp.issuer);
   await page.getByLabel("Client ID", { exact: true }).fill(idp.clientId);

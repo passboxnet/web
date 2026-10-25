@@ -32,6 +32,11 @@ async function importChrome(page: Page) {
   await page.goto("/#/import");
   await page.getByRole("radio", { name: "Chrome" }).click();
   await expect(page.getByRole("heading", { name: "How to export from Chrome" })).toBeVisible();
+  // The sources show their own icons, bundled with the app (no request to the services).
+  await expect(page.getByRole("radio", { name: "Chrome" }).locator("img")).toHaveAttribute(
+    "src",
+    /^data:image\/png|chrome.*\.png$/,
+  );
   await page.getByTestId("import-file-input").setInputFiles(join(FIXTURES, "chrome.csv"));
   await expect(page.getByRole("heading", { name: "3 items found in chrome.csv" })).toBeVisible();
 }

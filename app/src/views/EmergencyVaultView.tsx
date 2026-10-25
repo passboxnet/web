@@ -1,8 +1,9 @@
 import type { EmergencyVaults, Item } from "@passbox/client";
-import { Badge, Button, EmptyState, Monogram, Spinner } from "@passbox/ui";
+import { Badge, Button, EmptyState, Spinner } from "@passbox/ui";
 import { ArrowLeft, Copy, Eye, EyeOff, LifeBuoy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { errorMessage } from "../core";
+import { ItemIcon } from "../items/ItemIcon";
 import { copyToClipboard } from "../lib/clipboard";
 import { useI18n } from "../lib/i18n";
 import { fieldLabel, itemSubtitle, itemTitle } from "../lib/items";
@@ -97,7 +98,7 @@ function ItemRow({ item }: { item: Item }) {
         aria-expanded={open}
         className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-surface-raised coarse:min-h-14"
       >
-        <Monogram name={itemTitle(item, t)} size="sm" />
+        <ItemIcon item={item} size="sm" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[0.8125rem] font-medium">{itemTitle(item, t)}</span>
           <span className="block truncate text-xs text-text-muted">{itemSubtitle(item, t)}</span>

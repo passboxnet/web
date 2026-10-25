@@ -23,6 +23,8 @@ export interface Preferences {
   lockOnClose: boolean;
   /** "system" follows the browser's preferred languages. */
   language: LanguagePreference;
+  /** "Website-Icons anzeigen": load the icons of saved websites through the user's server. */
+  showWebsiteIcons: boolean;
   checklist: ChecklistState;
 }
 
@@ -33,6 +35,7 @@ const DEFAULTS: Preferences = {
   clipboardClearSeconds: 90,
   lockOnClose: true,
   language: "system",
+  showWebsiteIcons: true,
   checklist: { dismissed: false, extension: false, phone: false, import: false, securityCheck: false },
 };
 

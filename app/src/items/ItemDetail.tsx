@@ -19,7 +19,6 @@ import {
   MenuItem,
   MenuSeparator,
   MenuTrigger,
-  Monogram,
   Tooltip,
   toast,
 } from "@passbox/ui";
@@ -66,6 +65,7 @@ import { vaultName } from "../shell/Sidebar";
 import { useClient, useSnapshot } from "../useClient";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { ColoredPassword } from "./ColoredPassword";
+import { ItemIcon } from "./ItemIcon";
 import { CountdownRing, useTotp } from "./TotpCode";
 import { useAutoHide } from "./useAutoHide";
 import { ItemUsageContext, type ReportUsage, useItemUsage } from "./useItemUsage";
@@ -306,7 +306,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-10">
             <div className="flex items-center gap-4">
-              <Monogram name={data.title} size="xl" icon={data.category === "login" ? undefined : <category.icon />} />
+              <ItemIcon item={item} size="xl" />
               <div className="min-w-0">
                 <h2 className="text-2xl font-semibold tracking-tight break-words">{itemTitle(item, t)}</h2>
                 {url && safeHref(url) ? (

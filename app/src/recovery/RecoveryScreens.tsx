@@ -54,7 +54,7 @@ function BackLink({ label }: { label?: string }) {
 function Heading({ title, description }: { title: string; description?: ReactNode }) {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <h1 className="text-title text-text">{title}</h1>
       {description && <p className="mt-1.5 text-sm text-text-muted">{description}</p>}
     </div>
   );
@@ -144,7 +144,7 @@ function CodeRecovery() {
           error={looksWrong ? t("recovery.code.invalid") : undefined}
         />
         <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
+        <Button type="submit" size="lg" shape="pill" loading={busy}>
           {busy ? t("recovery.code.busy") : t("recovery.code.submit")}
         </Button>
         <p className="text-xs text-text-muted">{t("recovery.code.whatHappens")}</p>
@@ -194,7 +194,7 @@ function RecoveryTwoFactor({ onDone }: { onDone: () => void }) {
           hint={t("recovery.twoFactor.hint")}
         />
         <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
+        <Button type="submit" size="lg" shape="pill" loading={busy}>
           {t("action.continue")}
         </Button>
       </form>
@@ -278,7 +278,7 @@ function OrgRecoveryRequest({ onRequested }: { onRequested: (pending: PendingOrg
           </label>
         )}
         <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
+        <Button type="submit" size="lg" shape="pill" loading={busy}>
           <Building2 />
           {t("recovery.org.submit")}
         </Button>
@@ -473,7 +473,7 @@ function NewMasterPassword() {
           </li>
         </ul>
         <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
+        <Button type="submit" size="lg" shape="pill" loading={busy}>
           {busy ? t("recovery.newPassword.busy") : t("recovery.newPassword.submit")}
         </Button>
       </form>
@@ -571,7 +571,7 @@ function LinkDevice() {
           autoFocus
         />
         <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
+        <Button type="submit" size="lg" shape="pill" loading={busy}>
           {t("action.continue")}
         </Button>
         <p className="text-xs text-text-muted">{t("linkDevice.privacy")}</p>
@@ -635,7 +635,7 @@ function LinkedSignIn({ account }: { account: LinkedAccount }) {
           required
         />
         <FormError message={error} />
-        <Button type="submit" size="lg" loading={busy}>
+        <Button type="submit" size="lg" shape="pill" loading={busy}>
           {busy ? t("signIn.busy") : t("action.signIn")}
         </Button>
       </form>

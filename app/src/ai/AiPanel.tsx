@@ -14,7 +14,7 @@ import {
 import type { Item } from "@passbox/client";
 import { Badge, Button, ConfirmDialog, cn, fieldClassName, Input, SegmentedControl, Switch } from "@passbox/ui";
 import { BrandIcon } from "@passbox/ui/brand-icon";
-import { ChevronRight, ShieldCheck } from "lucide-react";
+import { ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { useI18n } from "../lib/i18n";
 import { itemTitle } from "../lib/items";
@@ -130,7 +130,7 @@ export function AiPanel() {
   }
 
   return (
-    <Panel id="ai" title={t("ai.title")} description={t("ai.description")}>
+    <Panel id="ai" icon={<Sparkles />} title={t("ai.title")} description={t("ai.description")}>
       <div className="px-5 py-4">
         <Switch
           label={t("ai.enable")}

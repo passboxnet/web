@@ -77,7 +77,12 @@ export function TrustedDevicesPanel() {
   }
 
   return (
-    <Panel id="trusted-devices" title={t("sso.devices.title")} description={t("sso.devices.description")}>
+    <Panel
+      id="trusted-devices"
+      icon={<MonitorSmartphone />}
+      title={t("sso.devices.title")}
+      description={t("sso.devices.description")}
+    >
       {state.requests.map((request) => (
         <div
           key={request.id}

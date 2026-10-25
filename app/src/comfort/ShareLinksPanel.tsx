@@ -35,7 +35,7 @@ export function ShareLinksPanel() {
   }
 
   return (
-    <Panel id="share-links" title={t("shareLinks.title")} description={t("shareLinks.description")}>
+    <Panel id="share-links" icon={<Link2 />} title={t("shareLinks.title")} description={t("shareLinks.description")}>
       {links === undefined && !error ? (
         <div className="px-5 py-4">
           <Spinner label={t("app.loading")} />

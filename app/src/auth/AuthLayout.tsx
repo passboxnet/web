@@ -50,22 +50,24 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                     "radial-gradient(70% 55% at 15% 0%, color-mix(in oklch, var(--pb-accent) 34%, transparent), transparent 70%), radial-gradient(60% 45% at 100% 100%, color-mix(in oklch, var(--color-tag-violet) 22%, transparent), transparent 70%)",
                 }}
               />
-              <GridFrame edges="both" className="py-8">
-                <p className="text-overline text-accent uppercase">{t("landing.eyebrow")}</p>
-                <h2 className="mt-3 text-title text-balance text-text">{t("landing.headline")}</h2>
-                <ul className="mt-8 flex flex-col gap-5">
-                  {POINTS.map(({ icon: Icon, title, text }) => (
-                    <li key={title} className="flex gap-3.5">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-raised text-accent shadow-highlight ring-1 ring-hairline">
-                        <Icon className="size-4" aria-hidden="true" />
-                      </span>
-                      <span>
-                        <span className="block text-label text-text">{t(title)}</span>
-                        <span className="mt-0.5 block text-body-sm text-text-muted">{t(text)}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              <GridFrame edges="both" className="py-10">
+                <div className="px-6">
+                  <p className="text-overline text-accent uppercase">{t("landing.eyebrow")}</p>
+                  <h2 className="mt-3 text-title text-balance text-text">{t("landing.headline")}</h2>
+                  <ul className="mt-8 flex flex-col gap-5">
+                    {POINTS.map(({ icon: Icon, title, text }) => (
+                      <li key={title} className="flex gap-3.5">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-raised text-accent shadow-highlight ring-1 ring-hairline">
+                          <Icon className="size-4" aria-hidden="true" />
+                        </span>
+                        <span>
+                          <span className="block text-label text-text">{t(title)}</span>
+                          <span className="mt-0.5 block text-body-sm text-text-muted">{t(text)}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </GridFrame>
               <p className="relative mt-8 flex items-center gap-2 px-10 text-caption text-text-subtle">
                 <ServerCog className="size-3.5" aria-hidden="true" />

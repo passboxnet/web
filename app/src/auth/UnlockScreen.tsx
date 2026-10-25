@@ -1,5 +1,5 @@
 import { TwoFactorRequiredError } from "@passbox/client";
-import { Button, Monogram, PasswordInput } from "@passbox/ui";
+import { Avatar, Button, PasswordInput } from "@passbox/ui";
 import { KeyRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { errorMessage, nextFrame } from "../core";
@@ -63,9 +63,9 @@ export function UnlockScreen() {
       <PendingRecoveryNotice />
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("unlock.title")}</h1>
-          <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-surface p-3 shadow-xs">
-            <Monogram name={email} size="lg" />
+          <h1 className="text-title text-text">{t("unlock.title")}</h1>
+          <div className="mt-5 flex items-center gap-3 rounded-control border border-hairline bg-surface-raised p-3">
+            <Avatar name={email} size="lg" tone="signature" />
             <div className="min-w-0">
               <p className="text-sm font-medium break-all">{email}</p>
               <p className="text-xs text-text-muted">{t("unlock.keyStored")}</p>
@@ -97,7 +97,7 @@ export function UnlockScreen() {
               }
             />
             <FormError message={error} />
-            <Button type="submit" size="lg" loading={busy}>
+            <Button type="submit" size="lg" shape="pill" loading={busy}>
               {busy ? t("unlock.busy") : t("action.unlock")}
             </Button>
           </>

@@ -67,7 +67,12 @@ export function TwoFactorPanel() {
   const onlyOne = status ? Number(status.totp) + status.securityKeys.length === 1 : false;
 
   return (
-    <Panel id="two-factor" title={t("term.twoFactor")} description={t("settings.twoFactorDescription")}>
+    <Panel
+      id="two-factor"
+      icon={<ShieldCheck />}
+      title={t("term.twoFactor")}
+      description={t("settings.twoFactorDescription")}
+    >
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-danger">
           {error}

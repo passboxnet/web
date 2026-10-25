@@ -1,5 +1,6 @@
 import type { AccountPreferences } from "@passbox/api-client";
 import { Switch, toast } from "@passbox/ui";
+import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import { errorMessage } from "../../core";
 import { useI18n } from "../../lib/i18n";
@@ -43,7 +44,12 @@ export function NotificationsPanel() {
   }
 
   return (
-    <Panel id="notifications" title={t("notifications.title")} description={t("notifications.description")}>
+    <Panel
+      id="notifications"
+      icon={<Bell />}
+      title={t("notifications.title")}
+      description={t("notifications.description")}
+    >
       <div className="px-5 py-4">
         {error ? (
           <p className="text-[0.8125rem] text-danger">{error}</p>

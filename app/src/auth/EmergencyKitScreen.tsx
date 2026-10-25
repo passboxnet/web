@@ -52,10 +52,11 @@ export function EmergencyKitScreen() {
   }
 
   return (
-    <main className="flex min-h-full justify-center bg-canvas px-4 py-10 print:block print:bg-white print:p-0">
+    <main className="relative isolate flex min-h-full justify-center bg-backdrop px-4 py-10 print:block print:bg-white print:p-0">
+      <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 -z-10 print:hidden" />
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex items-center justify-between print:hidden">
-          <Logo className="text-text" />
+          <Logo className="text-white" />
           {kit.mode === "onboarding" && (
             <Badge tone="success">{kit.recovered ? t("kit.badge.recovered") : t("kit.badge.created")}</Badge>
           )}
@@ -63,15 +64,13 @@ export function EmergencyKitScreen() {
         </div>
 
         <div className="mb-6 print:hidden">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {kit.recovered ? t("kit.titleRecovered") : t("kit.title")}
-          </h1>
+          <h1 className="text-title text-white">{kit.recovered ? t("kit.titleRecovered") : t("kit.title")}</h1>
           {kit.recovered && (
-            <p role="status" className="mt-2 text-sm text-text-muted">
+            <p role="status" className="mt-2 text-sm text-white/80">
               {t("kit.recoveredHint")}
             </p>
           )}
-          <div className="mt-4 flex gap-4 rounded-card border border-accent/20 bg-accent-soft p-5">
+          <div className="mt-4 flex gap-4 rounded-card border border-hairline bg-surface p-5 shadow-raised">
             <KeyRound className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
             <div className="text-sm leading-relaxed">
               <p className="font-semibold">{t("kit.explain.title")}</p>
@@ -85,16 +84,18 @@ export function EmergencyKitScreen() {
 
         <section
           aria-labelledby="kit-title"
-          className="overflow-hidden rounded-card border border-border bg-surface shadow-card print:border-0 print:shadow-none"
+          className="overflow-hidden rounded-panel border border-hairline bg-surface shadow-raised print:border-0 print:shadow-none"
         >
-          <div className="border-b border-border bg-surface-raised px-6 py-5 sm:px-8">
-            <p className="text-2xs font-semibold tracking-wider text-accent uppercase">Passbox</p>
-            <h2 id="kit-title" className="mt-1 text-xl font-semibold tracking-tight">
+          <div className="relative bg-signature px-6 py-6 text-white sm:px-8 print:bg-none print:text-black">
+            <Logo className="text-white print:text-black" />
+            <h2 id="kit-title" className="mt-4 text-title-sm">
               {t("kit.card.heading")}
             </h2>
-            <p className="mt-1 text-xs text-text-muted">{t("kit.card.created", { date: i18n.date(data.createdAt) })}</p>
+            <p className="mt-1 text-caption text-white/80 print:text-black">
+              {t("kit.card.created", { date: i18n.date(data.createdAt) })}
+            </p>
           </div>
-          <dl className="grid gap-px bg-border sm:grid-cols-2">
+          <dl className="grid gap-px bg-hairline sm:grid-cols-2">
             <KitField label={t("kit.field.server")} value={data.server} />
             <KitField label={t("kit.field.email")} value={email} />
             <div className="bg-surface px-6 py-5 sm:col-span-2 sm:px-8">
@@ -153,11 +154,11 @@ export function EmergencyKitScreen() {
         </section>
 
         <div className="mt-6 flex flex-wrap gap-2 print:hidden">
-          <Button size="lg" onClick={download}>
+          <Button size="lg" shape="pill" onClick={download}>
             <Download />
             {t("kit.download")}
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => window.print()}>
+          <Button size="lg" shape="pill" variant="secondary" onClick={() => window.print()}>
             <Printer />
             {t("kit.print")}
           </Button>
@@ -166,7 +167,7 @@ export function EmergencyKitScreen() {
         {needsCheck ? (
           <section
             aria-labelledby="kit-check"
-            className="mt-6 rounded-card border border-border bg-surface p-5 shadow-card print:hidden"
+            className="mt-6 rounded-card border border-hairline bg-surface p-5 shadow-raised print:hidden"
           >
             <h2 id="kit-check" className="text-sm font-semibold">
               {checkingCode ? t("recoveryCode.checkTitle") : t("kit.check.title")}
@@ -208,7 +209,7 @@ export function EmergencyKitScreen() {
                   }
                 />
               </div>
-              <Button type="submit" size="lg" disabled={!verified}>
+              <Button type="submit" size="lg" shape="pill" disabled={!verified}>
                 {checkingCode ? t("recoveryCode.done") : t("kit.continue")}
               </Button>
             </form>

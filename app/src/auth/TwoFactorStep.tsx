@@ -80,7 +80,7 @@ export function TwoFactorStep({
     <div className="flex flex-col gap-5">
       {Heading && (
         <div>
-          <Heading className={heading === "h1" ? "text-2xl font-semibold tracking-tight" : "text-base font-semibold"}>
+          <Heading className={heading === "h1" ? "text-title text-text" : "text-base font-semibold"}>
             {t("twoFactor.title")}
           </Heading>
           <p className="mt-1.5 text-sm text-text-muted">
@@ -129,7 +129,7 @@ export function TwoFactorStep({
             onCheckedChange={setRemember}
           />
           <FormError message={error} />
-          <Button type="submit" size="lg" loading={busy === "code"} disabled={busy === "key"}>
+          <Button type="submit" size="lg" shape="pill" loading={busy === "code"} disabled={busy === "key"}>
             {t("twoFactor.verify")}
           </Button>
         </form>

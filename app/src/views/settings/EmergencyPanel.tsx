@@ -42,7 +42,12 @@ export function EmergencyPanel() {
   useEffect(load, [load]);
 
   return (
-    <Panel id="emergency" title={t("emergency.title")} description={t("emergency.description")}>
+    <Panel
+      id="emergency"
+      icon={<HeartHandshake />}
+      title={t("emergency.title")}
+      description={t("emergency.description")}
+    >
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-danger">
           {error}

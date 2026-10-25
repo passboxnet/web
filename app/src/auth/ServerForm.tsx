@@ -45,9 +45,7 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {onCancel ? t("server.title.change") : t("server.title.connect")}
-        </h1>
+        <h1 className="text-title text-text">{onCancel ? t("server.title.change") : t("server.title.connect")}</h1>
         <p className="mt-1.5 text-sm text-text-muted">{t("server.description")}</p>
       </div>
       <Input
@@ -64,7 +62,7 @@ export function ServerForm({ onCancel }: { onCancel?: (() => void) | undefined }
         required
       />
       <FormError message={error} />
-      <Button type="submit" size="lg" loading={busy}>
+      <Button type="submit" size="lg" shape="pill" loading={busy}>
         {busy ? t("server.checking") : t("server.connect")}
       </Button>
       {(onCancel || (canUseOwnOrigin && stored)) && (

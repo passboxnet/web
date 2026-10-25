@@ -157,6 +157,103 @@ export class PdfPage {
     }
   }
 
+  /** A rectangle with rounded corners (cubic Bézier arcs). */
+  roundRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+    options: { fill?: Rgb; stroke?: Rgb; lineWidth?: number } = {},
+  ) {
+    const r = Math.min(radius, width / 2, height / 2);
+    const k = r * 0.5523; // control point offset for a quarter circle
+    const top = PAGE_HEIGHT - y;
+    const bottom = PAGE_HEIGHT - y - height;
+    const right = x + width;
+    const path = [
+      `${num(x + r)} ${num(top)} m`,
+      `${num(right - r)} ${num(top)} l`,
+      `${num(right - r + k)} ${num(top)} ${num(right)} ${num(top - r + k)} ${num(right)} ${num(top - r)} c`,
+      `${num(right)} ${num(bottom + r)} l`,
+      `${num(right)} ${num(bottom + r - k)} ${num(right - r + k)} ${num(bottom)} ${num(right - r)} ${num(bottom)} c`,
+      `${num(x + r)} ${num(bottom)} l`,
+      `${num(x + r - k)} ${num(bottom)} ${num(x)} ${num(bottom + r - k)} ${num(x)} ${num(bottom + r)} c`,
+      `${num(x)} ${num(top - r)} l`,
+      `${num(x)} ${num(top - r + k)} ${num(x + r - k)} ${num(top)} ${num(x + r)} ${num(top)} c`,
+      "h",
+    ].join(" ");
+    this.paint(path, options);
+  }
+
+  /** A filled or stroked circle. */
+  circle(cx: number, cy: number, radius: number, options: { fill?: Rgb; stroke?: Rgb; lineWidth?: number } = {}) {
+    this.roundRect(cx - radius, cy - radius, radius * 2, radius * 2, radius, options);
+  }
+
+  /** A filled polygon through `points` (top-left coordinates). */
+  polygon(points: Array<[number, number]>, fill: Rgb) {
+    const [first, ...rest] = points;
+    if (!first) return;
+    const path = [
+      `${num(first[0])} ${num(PAGE_HEIGHT - first[1])} m`,
+      ...rest.map(([px, py]) => `${num(px)} ${num(PAGE_HEIGHT - py)} l`),
+      "h",
+    ].join(" ");
+    this.paint(path, { fill });
+  }
+
+  /**
+   * A horizontal gradient through `stops` (0–1 positions), drawn as thin
+   * vertical strips (standard fonts and no shading objects keep the writer
+   * small). Optionally clipped to a rounded rectangle of `radius`.
+   */
+  gradientRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    stops: Array<[number, Rgb]>,
+    radius = 0,
+    strips = 96,
+  ) {
+    const colorAt = (t: number): Rgb => {
+      for (let i = 1; i < stops.length; i++) {
+        const [p1, c1] = stops[i] as [number, Rgb];
+        const [p0, c0] = stops[i - 1] as [number, Rgb];
+        if (t <= p1) {
+          const f = (t - p0) / (p1 - p0 || 1);
+          return [c0[0] + (c1[0] - c0[0]) * f, c0[1] + (c1[1] - c0[1]) * f, c0[2] + (c1[2] - c0[2]) * f];
+        }
+      }
+      return (stops[stops.length - 1] as [number, Rgb])[1];
+    };
+    const step = width / strips;
+    const ops: string[] = ["q"];
+    if (radius > 0) {
+      const clip = new PdfPage();
+      clip.roundRect(x, y, width, height, radius, { fill: [0, 0, 0] });
+      // Reuse the path of the rounded rectangle as the clipping path.
+      const path = clip.ops[0]?.replace(/^q [\d. ]+ rg /, "").replace(/ f Q$/, "") ?? "";
+      ops.push(`${path} W n`);
+    }
+    for (let i = 0; i < strips; i++) {
+      const rgb = colorAt((i + 0.5) / strips);
+      // Overlap each strip a little so no hairline gaps show between them.
+      ops.push(
+        `${color(rgb)} rg ${num(x + i * step)} ${num(PAGE_HEIGHT - y - height)} ${num(step + 0.6)} ${num(height)} re f`,
+      );
+    }
+    ops.push("Q");
+    this.ops.push(ops.join("\n"));
+  }
+
+  private paint(path: string, { fill, stroke, lineWidth = 0.75 }: { fill?: Rgb; stroke?: Rgb; lineWidth?: number }) {
+    if (fill && stroke) this.ops.push(`q ${color(fill)} rg ${color(stroke)} RG ${num(lineWidth)} w ${path} B Q`);
+    else if (fill) this.ops.push(`q ${color(fill)} rg ${path} f Q`);
+    else this.ops.push(`q ${color(stroke ?? [0, 0, 0])} RG ${num(lineWidth)} w ${path} S Q`);
+  }
+
   /** Serializes the page as a complete PDF document. */
   toBytes(title: string): Uint8Array {
     const content = this.ops.join("\n");

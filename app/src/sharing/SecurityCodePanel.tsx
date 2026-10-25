@@ -1,5 +1,5 @@
 import { Button } from "@passbox/ui";
-import { AlertTriangle, CheckCircle2, SearchCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Fingerprint, SearchCheck } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "../lib/i18n";
 import { useClient } from "../useClient";
@@ -37,6 +37,7 @@ export function SecurityCodePanel() {
 
   return (
     <Panel
+      icon={<Fingerprint />}
       id="security-code"
       title={t("sharing.securityCode.title")}
       description={t("sharing.securityCode.description")}

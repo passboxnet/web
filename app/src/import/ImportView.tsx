@@ -148,7 +148,7 @@ export function ImportView({ onShowItems }: { onShowItems: () => void }) {
     <section aria-labelledby="import-title" className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-canvas">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-10">
         <header className="mb-6">
-          <h1 id="import-title" className="text-2xl font-semibold tracking-tight">
+          <h1 id="import-title" className="text-title text-text">
             {t("import.title")}
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-text-muted">{t("import.description")}</p>

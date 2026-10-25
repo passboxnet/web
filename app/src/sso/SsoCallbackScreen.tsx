@@ -124,7 +124,7 @@ function ErrorStage({ message, flow }: { message: string; flow: SsoFlowState | u
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("sso.callback.failedTitle")}</h1>
+        <h1 className="text-title text-text">{t("sso.callback.failedTitle")}</h1>
         <p role="alert" className="mt-3 flex gap-2 rounded-lg bg-danger-soft p-3 text-[0.8125rem] text-text">
           <CircleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
           {message}
@@ -161,7 +161,7 @@ function NoAccountStage({ email }: { email: string }) {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("sso.noAccount.title")}</h1>
+        <h1 className="text-title text-text">{t("sso.noAccount.title")}</h1>
         <p className="mt-2 text-sm text-text-muted">{t("sso.noAccount.text", { email })}</p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -250,7 +250,7 @@ function SignedInStage({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("sso.callback.signedInTitle")}</h1>
+        <h1 className="text-title text-text">{t("sso.callback.signedInTitle")}</h1>
         <p className="mt-3 flex items-start gap-2 rounded-lg bg-success-soft px-3 py-2.5 text-[0.8125rem]">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
           {t("sso.callback.verified", { email: redeemed.email })}
@@ -290,7 +290,7 @@ function SignedInStage({
             />
           )}
           <FormError message={error} />
-          <Button type="submit" size="lg" loading={busy === "password"} disabled={busy === "device"}>
+          <Button type="submit" size="lg" shape="pill" loading={busy === "password"} disabled={busy === "device"}>
             {knownDevice ? t("action.unlock") : t("action.signIn")}
           </Button>
         </form>
@@ -358,7 +358,7 @@ function WaitingStage({ pending }: { pending: PendingDeviceApproval }) {
   return (
     <div className="flex flex-col gap-5" data-testid="sso-waiting">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("sso.approval.waitTitle")}</h1>
+        <h1 className="text-title text-text">{t("sso.approval.waitTitle")}</h1>
         <p className="mt-2 text-sm text-text-muted">{t("sso.approval.waitText")}</p>
       </div>
       <div className="rounded-card border border-border bg-surface p-5 text-center shadow-card">

@@ -1,5 +1,6 @@
 import type { AccountEvent } from "@passbox/api-client";
 import { Button, Spinner } from "@passbox/ui";
+import { Activity } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage } from "../../core";
 import { useI18n } from "../../lib/i18n";
@@ -98,7 +99,7 @@ export function ActivityPanel() {
   const shown = expanded ? events : events?.slice(0, COLLAPSED);
 
   return (
-    <Panel id="activity" title={t("term.activity")} description={t("activity.description")}>
+    <Panel id="activity" icon={<Activity />} title={t("term.activity")} description={t("activity.description")}>
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-danger">
           {error}

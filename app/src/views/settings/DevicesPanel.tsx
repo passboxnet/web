@@ -63,7 +63,7 @@ export function DevicesPanel() {
   const others = sessions?.filter((s) => !s.current) ?? [];
 
   return (
-    <Panel id="devices" title={t("term.devices")} description={t("devices.description")}>
+    <Panel id="devices" icon={<Laptop />} title={t("term.devices")} description={t("devices.description")}>
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-danger">
           {error}

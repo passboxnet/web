@@ -74,7 +74,12 @@ export function RecoveryPanel() {
   const code = status?.recoveryCode;
 
   return (
-    <Panel id="recovery" title={t("recovery.panel.title")} description={t("recovery.panel.description")}>
+    <Panel
+      id="recovery"
+      icon={<KeyRound />}
+      title={t("recovery.panel.title")}
+      description={t("recovery.panel.description")}
+    >
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-danger">
           {error}

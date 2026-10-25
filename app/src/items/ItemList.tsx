@@ -167,6 +167,7 @@ export function ItemList({
     if (query) {
       empty = (
         <EmptyState
+          tone="quiet"
           icon={<SearchX />}
           title={t("list.noMatch.title")}
           description={t("list.noMatch.text", { query })}
@@ -180,7 +181,7 @@ export function ItemList({
             title={t("list.empty.title")}
             description={t("list.empty.text")}
             action={
-              <Button onClick={() => onCreate("login")}>
+              <Button shape="pill" onClick={() => onCreate("login")}>
                 <Plus />
                 {t("list.empty.newLogin")}
               </Button>

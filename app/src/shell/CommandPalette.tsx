@@ -78,8 +78,8 @@ export function CommandPalette({ open, onOpenChange, navigate }: CommandPaletteP
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-40 animate-fade-in bg-black/40 backdrop-blur-[2px]" />
-        <RadixDialog.Content className="fixed top-[12vh] left-1/2 z-50 w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2 animate-scale-in overflow-hidden rounded-card border border-border bg-surface shadow-overlay focus:outline-none">
+        <RadixDialog.Overlay className="fixed inset-0 z-(--pb-z-scrim) animate-fade-in bg-scrim backdrop-blur-[3px]" />
+        <RadixDialog.Content className="fixed top-[12vh] left-1/2 z-(--pb-z-modal) w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2 animate-scale-in overflow-hidden rounded-panel border border-hairline bg-surface-overlay shadow-overlay focus:outline-none">
           <RadixDialog.Title className="sr-only">{t("shell.search")}</RadixDialog.Title>
           <RadixDialog.Description className="sr-only">{t("palette.description")}</RadixDialog.Description>
           <Command
@@ -90,12 +90,12 @@ export function CommandPalette({ open, onOpenChange, navigate }: CommandPaletteP
             onValueChange={setSelected}
             onKeyDown={onKeyDown}
           >
-            <div className="flex items-center gap-3 border-b border-border px-4">
+            <div className="flex items-center gap-3 border-b border-hairline px-5">
               <Search className="size-4 text-text-muted" aria-hidden="true" />
               <Command.Input
                 autoFocus
                 placeholder={t("palette.placeholder")}
-                className="h-12 flex-1 bg-transparent text-[0.9375rem] text-text outline-none placeholder:text-text-muted"
+                className="h-14 flex-1 bg-transparent text-body-lg text-text outline-none placeholder:text-text-subtle"
               />
               <Kbd>Esc</Kbd>
             </div>
@@ -189,7 +189,7 @@ export function CommandPalette({ open, onOpenChange, navigate }: CommandPaletteP
                 </PaletteItem>
               </Command.Group>
             </Command.List>
-            <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-surface-raised px-4 py-2 text-2xs text-text-muted coarse:hidden">
+            <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-hairline bg-surface-raised px-5 py-2.5 text-2xs text-text-muted coarse:hidden">
               <Hint keys={["↵"]} label={t("palette.hint.copy")} />
               <Hint keys={[mod, "↵"]} label={t("palette.hint.open")} />
               <Hint keys={[mod, "C"]} label={t("palette.hint.username")} />
@@ -214,7 +214,7 @@ function Hint({ keys, label }: { keys: string[]; label: string }) {
 }
 
 const groupClass =
-  "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-text-muted [&_[cmdk-group-heading]]:uppercase";
+  "[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-overline [&_[cmdk-group-heading]]:text-text-subtle [&_[cmdk-group-heading]]:uppercase";
 
 interface PaletteItemProps {
   value: string;
@@ -231,7 +231,7 @@ function PaletteItem({ value, keywords, onSelect, icon, hint, children }: Palett
       value={value}
       {...(keywords ? { keywords } : {})}
       onSelect={onSelect}
-      className="flex h-10 cursor-default items-center gap-3 rounded-md px-2 text-[0.8125rem] text-text data-[selected=true]:bg-surface-sunken coarse:h-12"
+      className="flex h-11 cursor-default items-center gap-3 rounded-control px-2.5 text-body text-text data-[selected=true]:bg-accent data-[selected=true]:text-accent-contrast data-[selected=true]:shadow-glow [&[data-selected=true]_.text-text-muted]:text-accent-contrast/85 coarse:h-12"
     >
       <span className="flex size-6 items-center justify-center text-text-muted">{icon}</span>
       <span className="flex min-w-0 flex-1 items-baseline gap-2">{children}</span>

@@ -64,9 +64,7 @@ export function WelcomeScreen() {
   return (
     <AuthLayout>
       <PendingRecoveryNotice />
-      <h1 className="text-2xl font-semibold tracking-tight">
-        {mode === "sign-in" ? t("signIn.title") : t("signUp.title")}
-      </h1>
+      <h1 className="text-title text-text">{mode === "sign-in" ? t("signIn.title") : t("signUp.title")}</h1>
       <p className="mt-1.5 text-sm text-text-muted">
         {mode === "sign-in" ? t("signIn.description") : t("signUp.description")}
       </p>
@@ -226,7 +224,7 @@ function SignInForm() {
         hint={t("signIn.secretKeyHint")}
       />
       <FormError message={error} />
-      <Button type="submit" size="lg" loading={busy} className="mt-1">
+      <Button type="submit" size="lg" shape="pill" loading={busy} className="mt-1">
         {busy ? t("signIn.busy") : t("action.signIn")}
       </Button>
       <div className="text-center">
@@ -418,7 +416,7 @@ function SignUpForm({
         onCheckedChange={setWithRecoveryCode}
       />
       <FormError message={error} />
-      <Button type="submit" size="lg" loading={busy} className="mt-1">
+      <Button type="submit" size="lg" shape="pill" loading={busy} className="mt-1">
         {busy ? t("signUp.busy") : t("action.createAccount")}
       </Button>
       <p className="text-center text-xs text-text-muted">{t("signUp.next")}</p>

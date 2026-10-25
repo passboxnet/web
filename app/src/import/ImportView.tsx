@@ -685,7 +685,7 @@ function ReviewStep({
               <input
                 type="radio"
                 name="vault-mode"
-                className="mt-1 size-4 accent-[var(--color-accent)]"
+                className="mt-1 size-4 accent-accent"
                 checked={vault.mode === "bySource"}
                 onChange={() => setVault({ mode: "bySource" })}
               />
@@ -703,7 +703,7 @@ function ReviewStep({
                 type="radio"
                 name="vault-mode"
                 aria-label={t("import.vault.single")}
-                className="size-4 accent-[var(--color-accent)]"
+                className="size-4 accent-accent"
                 checked={vault.mode !== "bySource"}
                 onChange={() => setVault({ mode: "single", vaultId: vaults[0]?.id ?? "" })}
               />
@@ -768,7 +768,7 @@ function ReviewStep({
             <label className="mt-3 flex items-center gap-2 text-[13px]">
               <input
                 type="checkbox"
-                className="size-4 accent-[var(--color-accent)]"
+                className="size-4 accent-accent"
                 checked={perItem}
                 onChange={(e) => setPerItem(e.target.checked)}
               />

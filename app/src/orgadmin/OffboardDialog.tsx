@@ -222,7 +222,7 @@ export function OffboardDialog({
           <label className="flex items-start gap-3 rounded-control border border-hairline px-3 py-2.5 text-[0.8125rem]">
             <input
               type="checkbox"
-              className="mt-0.5 size-4 accent-[var(--color-accent)]"
+              className="mt-0.5 size-4 accent-accent"
               checked={endSessions}
               onChange={(e) => setEndSessions(e.target.checked)}
             />

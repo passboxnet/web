@@ -246,7 +246,7 @@ export function AgentApprovalDialog({
               <label className="flex items-start gap-2 text-[0.8125rem] font-medium">
                 <input
                   type="checkbox"
-                  className="mt-0.5 size-4 accent-[var(--color-danger)]"
+                  className="mt-0.5 size-4 accent-danger"
                   checked={allowReveal}
                   onChange={(e) => setAllowReveal(e.target.checked)}
                   data-testid="agent-allow-reveal"

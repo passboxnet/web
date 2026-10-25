@@ -128,7 +128,7 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                 <label key={vault.id} className="flex min-h-8 items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    className="size-4 accent-[var(--color-accent)]"
+                    className="size-4 accent-accent"
                     checked={vaultIds.includes(vault.id)}
                     disabled={!canExportVault(snapshot.effectivePolicy, vault)}
                     onChange={(e) =>
@@ -176,7 +176,7 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             <label className="mt-3 flex min-h-8 items-center gap-2 font-medium">
               <input
                 type="checkbox"
-                className="size-4 accent-[var(--color-danger)]"
+                className="size-4 accent-danger"
                 checked={acknowledged}
                 onChange={(e) => setAcknowledged(e.target.checked)}
               />

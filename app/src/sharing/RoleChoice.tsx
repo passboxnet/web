@@ -42,7 +42,7 @@ export function RadioCards<T extends string>({
             value={option.value}
             checked={value === option.value}
             onChange={() => onChange(option.value)}
-            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+            className="mt-0.5 size-4 accent-accent"
           />
           <span className="min-w-0">
             <span className="block text-[0.8125rem] font-medium">{option.label}</span>

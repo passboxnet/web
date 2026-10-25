@@ -182,7 +182,7 @@ export function ShareLinkDialog({
               <label key={field.id} className="flex items-center gap-2 text-[0.8125rem]">
                 <input
                   type="checkbox"
-                  className="size-4 accent-[var(--color-accent)]"
+                  className="size-4 accent-accent"
                   checked={selected.includes(field.id)}
                   onChange={(e) =>
                     setSelected((list) =>
@@ -200,7 +200,7 @@ export function ShareLinkDialog({
               <label className="flex items-center gap-2 text-[0.8125rem]">
                 <input
                   type="checkbox"
-                  className="size-4 accent-[var(--color-accent)]"
+                  className="size-4 accent-accent"
                   checked={notes}
                   onChange={(e) => setNotes(e.target.checked)}
                 />

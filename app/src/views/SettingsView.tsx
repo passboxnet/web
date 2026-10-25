@@ -72,12 +72,12 @@ export function SettingsView() {
   const [route] = useRoute();
   const section = route.view === "settings" ? route.section : undefined;
   useEffect(() => {
-    if (section) document.getElementById(section)?.scrollIntoView({ block: "start" });
+    if (section) scrollToSection(section);
   }, [section]);
 
   return (
     <Page title={t("term.settings")} description={t("settings.description")} width="wide">
-      <div className="grid gap-8 xl:grid-cols-[11rem_minmax(0,1fr)]">
+      <div className="grid gap-8 xl:grid-cols-[13rem_minmax(0,1fr)]">
         <SettingsNav current={section} admin={isAdmin} />
         <div className="flex min-w-0 flex-col gap-6">
           <section
@@ -352,6 +352,18 @@ export function SettingsView() {
   );
 }
 
+/**
+ * Scrolls the settings page (not the whole window) to a panel. `scrollIntoView`
+ * would also scroll the app shell, which hides overflow, and leave it shifted.
+ */
+function scrollToSection(id: string) {
+  const panel = document.getElementById(id);
+  const scroller = panel?.closest<HTMLElement>("[data-page-scroller]");
+  if (!panel || !scroller) return;
+  const top = panel.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+  scroller.scrollTo({ top: Math.max(top - 24, 0) });
+}
+
 /** In-page navigation of the settings (wide screens): jumps to a panel and marks the current one. */
 function SettingsNav({ current, admin }: { current: string | undefined; admin: boolean }) {
   const { t } = useI18n();
@@ -378,7 +390,7 @@ function SettingsNav({ current, admin }: { current: string | undefined; admin: b
               href={`#/settings/${id}`}
               onClick={() => {
                 // The same section twice: the route does not change, so scroll here.
-                if (current === id) document.getElementById(id)?.scrollIntoView({ block: "start" });
+                if (current === id) scrollToSection(id);
               }}
               aria-current={current === id ? "location" : undefined}
               className={sidebarItemClassName({ active: current === id, className: "h-8" })}

@@ -23,7 +23,7 @@ export function Page({
   children: ReactNode;
 }) {
   return (
-    <section aria-label={title} className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+    <section aria-label={title} data-page-scroller className="flex min-w-0 flex-1 flex-col overflow-y-auto">
       <div
         className={`mx-auto w-full px-4 pt-8 pb-16 sm:px-6 lg:px-10 lg:pt-10 ${width === "wide" ? "max-w-5xl" : "max-w-4xl"}`}
       >

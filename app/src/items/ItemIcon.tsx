@@ -49,8 +49,9 @@ export function useWebsiteIconsEnabled(): boolean {
 }
 
 /**
- * The website icon of `host` as a `data:` URL, loaded through the user's own
- * Passbox server once the element is (nearly) visible. `undefined` while
+ * The website icon of `host` as a `data:` URL once the element is (nearly)
+ * visible: bundled with the app for popular sites, otherwise loaded through
+ * the user's own Passbox server. `undefined` while
  * loading, off or when there is none.
  */
 function useWebsiteIcon(host: string | undefined, element: React.RefObject<HTMLElement | null>): string | undefined {

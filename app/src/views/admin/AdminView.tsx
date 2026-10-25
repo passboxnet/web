@@ -198,6 +198,30 @@ function SettingsPanel({ data, onSaved }: { data: AdminSettings; onSaved: (next:
             }
           />
         </div>
+        <Input
+          label={t("admin.settings.agentLimit")}
+          hint={t("admin.settings.agentLimitHint", { env: data.envAgentLimitPerMember ?? 0 })}
+          type="number"
+          min={0}
+          max={10000}
+          placeholder={t("admin.settings.agentLimitPlaceholder", { env: data.envAgentLimitPerMember ?? 0 })}
+          value={form.agentLimitPerMember ?? ""}
+          data-testid="admin-agent-limit"
+          onChange={(e) =>
+            set({ agentLimitPerMember: e.target.value === "" ? null : Math.max(0, Math.floor(Number(e.target.value))) })
+          }
+        />
+        {data.usage && (
+          <p className="text-xs text-text-muted" data-testid="admin-usage">
+            {t("admin.settings.usage", {
+              accounts: data.usage.accounts,
+              organizations: data.usage.organizations,
+              members: data.usage.members,
+              guests: data.usage.guests,
+              serviceAccounts: data.usage.serviceAccounts,
+            })}
+          </p>
+        )}
         <FormError message={error} />
         <div>
           <Button type="submit" loading={busy}>

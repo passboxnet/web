@@ -1,4 +1,5 @@
 import { Button, Dialog, Input, toast } from "@passbox/ui";
+import { LifeBuoy } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
 import { useI18n } from "../lib/i18n";
@@ -74,6 +75,13 @@ export function CreateOrgDialog({ kind, onOpenChange, onCreated }: CreateOrgDial
             <li>{t("sharing.create.familyPoint3")}</li>
           </ul>
         )}
+        <p
+          className="flex gap-2 rounded-lg border border-border bg-surface-sunken p-3 text-[0.8125rem]"
+          data-testid="create-org-recovery"
+        >
+          <LifeBuoy className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+          <span>{family ? t("sharing.create.recoveryFamily") : t("sharing.create.recoveryTeam")}</span>
+        </p>
         <FormError message={error} />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>

@@ -159,9 +159,12 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
   const [info, setInfo] = useState<OrgRecoveryInfo>();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [dialog, setDialog] = useState<"setup" | "enroll" | "withdraw" | "admin">();
+  const [dialog, setDialog] = useState<"setup" | "enroll" | "withdraw" | "admin" | "off">();
   const name = org.name ?? t("recovery.org.unnamed");
   const admin = isAdmin(org);
+  const guest = org.role === "guest";
+  const { policies } = useSnapshot();
+  const required = policies.find((p) => p.orgId === org.id)?.rules.requireRecoveryEnrollment ?? false;
 
   const load = useCallback(() => {
     client
@@ -211,14 +214,19 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
                   ? t("app.loading")
                   : info.problem
                     ? t("recovery.org.unverified")
-                    : !info.available
-                      ? admin
-                        ? t("recovery.org.notSetUpAdmin")
-                        : t("recovery.org.notSetUp")
-                      : info.enrolled
-                        ? t("recovery.org.enrolled", { count: info.admins.length })
-                        : t("recovery.org.available")}
+                    : guest
+                      ? t("recovery.org.guest")
+                      : !info.available
+                        ? admin
+                          ? t("recovery.org.notSetUpAdmin")
+                          : t("recovery.org.notSetUp")
+                        : info.enrolled
+                          ? t("recovery.org.enrolled", { count: info.admins.length })
+                          : t("recovery.org.available")}
             </p>
+            {info?.available && !guest && required && (
+              <p className="mt-1 text-xs text-text-muted">{t("recovery.org.requiredHint")}</p>
+            )}
           </div>
         </div>
         {info && !info.problem && (
@@ -229,11 +237,11 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
                 {t("recovery.org.setUp")}
               </Button>
             )}
-            {info.available && (
+            {info.available && !guest && (
               <Switch
                 label={t("recovery.org.allow")}
                 checked={info.enrolled}
-                disabled={busy}
+                disabled={busy || (required && info.enrolled)}
                 onCheckedChange={(on) => setDialog(on ? "enroll" : "withdraw")}
               />
             )}
@@ -260,6 +268,29 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
           )}
         </div>
       )}
+      {info?.available && admin && (
+        <div className="mt-3 pl-7">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setDialog("off")}
+            disabled={busy || required}
+            data-testid="recovery-turn-off"
+          >
+            {t("recovery.org.turnOff")}
+          </Button>
+          {required && <p className="mt-1 text-xs text-text-muted">{t("recovery.org.turnOffRequired")}</p>}
+        </div>
+      )}
+      <ConfirmDialog
+        open={dialog === "off"}
+        onOpenChange={(open) => !open && setDialog(undefined)}
+        title={t("recovery.org.turnOffTitle", { name })}
+        description={t("recovery.org.turnOffBody")}
+        confirmLabel={t("recovery.org.turnOff")}
+        tone="danger"
+        onConfirm={() => void run(() => client.turnOffOrgRecovery(org.id), t("recovery.org.turnOffDone"))}
+      />
       <ConfirmDialog
         open={dialog === "setup"}
         onOpenChange={(open) => !open && setDialog(undefined)}

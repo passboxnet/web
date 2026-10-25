@@ -81,6 +81,11 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
       })),
   ];
   const waiting = org.members.filter((m) => m.status === "accepted");
+  // Guests are view-only (B8): they can only be given `view`.
+  const guests = new Set(org.members.filter((m) => m.role === "guest").map((m) => m.accountId));
+  const isGuestKey = (key: string) => key.startsWith("account:") && guests.has(key.slice("account:".length));
+  const addingGuest = isGuestKey(adding);
+  const effectiveAddRole: VaultRole = addingGuest ? "view" : addRole;
 
   async function run(key: string, action: () => Promise<void>, done: string) {
     setBusy(key);
@@ -102,7 +107,7 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
     if (!candidate || !vaultId) return;
     const ok = await run(
       "add",
-      () => client.shareVault(vaultId, candidate.type, candidate.id, addRole),
+      () => client.shareVault(vaultId, candidate.type, candidate.id, effectiveAddRole),
       t("sharing.vaultDialog.added", { name: candidate.label, vault: name }),
     );
     if (ok) setAdding("");
@@ -225,7 +230,11 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
                       onChange={(e) => void changeRole(member, e.target.value as VaultRole)}
                     >
                       {VAULT_ROLES.map((role) => (
-                        <option key={role} value={role}>
+                        <option
+                          key={role}
+                          value={role}
+                          disabled={role !== "view" && isGuestKey(`${member.principalType}:${member.principalId}`)}
+                        >
                           {t(vaultRoleKey(role))}
                         </option>
                       ))}
@@ -273,7 +282,8 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
                 <select
                   className={selectClass}
                   aria-label={t("sharing.vaultRoleLabel")}
-                  value={addRole}
+                  value={effectiveAddRole}
+                  disabled={addingGuest}
                   onChange={(e) => setAddRole(e.target.value as VaultRole)}
                 >
                   {VAULT_ROLES.map((role) => (
@@ -288,6 +298,7 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
                 </Button>
               </div>
             )}
+            {addingGuest && <p className="text-xs text-text-muted">{t("sharing.vaultDialog.guestViewOnly")}</p>}
             {waiting.length > 0 && (
               <p className="text-xs text-text-muted">{t("sharing.vaultDialog.waiting", { count: waiting.length })}</p>
             )}

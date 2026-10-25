@@ -1,6 +1,6 @@
-import type { AgentRequest, Item, PassboxClient, Vault } from "@passbox/client";
+import { type AgentRequest, agentRevealAllowed, type Item, type PassboxClient, type Vault } from "@passbox/client";
 import { Badge, Button, Dialog, toast } from "@passbox/ui";
-import { AlertTriangle, Bot, FileOutput, KeyRound, TerminalSquare } from "lucide-react";
+import { AlertTriangle, Bot, Eye, FileOutput, KeyRound, TerminalSquare } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { errorMessage } from "../core";
 import { requestAgentAttention } from "../desktop";
@@ -75,13 +75,20 @@ export function AgentApprovalDialog({
 }) {
   const client = useClient();
   const { t } = useI18n();
-  const { items, vaults } = useSnapshot();
+  const { items, vaults, effectivePolicy } = useSnapshot();
   const [busy, setBusy] = useState<"approve" | "deny">();
+  // passbox_reveal: off unless the person ticks it for this grant.
+  const [allowReveal, setAllowReveal] = useState(false);
+  const asksReveal = request.actions.includes("reveal");
   const [error, setError] = useState<string>();
   const [now, setNow] = useState(() => Date.now());
   const resolved = resolveItems(request, items, vaults);
   const unknown = resolved.filter((r) => !r.item);
   const expired = request.expiresAt <= now;
+  // An organization's policy can forbid reveals for its vaults (`allowAgentReveal`).
+  const revealForbidden = asksReveal && resolved.some((r) => !agentRevealAllowed(effectivePolicy, r.vault ?? {}));
+  // A request that only asks to reveal is pointless to approve without the tick.
+  const onlyReveal = asksReveal && request.actions.every((a) => a === "reveal");
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -101,7 +108,7 @@ export function AgentApprovalDialog({
     setBusy(approved ? "approve" : "deny");
     setError(undefined);
     try {
-      await decideAgentRequest(client, request, approved);
+      await decideAgentRequest(client, request, approved, approved && allowReveal && !revealForbidden);
       toast.success(approved ? t("agent.approved", { code: request.code }) : t("agent.denied"));
       onClose(true);
     } catch (e) {
@@ -110,8 +117,11 @@ export function AgentApprovalDialog({
     }
   }
 
-  const who =
-    request.principalKind === "service"
+  const who = asksReveal
+    ? request.principalKind === "service"
+      ? t("agent.who.serviceReveal", { name: request.principalName ?? request.principalId })
+      : t("agent.who.sessionReveal")
+    : request.principalKind === "service"
       ? t("agent.who.service", { name: request.principalName ?? request.principalId })
       : t("agent.who.session");
   const duration =
@@ -133,7 +143,7 @@ export function AgentApprovalDialog({
           <Button
             onClick={() => void decide(true)}
             loading={busy === "approve"}
-            disabled={!!busy || expired || unknown.length > 0}
+            disabled={!!busy || expired || unknown.length > 0 || (onlyReveal && (!allowReveal || revealForbidden))}
             data-testid="agent-approve"
           >
             {t("agent.approve")}
@@ -216,6 +226,37 @@ export function AgentApprovalDialog({
           </section>
         )}
 
+        {asksReveal && (
+          <section
+            aria-labelledby="agent-reveal"
+            className="flex flex-col gap-3 rounded-lg border border-danger/40 bg-danger-soft p-4"
+            data-testid="agent-reveal"
+          >
+            <h3 id="agent-reveal" className="flex items-center gap-2 text-[0.8125rem] font-semibold text-danger">
+              <Eye className="size-4" aria-hidden="true" />
+              {t("agent.reveal.title")}
+            </h3>
+            <p className="text-[0.8125rem]">{t("agent.reveal.warning")}</p>
+            {revealForbidden ? (
+              <p className="flex gap-2 text-[0.8125rem] font-medium" role="note">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
+                {t("agent.reveal.forbidden")}
+              </p>
+            ) : (
+              <label className="flex items-start gap-2 text-[0.8125rem] font-medium">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 accent-[var(--color-danger)]"
+                  checked={allowReveal}
+                  onChange={(e) => setAllowReveal(e.target.checked)}
+                  data-testid="agent-allow-reveal"
+                />
+                {t("agent.reveal.allow")}
+              </label>
+            )}
+          </section>
+        )}
+
         <section aria-labelledby="agent-reason">
           <h3 id="agent-reason" className="mb-1 flex items-center gap-2 text-[0.8125rem] font-semibold">
             <Bot className="size-4 text-text-muted" aria-hidden="true" />
@@ -249,6 +290,6 @@ export function AgentApprovalDialog({
   );
 }
 
-async function decideAgentRequest(client: PassboxClient, request: AgentRequest, approved: boolean) {
-  await client.decideAgentRequest(request, approved);
+async function decideAgentRequest(client: PassboxClient, request: AgentRequest, approved: boolean, reveal: boolean) {
+  await client.decideAgentRequest(request, approved, 0, reveal);
 }

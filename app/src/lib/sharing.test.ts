@@ -10,6 +10,7 @@ import {
   captureOrgInvite,
   defaultVault,
   fingerprintGroups,
+  isGuestVault,
   isOrgAdmin,
   orgInviteFromLocation,
   orgRoleKey,
@@ -170,6 +171,19 @@ describe("warnings", () => {
 
   it("splits fingerprints into groups", () => {
     expect(fingerprintGroups("12345 67890  11111")).toEqual(["12345", "67890", "11111"]);
+  });
+});
+
+describe("guests", () => {
+  it("are view-only in the vaults of the organizations they are guests of", () => {
+    const orgs = [
+      { id: "team", role: "guest" },
+      { id: "family", role: "member" },
+    ];
+    expect(isGuestVault({ orgId: "team" }, orgs)).toBe(true);
+    expect(isGuestVault({ orgId: "family" }, orgs)).toBe(false);
+    expect(isGuestVault({}, orgs)).toBe(false);
+    expect(isGuestVault(undefined, orgs)).toBe(false);
   });
 });
 

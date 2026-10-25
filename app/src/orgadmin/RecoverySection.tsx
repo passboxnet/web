@@ -12,7 +12,8 @@ export function RecoverySection({ org, data }: { org: Org; data: ReportState }) 
   const { t } = useI18n();
   const { policies } = useSnapshot();
   const required = policies.find((p) => p.orgId === org.id)?.rules.requireRecoveryEnrollment ?? false;
-  const active = data.report?.members.filter((m) => m.status === "confirmed") ?? [];
+  // Guests are never recovered by the organization (B8).
+  const active = data.report?.members.filter((m) => m.status === "confirmed" && m.role !== "guest") ?? [];
   const missing = active.filter((m) => !m.recoveryEnrolled);
 
   return (

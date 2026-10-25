@@ -57,6 +57,14 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("error.invalidTwoFactorCode");
       case "two_factor_expired":
         return t("error.twoFactorExpired");
+      case "guest_view_only":
+        return t("sharing.error.guestViewOnly");
+      case "agent_limit_reached":
+        return t("developer.limit.reached");
+      case "recovery_required":
+        return t("recovery.org.turnOffRequired");
+      case "agent_reveal_not_allowed":
+        return t("agent.reveal.notAllowed");
       case "account_disabled":
         return t("errors.accountDisabled");
       case "registration_closed":

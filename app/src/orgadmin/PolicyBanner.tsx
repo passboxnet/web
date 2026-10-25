@@ -34,8 +34,12 @@ export function PolicyBanner({ navigate }: { navigate: (route: Route) => void })
         .catch(() => setTwoFactor(undefined));
     }
     if (needsRecoveryState) {
+      // Members agreed to recovery when they joined: seal the share
+      // automatically once confirmed; the banner remains for what fails.
       client
-        .recoveryStatus()
+        .enrollRequiredOrgRecovery()
+        .catch(() => [])
+        .then(() => client.recoveryStatus())
         .then((status) => setEnrolledOrgs(status.orgEscrows.map((e) => e.orgId)))
         .catch(() => setEnrolledOrgs(undefined));
     }

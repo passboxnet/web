@@ -43,8 +43,12 @@ export function OverviewSection({
   if (!report) return <Loading error={data.error} onRetry={data.reload} />;
 
   const active = report.members.filter((m) => m.status === "confirmed");
+  // Guests are free and view-only (B8): counted separately, never as members.
+  const members = active.filter((m) => m.role !== "guest");
+  const guests = report.guestCount ?? active.length - members.length;
   const withTwoFactor = active.filter((m) => m.twoFactor).length;
-  const enrolled = active.filter((m) => m.recoveryEnrolled).length;
+  // Guests are never recovered by the organization.
+  const enrolled = members.filter((m) => m.recoveryEnrolled).length;
   const scores = active.flatMap((m) => (m.security ? [m.security.score] : []));
   const average = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : undefined;
   const waiting = awaitingConfirmation(org).length;
@@ -140,7 +144,7 @@ export function OverviewSection({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label={t("orgAdmin.overview.members")}
-          value={active.length}
+          value={report.memberCount ?? members.length}
           hint={t("orgAdmin.overview.membersHint", { invited: report.pendingInvitations, waiting })}
           onClick={() => go("members")}
         />
@@ -153,10 +157,10 @@ export function OverviewSection({
         />
         <Stat
           label={t("orgAdmin.overview.recovery")}
-          value={report.recoverySetUp ? `${enrolled}/${active.length}` : "–"}
+          value={report.recoverySetUp ? `${enrolled}/${members.length}` : "–"}
           hint={
             report.recoverySetUp ? (
-              <Meter value={share(enrolled)} label={t("orgAdmin.overview.recovery")} />
+              <Meter value={members.length ? enrolled / members.length : 1} label={t("orgAdmin.overview.recovery")} />
             ) : (
               t("orgAdmin.overview.recoveryOff")
             )
@@ -172,7 +176,25 @@ export function OverviewSection({
         />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat
+          label={t("orgAdmin.overview.guests")}
+          value={guests}
+          hint={t("orgAdmin.overview.guestsHint")}
+          onClick={() => go("members")}
+        />
+        <Stat
+          label={t("orgAdmin.overview.agents")}
+          value={report.serviceAccountCount ?? "–"}
+          hint={
+            !report.agentLimitPerMember
+              ? t("orgAdmin.overview.agentsUnlimited")
+              : t("orgAdmin.overview.agentsHint", {
+                  allowed: report.agentLimitPerMember * Math.max(1, report.memberCount ?? members.length),
+                  perMember: report.agentLimitPerMember,
+                })
+          }
+        />
         <Stat
           label={t("orgAdmin.overview.vaults")}
           value={report.vaults.length}

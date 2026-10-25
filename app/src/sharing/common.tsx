@@ -41,6 +41,7 @@ export function sharingError(error: unknown, t: T): string {
       return t("sharing.error.rotated");
     }
     if (error.code === "conflict") return t("sharing.error.conflict");
+    if (error.code === "guest_view_only") return t("sharing.error.guestViewOnly");
     if (error.code === "forbidden") return t("sharing.error.forbidden");
     if (error.code === "not_found") return t("sharing.error.notFound");
   }

@@ -59,6 +59,8 @@ const KNOWN = new Set([
   "agent_run",
   "agent_inject",
   "agent_create",
+  "agent_reveal",
+  "org_recovery_disabled",
 ]);
 /** Events worth noticing: shown in red. */
 const ALERTS = new Set([
@@ -70,6 +72,7 @@ const ALERTS = new Set([
   "org_recovery_requested",
   "emergency_access_requested",
   "emergency_access_used",
+  "agent_reveal",
 ]);
 const COLLAPSED = 8;
 

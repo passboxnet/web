@@ -58,6 +58,7 @@ import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
 import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
 import type { Route } from "../lib/route";
+import { isGuestVault } from "../lib/sharing";
 import { AudienceIcon, useAudience } from "../sharing/common";
 import { ShareItemDialog } from "../sharing/ShareItemDialog";
 import { VaultSharingDialog } from "../sharing/VaultSharingDialog";
@@ -111,7 +112,7 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   const client = useClient();
   const i18n = useI18n();
   const { t } = i18n;
-  const { vaults } = useSnapshot();
+  const { vaults, orgs } = useSnapshot();
   const [changing, setChanging] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [moving, setMoving] = useState(false);
@@ -119,7 +120,9 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   const itemVault = vaults.find((v) => v.id === item?.vaultId);
   const audience = useAudience(item?.vaultId);
   // View-only members of a shared vault can read, copy and fill, not change.
-  const canEdit = !itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage";
+  // Guests are view-only, whatever the vault grants (B8).
+  const guest = isGuestVault(itemVault, orgs);
+  const canEdit = !guest && (!itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage");
 
   // Item usage for organizations whose policy asks for it (D3).
   const itemId = item?.id;
@@ -270,12 +273,16 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
                   </MenuItem>
                 )}
                 {(username || password || url) && <MenuSeparator />}
-                <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
-                  {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
-                </MenuItem>
-                <MenuItem icon={<Link2 />} onSelect={() => setLinking(true)}>
-                  {t("shareLink.menu")}
-                </MenuItem>
+                {!guest && (
+                  <MenuItem icon={<Share2 />} onSelect={() => setSharing(true)}>
+                    {audience.shared ? t("sharing.detail.whoHasAccess") : t("sharing.detail.share")}
+                  </MenuItem>
+                )}
+                {!guest && (
+                  <MenuItem icon={<Link2 />} onSelect={() => setLinking(true)}>
+                    {t("shareLink.menu")}
+                  </MenuItem>
+                )}
                 {canEdit && (
                   <MenuItem icon={<ArrowRightLeft />} onSelect={() => setMoving(true)}>
                     {t("move.menu")}
@@ -353,9 +360,13 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
                 className="mt-6 flex items-start gap-3 rounded-lg border border-border bg-surface-raised px-4 py-3 text-[0.8125rem]"
               >
                 <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
-                <p>
-                  <strong className="font-semibold">{t("sharing.viewOnly.title")}</strong>{" "}
-                  <span className="text-text-muted">{t("sharing.viewOnly.text")}</span>
+                <p data-testid={guest ? "guest-view-only" : undefined}>
+                  <strong className="font-semibold">
+                    {guest ? t("sharing.guest.title") : t("sharing.viewOnly.title")}
+                  </strong>{" "}
+                  <span className="text-text-muted">
+                    {guest ? t("sharing.guest.text") : t("sharing.viewOnly.text")}
+                  </span>
                 </p>
               </div>
             )}

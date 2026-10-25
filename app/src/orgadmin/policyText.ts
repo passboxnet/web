@@ -26,6 +26,7 @@ export function describeRules(rules: PolicyRules, t: Translate): string[] {
         : t("orgAdmin.rule.links.allowed"),
     rules.requireRecoveryEnrollment ? t("orgAdmin.rule.recovery.on") : t("orgAdmin.rule.recovery.off"),
     rules.reportItemUsage ? t("orgAdmin.rule.usage.on") : t("orgAdmin.rule.usage.off"),
+    rules.allowAgentReveal ? t("orgAdmin.rule.agentReveal.on") : t("orgAdmin.rule.agentReveal.off"),
   ];
 }
 
@@ -42,6 +43,8 @@ export function activeRules(rules: PolicyRules, t: Translate): string[] {
     rules.shareLinks !== "allowed",
     rules.requireRecoveryEnrollment,
     rules.reportItemUsage,
+    // Members should know that agents may see values (it loosens, but matters).
+    rules.allowAgentReveal === true,
   ];
   return lines.filter((_, index) => restricting[index]);
 }

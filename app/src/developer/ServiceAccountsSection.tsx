@@ -1,4 +1,5 @@
 import type {
+  AgentUsage,
   ServiceAccount,
   ServiceAccountEventRecord,
   ServiceAccountPermission,
@@ -70,6 +71,7 @@ export function ServiceAccountsSection() {
   const [history, setHistory] = useState<ServiceAccount>();
   const [revoking, setRevoking] = useState<ServiceAccount>();
   const [deleting, setDeleting] = useState<ServiceAccount>();
+  const [usage, setUsage] = useState<AgentUsage>();
 
   const load = useCallback(() => {
     client
@@ -79,7 +81,14 @@ export function ServiceAccountsSection() {
         setError(undefined);
       })
       .catch((e: unknown) => setError(errorMessage(e)));
+    // Fair use: agents and service accounts are free and never count as
+    // members; older servers have no limit endpoint.
+    client
+      .agentLimit()
+      .then(setUsage)
+      .catch(() => setUsage(undefined));
   }, [client]);
+  const limitReached = !!usage && usage.allowed > 0 && usage.used >= usage.allowed;
   useEffect(load, [load]);
 
   const vaultName = (id: string) => vaults.find((v) => v.id === id)?.name ?? t("serviceAccount.unknownVault");
@@ -87,12 +96,30 @@ export function ServiceAccountsSection() {
   return (
     <div className="flex flex-col gap-6">
       <Panel title={t("serviceAccount.title")} description={t("serviceAccount.description")}>
-        <div className="flex justify-end px-5 py-3">
-          <Button size="sm" onClick={() => setCreating(true)} data-testid="sa-new">
+        <div className="flex flex-wrap items-center justify-end gap-3 px-5 py-3">
+          {usage && (
+            <p className="mr-auto text-xs text-text-muted" data-testid="agent-usage">
+              {usage.allowed === 0
+                ? t("developer.limit.unlimited")
+                : usage.pool === "organization"
+                  ? t("developer.limit.organization", {
+                      used: usage.used,
+                      allowed: usage.allowed,
+                      perMember: usage.limitPerMember,
+                    })
+                  : t("developer.limit.personal", { used: usage.used, allowed: usage.allowed })}
+            </p>
+          )}
+          <Button size="sm" onClick={() => setCreating(true)} disabled={limitReached} data-testid="sa-new">
             <Plus />
             {t("serviceAccount.new")}
           </Button>
         </div>
+        {limitReached && (
+          <p role="note" className="mx-5 mb-3 rounded-md bg-warning-soft px-3 py-2 text-[0.8125rem]">
+            {t("developer.limit.reached")}
+          </p>
+        )}
         {error ? (
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[0.8125rem] text-text-muted">
             {error}

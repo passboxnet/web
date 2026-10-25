@@ -4,12 +4,15 @@ import {
   FEATURES,
   type FeatureId,
   type ModelLocation,
+  PROVIDER_PRESETS,
   type ProviderSettings,
+  presetById,
+  presetForEndpoint,
   promptApiAvailability,
   providerProblem,
 } from "@passbox/ai";
 import type { Item } from "@passbox/client";
-import { Badge, Button, ConfirmDialog, Input, SegmentedControl, Switch } from "@passbox/ui";
+import { Badge, Button, ConfirmDialog, cn, fieldClassName, Input, SegmentedControl, Switch } from "@passbox/ui";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { type ReactNode, useEffect, useId, useState } from "react";
 import { useI18n } from "../lib/i18n";
@@ -55,7 +58,8 @@ export function AiPanel() {
   const [browserModel, setBrowserModel] = useState<string>();
   const provider = settings.provider ?? DEFAULT_PROVIDER;
   const keyItems = items.filter((i) => !i.data.trashedAt && apiKeyOf(i));
-  const ids = { endpoint: useId(), model: useId(), key: useId(), region: useId() };
+  const ids = { endpoint: useId(), model: useId(), key: useId(), region: useId(), preset: useId() };
+  const preset = presetById(provider.preset);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,7 +75,35 @@ export function AiPanel() {
     const merged = { ...provider, ...next } as ProviderSettings;
     if (!merged.apiKeyItemId) delete merged.apiKeyItemId;
     if (!merged.jurisdiction) delete merged.jurisdiction;
+    if (!merged.preset) delete merged.preset;
+    if (!merged.api || merged.api === "openai") delete merged.api;
     save({ provider: merged });
+  };
+  /** Fills in endpoint, API, region and a suggested model from a preset ("" = custom). */
+  const choosePreset = (id: string) => {
+    const chosen = presetById(id);
+    if (!chosen) {
+      saveProvider({ preset: undefined, api: undefined });
+      return;
+    }
+    const keepModel = chosen.models.includes(provider.model);
+    saveProvider({
+      preset: chosen.id,
+      api: chosen.api,
+      location: chosen.location,
+      endpoint: chosen.baseUrl,
+      jurisdiction: chosen.jurisdiction,
+      model: keepModel ? provider.model : chosen.model,
+    });
+  };
+  /** A typed endpoint keeps the preset only while it is the preset's base URL. */
+  const typeEndpoint = (value: string) => {
+    const match = presetForEndpoint(value);
+    saveProvider(
+      match
+        ? { endpoint: value, preset: match.id, api: match.api }
+        : { endpoint: value, preset: undefined, api: undefined },
+    );
   };
   const endpoint = endpointProblem(provider.endpoint, provider.location);
   const problem = providerProblem(provider);
@@ -126,6 +158,59 @@ export function AiPanel() {
                 />
               </div>
             </div>
+            {provider.location === "cloud" && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor={ids.preset} className="text-[0.8125rem] font-medium">
+                  {t("ai.preset")}
+                </label>
+                <select
+                  id={ids.preset}
+                  className={cn(fieldClassName, "h-10 px-2.5 coarse:h-12")}
+                  value={provider.preset ?? ""}
+                  onChange={(e) => choosePreset(e.target.value)}
+                  data-testid="ai-preset"
+                >
+                  <option value="">{t("ai.preset.custom")}</option>
+                  {PROVIDER_PRESETS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {t("ai.preset.option", {
+                        name: p.name,
+                        region: t(`ai.region.${p.jurisdiction}`),
+                        country: p.country,
+                      })}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-text-muted">{t("ai.preset.hint")}</p>
+              </div>
+            )}
+            {provider.location === "cloud" && preset && (
+              <div
+                className="flex flex-col gap-1 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2.5 text-[0.8125rem]"
+                role="note"
+                data-testid="ai-preset-note"
+              >
+                <p className="flex flex-wrap items-center gap-2">
+                  <strong className="font-semibold">{preset.name}</strong>
+                  <Badge tone={preset.jurisdiction === "EU" ? "success" : "warning"}>
+                    {t("ai.preset.region", { region: t(`ai.region.${preset.jurisdiction}`), country: preset.country })}
+                  </Badge>
+                </p>
+                <p>{t("ai.preset.dataGoes", { name: preset.name, region: t(`ai.region.${preset.jurisdiction}`) })}</p>
+                {!preset.model && (
+                  <p className="text-xs text-text-muted">{t("ai.preset.chooseModel", { name: preset.name })}</p>
+                )}
+                {preset.model && !preset.modelChecked && (
+                  <p className="text-xs text-text-muted">{t("ai.preset.modelUnchecked")}</p>
+                )}
+                <p className="text-xs text-text-muted">
+                  {t("ai.preset.checked", { date: preset.checked })}{" "}
+                  <a className="underline" href={preset.docs} target="_blank" rel="noreferrer noopener">
+                    {t("ai.preset.docs")}
+                  </a>
+                </p>
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
                 id={ids.endpoint}
@@ -135,7 +220,7 @@ export function AiPanel() {
                 inputMode="url"
                 autoComplete="off"
                 spellCheck={false}
-                onChange={(e) => saveProvider({ endpoint: e.target.value })}
+                onChange={(e) => typeEndpoint(e.target.value)}
                 hint={
                   provider.location === "on-device" && !provider.endpoint.trim()
                     ? t(browserModel === "available" ? "ai.endpoint.browserReady" : "ai.endpoint.browserMissing")
@@ -147,7 +232,8 @@ export function AiPanel() {
                 id={ids.model}
                 label={t("ai.model")}
                 value={provider.model}
-                placeholder={MODEL_PLACEHOLDER}
+                placeholder={preset?.models[0] ?? MODEL_PLACEHOLDER}
+                list={preset && preset.models.length > 0 ? `${ids.model}-models` : undefined}
                 autoComplete="off"
                 spellCheck={false}
                 disabled={provider.location === "on-device" && !provider.endpoint.trim()}
@@ -174,6 +260,13 @@ export function AiPanel() {
                 />
               )}
             </div>
+            {preset && preset.models.length > 0 && (
+              <datalist id={`${ids.model}-models`}>
+                {preset.models.map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
+            )}
             {provider.endpoint.trim() && !endpoint && (
               <p className="text-xs text-text-muted">{t("ai.cors", { origin: window.location.origin })}</p>
             )}

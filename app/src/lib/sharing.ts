@@ -23,6 +23,16 @@ export function isOrgAdmin(org: Org): boolean {
   return (org.role === "owner" || org.role === "admin") && org.status === "confirmed";
 }
 
+/**
+ * Whether this account is a guest of the vault's organization (B8): guests
+ * open, copy and fill items of the vaults shared with them and change
+ * nothing (no items, vaults, share links, attachments or invitations). The
+ * server enforces it (403 `guest_view_only`); the UI hides what it refuses.
+ */
+export function isGuestVault(vault: Pick<Vault, "orgId"> | undefined, orgs: Pick<Org, "id" | "role">[]): boolean {
+  return !!vault?.orgId && orgs.some((o) => o.id === vault.orgId && o.role === "guest");
+}
+
 /** Whether `me` may change `member` (role, suspend, remove). Only the owner manages admins. */
 export function canManageMember(org: Org, member: OrgMember, me: string | undefined): boolean {
   if (!isOrgAdmin(org) || member.accountId === me || member.role === "owner") return false;

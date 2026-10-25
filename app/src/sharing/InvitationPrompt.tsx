@@ -1,6 +1,6 @@
 import type { InvitationPreview } from "@passbox/api-client";
 import { Button, Dialog, Spinner, toast } from "@passbox/ui";
-import { AlertTriangle, Check } from "lucide-react";
+import { AlertTriangle, Check, Eye, LifeBuoy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
 import { useI18n } from "../lib/i18n";
@@ -51,6 +51,10 @@ export function InvitationPrompt({ navigate }: { navigate: (route: Route) => voi
     setError(undefined);
     try {
       const orgId = await client.acceptInvitation(invite.link);
+      // Organizations that require recovery: the recovery share is sealed
+      // as soon as an admin confirmed the membership (now or at a later
+      // unlock); the person agreed to it above.
+      client.enrollRequiredOrgRecovery().catch((e: unknown) => console.warn("Could not enroll in recovery yet", e));
       setPendingOrgInvite(undefined);
       toast.success(t("sharing.accept.done"));
       navigate({ view: "org", orgId });
@@ -119,6 +123,29 @@ export function InvitationPrompt({ navigate }: { navigate: (route: Route) => voi
                 </li>
               ))}
             </ol>
+          )}
+          {!wrongAccount && preview.role === "guest" && (
+            <div
+              className="flex gap-3 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-[0.8125rem]"
+              data-testid="invite-guest-note"
+            >
+              <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
+              <p>{t("sharing.accept.guest")}</p>
+            </div>
+          )}
+          {!wrongAccount && preview.recovery && (
+            <div
+              className="flex gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-[0.8125rem]"
+              data-testid="invite-recovery-note"
+            >
+              <LifeBuoy className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">
+                  {family ? t("sharing.accept.recoveryTitleFamily") : t("sharing.accept.recoveryTitleTeam")}
+                </p>
+                <p className="mt-1">{t("sharing.accept.recoveryBody")}</p>
+              </div>
+            </div>
           )}
           <p className="text-xs text-text-muted">{t("sharing.accept.privacy")}</p>
           <FormError message={error} />

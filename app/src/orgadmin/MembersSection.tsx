@@ -107,6 +107,18 @@ export function MembersSection({
         />
       </div>
 
+      {data.report && (
+        <p className="text-xs text-text-muted" data-testid="member-counts">
+          {t("orgAdmin.members.counts", {
+            members:
+              data.report.memberCount ??
+              data.report.members.filter((m) => m.status === "confirmed" && m.role !== "guest").length,
+            guests:
+              data.report.guestCount ??
+              data.report.members.filter((m) => m.status === "confirmed" && m.role === "guest").length,
+          })}
+        </p>
+      )}
       {!data.report && <Loading error={data.error} onRetry={data.reload} />}
       <Table
         label={t("orgAdmin.section.members")}

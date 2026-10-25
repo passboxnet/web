@@ -200,6 +200,15 @@ export function PoliciesSection({ org, data }: { org: Org; data: ReportState }) 
           />
         </Group>
 
+        <Group title={t("orgAdmin.policy.group.agents")}>
+          <Switch
+            label={t("orgAdmin.policy.agentReveal")}
+            description={t("orgAdmin.policy.agentRevealHint")}
+            checked={rules.allowAgentReveal === true}
+            onCheckedChange={(allowAgentReveal) => set({ allowAgentReveal })}
+          />
+        </Group>
+
         <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-3 border-t border-border bg-canvas/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
           {dirty && <span className="mr-auto text-[0.8125rem] text-text-muted">{t("orgAdmin.policy.unsaved")}</span>}
           <Button variant="secondary" disabled={!dirty || busy} onClick={() => setRules(saved)}>

@@ -257,7 +257,7 @@ function OidcPanel({ orgId }: { orgId: string }) {
                 className={cn(
                   "flex min-h-11 items-center gap-2.5 rounded-lg border bg-surface px-2.5 py-2 text-left font-medium transition-colors coarse:min-h-12",
                   settings.provider === p.id
-                    ? "border-accent ring-2 ring-accent/30"
+                    ? "border-selection-marker ring-2 ring-selection-marker/25"
                     : "border-border hover:border-border-strong",
                 )}
               >

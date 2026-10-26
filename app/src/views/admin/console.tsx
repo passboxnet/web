@@ -138,7 +138,7 @@ export function ConsoleIdentity({ tile, name, caption }: { tile: ReactNode; name
     <div className="flex items-center gap-3 rounded-control border border-hairline bg-surface-raised px-3 py-2.5">
       <span
         aria-hidden="true"
-        className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-signature text-white shadow-highlight [&_svg]:size-4"
+        className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-signature text-solar shadow-highlight [&_svg]:size-4"
       >
         {tile}
       </span>

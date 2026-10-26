@@ -178,7 +178,11 @@ function Step({
         aria-hidden="true"
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-          done ? "bg-success-soft text-success-text" : active ? "bg-accent text-accent-contrast" : "bg-surface-sunken",
+          done
+            ? "bg-success-soft text-success-text"
+            : active
+              ? "bg-accent text-accent-contrast shadow-lip"
+              : "bg-surface-sunken",
         )}
       >
         {done ? <Check className="size-3.5" /> : number}

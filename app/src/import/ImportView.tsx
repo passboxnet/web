@@ -225,7 +225,7 @@ function Stepper({ t, active }: { t: Translate; active: number }) {
             className={cn(
               "flex size-6 items-center justify-center rounded-full text-xs font-semibold",
               i < active && "bg-success-soft text-success",
-              i === active && "bg-accent text-accent-contrast",
+              i === active && "bg-selection text-text shadow-[inset_0_0_0_1px_var(--pb-selection-marker)]",
               i > active && "bg-surface-sunken text-text-muted",
             )}
           >
@@ -270,9 +270,9 @@ function SourceStep({
               onClick={() => onSource(s)}
               className={cn(
                 "flex min-h-14 items-center gap-3 rounded-card border bg-surface px-3 py-2.5 text-left text-[13px] font-medium shadow-xs transition-colors",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
                 source?.id === s.id
-                  ? "border-accent ring-2 ring-accent/30"
+                  ? "border-selection-marker ring-2 ring-selection-marker/25"
                   : "border-border hover:border-border-strong",
               )}
             >
@@ -348,7 +348,7 @@ function DropZone({
       onDrop={drop}
       className={cn(
         "flex min-h-56 flex-col items-center justify-center gap-3 rounded-card border-2 border-dashed p-6 text-center transition-colors",
-        over ? "border-accent bg-accent-soft" : "border-border-strong bg-surface",
+        over ? "border-selection-marker bg-selection" : "border-border-strong bg-surface",
       )}
     >
       {busy ? (
@@ -685,7 +685,7 @@ function ReviewStep({
               <input
                 type="radio"
                 name="vault-mode"
-                className="mt-1 size-4 accent-accent"
+                className="mt-1 size-4 accent-control"
                 checked={vault.mode === "bySource"}
                 onChange={() => setVault({ mode: "bySource" })}
               />
@@ -703,7 +703,7 @@ function ReviewStep({
                 type="radio"
                 name="vault-mode"
                 aria-label={t("import.vault.single")}
-                className="size-4 accent-accent"
+                className="size-4 accent-control"
                 checked={vault.mode !== "bySource"}
                 onChange={() => setVault({ mode: "single", vaultId: vaults[0]?.id ?? "" })}
               />
@@ -768,7 +768,7 @@ function ReviewStep({
             <label className="mt-3 flex items-center gap-2 text-[13px]">
               <input
                 type="checkbox"
-                className="size-4 accent-accent"
+                className="size-4 accent-control"
                 checked={perItem}
                 onChange={(e) => setPerItem(e.target.checked)}
               />
@@ -926,7 +926,7 @@ function ProgressStep({ t, done, total, onStop }: { t: Translate; done: number; 
         aria-label={t("import.progress.title")}
         className="mt-4 h-2 overflow-hidden rounded-full bg-surface-sunken"
       >
-        <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${percent}%` }} />
+        <div className="h-full rounded-full bg-control transition-[width]" style={{ width: `${percent}%` }} />
       </div>
       <p className="mt-2 text-sm text-text-muted">
         {t("import.progress.count", { done, total })} · {percent} %

@@ -14,7 +14,7 @@ const POINTS = [
 
 /**
  * The brand moment: sign-up, sign-in, unlock and recovery sit in a bezelled
- * panel on the signature backdrop (deep navy into electric blue, with grain).
+ * panel on the signature backdrop (deep Marina with a Sky glow, with grain).
  * Wide screens show the dark brand half with the dotted grid frame next to
  * the form; the form half follows the theme.
  */
@@ -47,7 +47,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                 className="pointer-events-none absolute inset-0 opacity-90"
                 style={{
                   background:
-                    "radial-gradient(70% 55% at 15% 0%, color-mix(in oklch, var(--pb-accent) 34%, transparent), transparent 70%), radial-gradient(60% 45% at 100% 100%, color-mix(in oklch, var(--color-tag-violet) 22%, transparent), transparent 70%)",
+                    "radial-gradient(70% 55% at 15% 0%, color-mix(in oklch, var(--color-sky) 34%, transparent), transparent 70%), radial-gradient(60% 45% at 100% 100%, color-mix(in oklch, var(--color-solar) 12%, transparent), transparent 70%)",
                 }}
               />
               <GridFrame edges="both" className="py-10">

@@ -101,9 +101,9 @@ export function AgentSetupSnippets({ server }: { server: string }) {
             key={c.id}
             className={cn(
               "flex h-9 cursor-pointer items-center gap-2 rounded-lg border py-1 pr-3 pl-1.5 text-[0.8125rem] font-medium transition-colors coarse:h-11",
-              "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent",
+              "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus",
               selected === c.id
-                ? "border-accent bg-accent-soft text-text"
+                ? "border-selection-marker bg-selection text-text"
                 : "border-border bg-surface text-text-muted hover:border-border-strong hover:text-text",
             )}
           >

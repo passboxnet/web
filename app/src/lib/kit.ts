@@ -51,31 +51,37 @@ export interface KitData {
   recoveryCode?: string;
 }
 
-// Passbox Night colors (sRGB from packages/ui/tokens/tokens.json, light theme): print on white.
-const INK: Rgb = [0.051, 0.075, 0.129]; // text #0D1321
-const MUTED: Rgb = [0.31, 0.333, 0.392]; // text-muted #4F5564
-const BORDER: Rgb = [0.878, 0.89, 0.91]; // border #E0E3E8
-const GUIDE: Rgb = [0.6, 0.62, 0.68];
-const ACCENT: Rgb = [0.11, 0.349, 0.894]; // accent-text #1C59E4
-const ACCENT_SOFT: Rgb = [0.894, 0.929, 1]; // accent-soft #E4EDFF
-const ACCENT_EDGE: Rgb = [0.75, 0.82, 0.99];
-const SUCCESS_TEXT: Rgb = [0.039, 0.412, 0.235]; // success-text #0A693C
-const SUCCESS_SOFT: Rgb = [0.875, 0.973, 0.902]; // success-soft #DFF8E6
-const SUCCESS_EDGE: Rgb = [0.7, 0.88, 0.76];
-const WARNING_SOFT: Rgb = [1, 0.945, 0.878]; // warning-soft #FFF1E0
-const WARNING_EDGE: Rgb = [0.97, 0.82, 0.62];
+/** `#RRGGBB` → PDF color components. */
+const hex = (value: string): Rgb =>
+  [0, 2, 4].map((at) => Number.parseInt(value.slice(1 + at, 3 + at), 16) / 255) as Rgb;
+
+// Passbox Marina colors (sRGB from packages/ui/tokens/tokens.json, light theme): print on white.
+const INK = hex("#11262F"); // text
+const MUTED = hex("#455963"); // text-muted
+const BORDER = hex("#D9E1E5"); // border
+const GUIDE = hex("#9AAAB2");
+const ACCENT = hex("#1E5F7D"); // accent-text (deep Sky)
+const ACCENT_SOFT = hex("#E0F0F8"); // accent-soft (Sky tint)
+const ACCENT_EDGE = hex("#A9D0E2");
+const SUCCESS_TEXT = hex("#0A693C"); // success-text
+const SUCCESS_SOFT = hex("#DFF8E6"); // success-soft
+const SUCCESS_EDGE = hex("#B3E0C2");
+const WARNING_SOFT = hex("#FEF1E2"); // warning-soft
+const WARNING_EDGE = hex("#F7D19E");
 const WHITE: Rgb = [1, 1, 1];
-/** The signature gradient: #5EA8F9 → #2061F5 → #1A2C94. */
+const SOLAR = hex("#FFE26D"); // palette.solar: the keyhole
+const MARINA_LIP = hex("#0B1A21"); // palette.marina-lip: the lip under the band
+/** The signature gradient: #36596A → #243E4B → #12232B. */
 const SIGNATURE: Array<[number, Rgb]> = [
-  [0, [0.369, 0.659, 0.976]],
-  [0.5, [0.125, 0.38, 0.961]],
-  [1, [0.102, 0.173, 0.58]],
+  [0, hex("#36596A")],
+  [0.5, hex("#243E4B")],
+  [1, hex("#12232B")],
 ];
 
-/** The keyhole glyph (packages/ui/brand/glyph.svg, 32-unit grid) in white at `size` points. */
+/** The keyhole glyph (packages/ui/brand/glyph.svg, 32-unit grid) in Solar at `size` points. */
 function keyhole(page: PdfPage, x: number, y: number, size: number) {
   const u = size / 32;
-  page.circle(x + 16 * u, y + 13.4 * u, 4.2 * u, { fill: WHITE });
+  page.circle(x + 16 * u, y + 13.4 * u, 4.2 * u, { fill: SOLAR });
   page.polygon(
     [
       [x + 14.2 * u, y + 16.2 * u],
@@ -83,7 +89,7 @@ function keyhole(page: PdfPage, x: number, y: number, size: number) {
       [x + 18.95 * u, y + 23.4 * u],
       [x + 13.05 * u, y + 23.4 * u],
     ],
-    WHITE,
+    SOLAR,
   );
 }
 
@@ -95,9 +101,10 @@ export function emergencyKitPdf(kit: KitData, i18n: Translator): Uint8Array {
   const width = PAGE_WIDTH - 2 * left;
   const right = left + width;
 
-  // Brand band: the signature gradient with the white keyhole, the wordmark and the title.
+  // Brand band: the Marina signature gradient with its lip, the Solar keyhole, the wordmark and the title.
   const band = 122;
   page.gradientRect(0, 0, PAGE_WIDTH, band, SIGNATURE);
+  page.rect(0, band - 3, PAGE_WIDTH, 3, { fill: MARINA_LIP });
   page.roundRect(left, 30, 30, 30, 8.4, { fill: [1, 1, 1] });
   page.gradientRect(left + 1.5, 31.5, 27, 27, SIGNATURE, 7.4, 24);
   keyhole(page, left + 1.5, 31.5, 27);

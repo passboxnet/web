@@ -231,7 +231,7 @@ function PaletteItem({ value, keywords, onSelect, icon, hint, children }: Palett
       value={value}
       {...(keywords ? { keywords } : {})}
       onSelect={onSelect}
-      className="flex h-11 cursor-default items-center gap-3 rounded-control px-2.5 text-body text-text data-[selected=true]:bg-accent data-[selected=true]:text-accent-contrast data-[selected=true]:shadow-glow [&[data-selected=true]_.text-text-muted]:text-accent-contrast/85 coarse:h-12"
+      className="flex h-11 cursor-default items-center gap-3 rounded-control px-2.5 text-body text-text data-[selected=true]:bg-selection data-[selected=true]:shadow-[inset_3px_0_0_0_var(--pb-selection-marker)] coarse:h-12"
     >
       <span className="flex size-6 items-center justify-center text-text-muted">{icon}</span>
       <span className="flex min-w-0 flex-1 items-baseline gap-2">{children}</span>

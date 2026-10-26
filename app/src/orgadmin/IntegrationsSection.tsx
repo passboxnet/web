@@ -304,7 +304,7 @@ function NewTokenDialog({
               type="button"
               onClick={() => setName(siem.name)}
               aria-pressed={name === siem.name}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-surface py-0.5 pr-2.5 pl-0.5 text-xs font-medium transition-colors hover:border-border-strong aria-pressed:border-accent aria-pressed:bg-accent-soft coarse:py-1.5"
+              className="flex items-center gap-1.5 rounded-full border border-border bg-surface py-0.5 pr-2.5 pl-0.5 text-xs font-medium transition-colors hover:border-border-strong aria-pressed:border-selection-marker aria-pressed:bg-selection coarse:py-1.5"
             >
               <BrandIcon service={siem.id} name={siem.name} size="sm" decorative className="!size-5 !rounded-full" />
               {siem.name}

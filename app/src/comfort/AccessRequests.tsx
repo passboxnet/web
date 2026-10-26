@@ -14,7 +14,7 @@ import { comfortError } from "./errors";
 
 const ROLES: VaultRole[] = ["view", "edit", "manage"];
 const selectClass =
-  "h-9 rounded-lg border border-border-strong bg-surface px-2 text-[0.8125rem] shadow-xs focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 coarse:h-11";
+  "h-9 rounded-lg border border-border-strong bg-surface px-2 text-[0.8125rem] shadow-xs focus:border-focus focus:outline-none focus:ring-3 focus:ring-focus/20 coarse:h-11";
 
 /** The link colleagues open to ask for access to a vault. */
 export function vaultLink(vaultId: string): string {

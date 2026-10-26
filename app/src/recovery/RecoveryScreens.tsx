@@ -344,7 +344,7 @@ function OrgRecoveryWaiting({ pending, onReset }: { pending: PendingOrgRecovery;
       <Heading title={t("recovery.org.waitingTitle")} description={t("recovery.org.waitingBody")} />
       <section
         aria-labelledby="request-code"
-        className="rounded-card border border-accent/30 bg-accent-soft p-5 text-center shadow-card"
+        className="rounded-card border border-info/30 bg-accent-soft p-5 text-center shadow-card"
       >
         <p id="request-code" className="flex items-center justify-center gap-2 text-sm font-semibold">
           <Phone className="size-4 text-accent" aria-hidden="true" />

@@ -250,7 +250,7 @@ function OrgInviteNotice({ preview }: { preview: InvitationPreview | null }) {
   return (
     <div
       role="note"
-      className="mt-5 flex gap-3 rounded-lg border border-accent/25 bg-accent-soft p-3 text-[0.8125rem]"
+      className="mt-5 flex gap-3 rounded-lg border border-info/25 bg-accent-soft p-3 text-[0.8125rem]"
       data-testid="org-invite-notice"
     >
       <House className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
@@ -374,7 +374,7 @@ function SignUpForm({
         />
         {password && <PasswordStrength password={password} context={[email]} master />}
         {suggestion ? (
-          <div className="rounded-lg border border-accent/20 bg-accent-soft p-3 text-[0.8125rem]">
+          <div className="rounded-lg border border-info/20 bg-accent-soft p-3 text-[0.8125rem]">
             <p className="text-text-muted">{t("signUp.suggestion")}</p>
             <p className="mt-1 font-mono text-[0.9375rem] font-medium break-all text-text">{suggestion}</p>
             <p className="mt-1 text-xs text-text-muted">{t("signUp.suggestionHint")}</p>

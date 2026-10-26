@@ -152,7 +152,7 @@ export function AgentApprovalDialog({
       }
     >
       <div className="flex flex-col gap-5 text-sm" data-testid="agent-approval">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-info/30 bg-accent-soft px-4 py-3">
           <div>
             <p className="text-[0.8125rem] font-medium">{t("agent.code.title")}</p>
             <p className="text-xs text-text-muted">{t("agent.code.hint")}</p>

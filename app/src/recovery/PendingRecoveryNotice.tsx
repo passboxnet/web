@@ -14,7 +14,7 @@ export function PendingRecoveryNotice() {
   return (
     <div
       role="status"
-      className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2.5 text-[0.8125rem]"
+      className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-info/30 bg-accent-soft px-3 py-2.5 text-[0.8125rem]"
     >
       <Building2 className="size-4 shrink-0 text-accent" aria-hidden="true" />
       <p className="min-w-0 flex-1">{t("recovery.org.pendingNotice")}</p>

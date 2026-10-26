@@ -12,7 +12,7 @@ import { ViewRoleNote } from "./RoleChoice";
 import { exclusive } from "./usePendingRotations";
 
 const selectClass =
-  "h-8 rounded-lg border border-border-strong bg-surface px-2.5 text-[0.8125rem] text-text shadow-xs focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 disabled:opacity-70 coarse:h-11";
+  "h-8 rounded-lg border border-border-strong bg-surface px-2.5 text-[0.8125rem] text-text shadow-xs focus:border-focus focus:outline-none focus:ring-3 focus:ring-focus/20 disabled:opacity-70 coarse:h-11";
 
 interface VaultSharingDialogProps {
   vaultId: string | undefined;

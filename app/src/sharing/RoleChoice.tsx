@@ -32,7 +32,7 @@ export function RadioCards<T extends string>({
           className={cn(
             "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors coarse:py-3.5",
             value === option.value
-              ? "border-accent bg-accent-soft"
+              ? "border-selection-marker bg-selection"
               : "border-border bg-surface hover:border-border-strong",
           )}
         >
@@ -42,7 +42,7 @@ export function RadioCards<T extends string>({
             value={option.value}
             checked={value === option.value}
             onChange={() => onChange(option.value)}
-            className="mt-0.5 size-4 accent-accent"
+            className="mt-0.5 size-4 accent-control"
           />
           <span className="min-w-0">
             <span className="block text-[0.8125rem] font-medium">{option.label}</span>

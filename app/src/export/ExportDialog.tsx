@@ -128,7 +128,7 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                 <label key={vault.id} className="flex min-h-8 items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    className="size-4 accent-accent"
+                    className="size-4 accent-control"
                     checked={vaultIds.includes(vault.id)}
                     disabled={!canExportVault(snapshot.effectivePolicy, vault)}
                     onChange={(e) =>
@@ -228,8 +228,10 @@ function KindOption({
     <label
       className={cn(
         "flex cursor-pointer gap-3 rounded-card border p-4 transition-colors",
-        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
-        checked ? "border-accent ring-2 ring-accent/30" : "border-border hover:border-border-strong",
+        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus",
+        checked
+          ? "border-selection-marker ring-2 ring-selection-marker/25"
+          : "border-border hover:border-border-strong",
       )}
     >
       <input type="radio" name="export-kind" className="sr-only" checked={checked} onChange={onSelect} />

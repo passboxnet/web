@@ -135,7 +135,7 @@ export function AttachmentsSection({ item, canEdit }: { item: Item; canEdit: boo
       aria-label={t("attachments.title")}
       className={cn(
         "mt-4 rounded-card border border-border bg-surface shadow-card transition-colors",
-        dragging && "border-accent bg-accent-soft",
+        dragging && "border-selection-marker bg-selection",
       )}
       onDragOver={(event) => {
         if (!canEdit) return;

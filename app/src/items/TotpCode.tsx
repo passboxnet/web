@@ -44,7 +44,7 @@ export function CountdownRing({ remaining, period }: { remaining: number; period
           cx="10"
           cy="10"
           r={radius}
-          className={urgent ? "fill-none stroke-danger" : "fill-none stroke-accent"}
+          className={urgent ? "fill-none stroke-danger" : "fill-none stroke-accent-text"}
           strokeWidth="2"
           strokeLinecap="round"
           strokeDasharray={circumference}

@@ -77,7 +77,7 @@ export function PolicyBanner({ navigate }: { navigate: (route: Route) => void })
   return (
     <div
       role="status"
-      className="flex flex-col gap-2 border-b border-accent/25 bg-accent-soft px-4 py-2.5 text-[0.8125rem]"
+      className="flex flex-col gap-2 border-b border-info/25 bg-accent-soft px-4 py-2.5 text-[0.8125rem]"
     >
       {tasks.map((task) => (
         <div key={task.kind} className="flex flex-wrap items-center gap-x-4 gap-y-2">

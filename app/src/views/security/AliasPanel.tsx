@@ -200,7 +200,9 @@ function AliasSetup({
               onClick={() => setProvider(p)}
               className={cn(
                 "flex min-h-11 items-center gap-2 rounded-lg border bg-surface px-2.5 py-2 text-left text-[0.8125rem] font-medium transition-colors coarse:min-h-12",
-                provider === p ? "border-accent ring-2 ring-accent/30" : "border-border hover:border-border-strong",
+                provider === p
+                  ? "border-selection-marker ring-2 ring-selection-marker/25"
+                  : "border-border hover:border-border-strong",
               )}
             >
               <BrandIcon service={PROVIDER_ICONS[p]} size="sm" decorative />

@@ -89,7 +89,7 @@ export function SettingsView() {
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(60% 120% at 0% 0%, color-mix(in oklch, var(--pb-accent) 14%, transparent), transparent 70%)",
+                  "radial-gradient(60% 120% at 0% 0%, color-mix(in oklch, var(--color-sky) 18%, transparent), transparent 70%)",
               }}
             />
             <Avatar name={email} size="lg" tone="signature" className="relative" />

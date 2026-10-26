@@ -288,7 +288,7 @@ function ReceivedRow({ contact, onChange }: { contact: EmergencyContact; onChang
           {contact.status === "confirmed" && contact.released && (
             <a
               href={`#/emergency/${encodeURIComponent(contact.id)}`}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[0.8125rem] font-medium text-accent-contrast shadow-xs hover:bg-accent-hover coarse:h-11"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[0.8125rem] font-medium text-accent-contrast shadow-lip hover:bg-accent-hover coarse:h-11"
             >
               {t("emergency.open")}
             </a>
@@ -486,7 +486,7 @@ function ConfirmVaultsDialog({
           <label key={vault.id} className="flex items-center gap-2 text-sm coarse:min-h-11">
             <input
               type="checkbox"
-              className="size-4 accent-accent"
+              className="size-4 accent-control"
               checked={chosen.includes(vault.id)}
               onChange={(e) =>
                 setChosen((current) =>

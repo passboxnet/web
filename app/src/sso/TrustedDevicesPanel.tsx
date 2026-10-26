@@ -238,7 +238,7 @@ function ApproveDialog({
           <label className="flex items-start gap-2.5 text-[0.8125rem]">
             <input
               type="checkbox"
-              className="mt-0.5 size-4 accent-accent"
+              className="mt-0.5 size-4 accent-control"
               checked={matches}
               onChange={(event) => setMatches(event.target.checked)}
             />

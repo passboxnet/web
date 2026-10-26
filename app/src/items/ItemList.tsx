@@ -266,7 +266,7 @@ export function ItemList({
             </MenuContent>
           </Menu>
         </div>
-        <label className="flex h-11 items-center gap-2.5 rounded-control border border-hairline bg-field px-3.5 text-text-subtle shadow-xs transition focus-within:border-accent focus-within:ring-4 focus-within:ring-focus/25 coarse:h-12">
+        <label className="flex h-11 items-center gap-2.5 rounded-control border border-hairline bg-field px-3.5 text-text-subtle shadow-xs transition focus-within:border-focus focus-within:ring-4 focus-within:ring-focus/25 coarse:h-12">
           <Search className="size-4" aria-hidden="true" />
           <span className="sr-only">{t("list.search")}</span>
           <input
@@ -419,7 +419,7 @@ function ItemRow({
   const password = fieldValue(item.data, FIELD.password);
   const totp = fieldValue(item.data, FIELD.totp);
   const copyable = Boolean(username || password || totp);
-  // The solid blue row: a single selected item; in selection mode the ticked rows are tinted instead.
+  // The selected row (Sky tint with a marker): a single selected item; in selection mode the ticked rows are tinted instead.
   const solid = checked === undefined && selected;
   // Phones show the list alone: a default selection is only highlighted from `md` up.
   // (Literal class names, so Tailwind generates both variants.)
@@ -449,11 +449,11 @@ function ItemRow({
       className={cn(
         "group flex min-h-14 cursor-default items-center gap-3 rounded-control px-2.5 py-2 transition-colors duration-150",
         checked
-          ? "bg-accent-soft"
+          ? "bg-selection"
           : tone(
               "hover:bg-surface-raised",
-              "bg-accent text-accent-contrast shadow-glow",
-              "md:bg-accent md:text-accent-contrast md:shadow-glow",
+              "bg-selection shadow-[inset_3px_0_0_0_var(--pb-selection-marker)]",
+              "md:bg-selection md:shadow-[inset_3px_0_0_0_var(--pb-selection-marker)]",
             ),
         disabled && "opacity-50",
       )}
@@ -463,7 +463,7 @@ function ItemRow({
           aria-hidden="true"
           className={cn(
             "flex size-4 shrink-0 items-center justify-center rounded border",
-            checked ? "border-accent bg-accent text-accent-contrast" : "border-border-strong bg-surface",
+            checked ? "border-control bg-control text-control-contrast" : "border-border-strong bg-surface",
           )}
         >
           {checked && <Check className="size-3" />}
@@ -471,22 +471,8 @@ function ItemRow({
       )}
       <ItemIcon item={item} size="lg" />
       <span className="min-w-0 flex-1">
-        <span
-          className={cn(
-            "block truncate text-label",
-            tone("text-text", "text-accent-contrast", "md:text-accent-contrast"),
-          )}
-        >
-          {itemTitle(item, t)}
-        </span>
-        <span
-          className={cn(
-            "block truncate text-body-sm",
-            tone("text-text-muted", "text-accent-contrast/85", "md:text-accent-contrast/85"),
-          )}
-        >
-          {itemSubtitle(item, t)}
-        </span>
+        <span className="block truncate text-label text-text">{itemTitle(item, t)}</span>
+        <span className="block truncate text-body-sm text-text-muted">{itemSubtitle(item, t)}</span>
       </span>
       {/* Quick copy: on hover with a mouse, always on touch screens. */}
       <span className={cn("hidden items-center gap-0.5 group-hover:flex coarse:flex", !copyable && "!hidden")}>
@@ -515,11 +501,7 @@ function ItemRow({
         )}
       </span>
       <span
-        className={cn(
-          "flex items-center gap-1.5",
-          tone("text-text-subtle", "text-accent-contrast", "md:text-accent-contrast"),
-          copyable && "group-hover:hidden coarse:hidden",
-        )}
+        className={cn("flex items-center gap-1.5 text-text-subtle", copyable && "group-hover:hidden coarse:hidden")}
       >
         {shared && (
           <Users
@@ -528,21 +510,9 @@ function ItemRow({
           />
         )}
         {totp && <Timer className="size-3.5" aria-label={t("list.hasTotp")} />}
-        {item.data.favorite && (
-          <Star
-            className={cn(
-              "size-3.5",
-              tone("fill-warning text-warning", "fill-current", "md:fill-current md:text-current"),
-            )}
-            aria-label={t("list.favorite")}
-          />
-        )}
+        {item.data.favorite && <Star className="size-3.5 fill-warning text-warning" aria-label={t("list.favorite")} />}
         {risky && (
-          <ShieldAlert
-            className={cn("size-[18px]", tone("text-warning", "text-accent-contrast", "md:text-accent-contrast"))}
-            aria-label={t("list.risky")}
-            data-testid="risky-badge"
-          />
+          <ShieldAlert className="size-[18px] text-warning" aria-label={t("list.risky")} data-testid="risky-badge" />
         )}
       </span>
     </div>

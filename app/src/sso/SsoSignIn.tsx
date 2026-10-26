@@ -60,7 +60,7 @@ export function SsoSignInOption({ email }: { email: string }) {
     <>
       {option ? (
         <div
-          className="flex flex-col gap-2.5 rounded-lg border border-accent/25 bg-accent-soft p-3"
+          className="flex flex-col gap-2.5 rounded-lg border border-info/25 bg-accent-soft p-3"
           data-testid="sso-option"
         >
           <p className="flex items-start gap-2 text-[0.8125rem]">

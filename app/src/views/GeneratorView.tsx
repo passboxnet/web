@@ -142,7 +142,7 @@ export function GeneratorView() {
               max={length.max}
               value={length.value}
               onChange={(e) => length.set(Number(e.target.value))}
-              className="accent-accent coarse:h-8"
+              className="accent-control coarse:h-8"
             />
           </label>
           {mode === "password" && (

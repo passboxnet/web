@@ -86,7 +86,7 @@ export function EmergencyKitScreen() {
           aria-labelledby="kit-title"
           className="overflow-hidden rounded-panel border border-hairline bg-surface shadow-raised print:border-0 print:shadow-none"
         >
-          <div className="relative bg-signature px-6 py-6 text-white sm:px-8 print:bg-none print:text-black">
+          <div className="relative bg-signature px-6 py-6 text-white shadow-[inset_0_-3px_0_0_var(--color-marina-lip)] sm:px-8 print:bg-none print:text-black print:shadow-none">
             <Logo className="text-white print:text-black" />
             <h2 id="kit-title" className="mt-4 text-title-sm">
               {t("kit.card.heading")}

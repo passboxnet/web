@@ -179,7 +179,7 @@ function WaitingCard({ org }: { org: Org }) {
   return (
     <section
       aria-labelledby="waiting-title"
-      className="flex flex-col gap-4 rounded-card border border-accent/25 bg-accent-soft px-5 py-5"
+      className="flex flex-col gap-4 rounded-card border border-info/25 bg-accent-soft px-5 py-5"
     >
       <div className="flex gap-3">
         <Hourglass className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />

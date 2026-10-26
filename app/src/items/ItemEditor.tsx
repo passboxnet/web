@@ -270,7 +270,7 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
                   onChange={(e) => setData((d) => ({ ...d, title: e.target.value }))}
                   ref={titleRef}
                   placeholder={t("editor.titlePlaceholder")}
-                  className="w-full rounded-md bg-transparent px-1 py-1 text-title text-text outline-none placeholder:text-text-muted focus:bg-surface focus:ring-3 focus:ring-accent/20"
+                  className="w-full rounded-md bg-transparent px-1 py-1 text-title text-text outline-none placeholder:text-text-muted focus:bg-surface focus:ring-3 focus:ring-focus/20"
                 />
                 <div className="mt-1 flex flex-wrap items-center gap-3 px-1 text-[0.8125rem] text-text-muted">
                   {item ? (

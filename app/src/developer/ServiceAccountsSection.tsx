@@ -466,7 +466,7 @@ pbx read pbx://<vault>/<item>/<field>`}
         <label className="flex items-start gap-2 text-[0.8125rem] coarse:min-h-11">
           <input
             type="checkbox"
-            className="mt-0.5 size-4 accent-accent"
+            className="mt-0.5 size-4 accent-control"
             checked={stored}
             onChange={(e) => setStored(e.target.checked)}
             data-testid="sa-token-stored"

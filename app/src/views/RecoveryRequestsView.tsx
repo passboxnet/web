@@ -178,7 +178,7 @@ function ApproveDialog({ org, request, onClose }: { org: Org; request: RecoveryR
           <label className="mt-2 flex items-start gap-2 text-[0.8125rem] coarse:min-h-11">
             <input
               type="checkbox"
-              className="mt-0.5 size-4 accent-accent"
+              className="mt-0.5 size-4 accent-control"
               checked={identity}
               onChange={(e) => setIdentity(e.target.checked)}
             />
@@ -189,7 +189,7 @@ function ApproveDialog({ org, request, onClose }: { org: Org; request: RecoveryR
           <p className="font-semibold">{t("recovery.requests.step2Title")}</p>
           <p className="mt-1 text-[0.8125rem] text-text-muted">{t("recovery.requests.step2Body")}</p>
           <p
-            className="mt-2 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 text-center font-mono text-xl font-semibold tracking-wider tabular-nums"
+            className="mt-2 rounded-lg border border-info/30 bg-accent-soft px-3 py-2 text-center font-mono text-xl font-semibold tracking-wider tabular-nums"
             data-testid="approve-request-code"
           >
             {request.requestCode}
@@ -197,7 +197,7 @@ function ApproveDialog({ org, request, onClose }: { org: Org; request: RecoveryR
           <label className="mt-2 flex items-start gap-2 text-[0.8125rem] coarse:min-h-11">
             <input
               type="checkbox"
-              className="mt-0.5 size-4 accent-accent"
+              className="mt-0.5 size-4 accent-control"
               checked={codeMatches}
               onChange={(e) => setCodeMatches(e.target.checked)}
             />

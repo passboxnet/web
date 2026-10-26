@@ -135,7 +135,7 @@ export function InvitationPrompt({ navigate }: { navigate: (route: Route) => voi
           )}
           {!wrongAccount && preview.recovery && (
             <div
-              className="flex gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-[0.8125rem]"
+              className="flex gap-3 rounded-lg border border-info/30 bg-accent-soft px-4 py-3 text-[0.8125rem]"
               data-testid="invite-recovery-note"
             >
               <LifeBuoy className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />

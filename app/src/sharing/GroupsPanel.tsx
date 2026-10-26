@@ -188,7 +188,7 @@ function CreateGroupDialog({
             >
               <input
                 type="checkbox"
-                className="size-4 accent-accent"
+                className="size-4 accent-control"
                 checked={members.includes(person.accountId)}
                 onChange={(e) =>
                   setMembers((current) =>

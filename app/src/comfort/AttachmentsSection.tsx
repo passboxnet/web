@@ -46,7 +46,7 @@ export function saveBytes(data: Uint8Array, name: string, type: string) {
 }
 
 /**
- * Files attached to an item (G2): add by picking or dropping files, open a
+ * Files attached to an item: add by picking or dropping files, open a
  * preview of images and PDFs, download and remove. Files are encrypted on
  * this device before they are uploaded.
  */

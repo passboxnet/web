@@ -1,5 +1,5 @@
 /**
- * Decisions of 25.10.2026 in the web app: organization recovery is on by
+ * In the web app: organization recovery is on by
  * default and members are told when they join; guests are free and
  * view-only; members and guests are counted separately.
  * Set PASSBOX_SCREENSHOTS to a directory to save screenshots.

@@ -24,7 +24,7 @@ export function shareLinkBase(): string {
 }
 
 /**
- * "Share via link" (B7): a copy of selected fields for someone without an
+ * "Share via link": a copy of selected fields for someone without an
  * account. The copy is encrypted here; the key is only in the link. The
  * link expires, can be limited to a number of views and protected with a
  * passphrase. An organization's policy may forbid or limit links.

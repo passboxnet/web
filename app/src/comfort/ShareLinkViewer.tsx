@@ -23,7 +23,7 @@ export function shareLinkFromLocation(location: Pick<Location, "pathname" | "has
 }
 
 /**
- * The page for people without an account who open a share link (B7). It
+ * The page for people without an account who open a share link. It
  * needs no sign-in: the key is in the link's fragment (never sent to the
  * server), the copy is decrypted in this browser. Opening counts a view, so
  * the page asks before it opens.

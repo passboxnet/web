@@ -1,5 +1,5 @@
 /**
- * AI features (K6 import mapping, K4 security plan): off by default, useful
+ * AI features (import mapping, security plan): off by default, useful
  * without a model, and with a model only headers, patterns, kinds, counts
  * and domains leave the page. The model server is faked with request
  * interception, so the test sees exactly what would be sent.

@@ -67,7 +67,7 @@ export function vaultSecrets(items: readonly Item[]): SecretGuard {
 const TONE: Record<Priority, BadgeTone> = { critical: "danger", high: "warning", medium: "neutral", low: "neutral" };
 
 /**
- * K4 security copilot: a prioritised plan above the findings. Without AI
+ * Security plan: a prioritised plan above the findings. Without AI
  * (the default) it is built by rules and shown with translated texts; with
  * the feature on, a model explains it in plain language from metadata only.
  */

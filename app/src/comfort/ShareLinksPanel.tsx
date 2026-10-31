@@ -7,7 +7,7 @@ import { useClient } from "../useClient";
 import { Panel } from "../views/PageHeader";
 import { comfortError } from "./errors";
 
-/** The account's share links (B7) in Settings: how often each was opened, and "End link". */
+/** The account's share links in Settings: how often each was opened, and "End link". */
 export function ShareLinksPanel() {
   const client = useClient();
   const i18n = useI18n();

@@ -1,5 +1,5 @@
 /**
- * Where this browser keeps its trusted device key (SSO unlock, wave E2).
+ * Where this browser keeps its trusted device key (SSO unlock).
  *
  * The device's X-Wing seed is encrypted with an AES-GCM key that WebCrypto
  * creates as non-extractable, and both are stored in IndexedDB. Scripts on

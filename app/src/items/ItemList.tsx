@@ -96,7 +96,7 @@ export function ItemList({
   const { vaults } = useSnapshot();
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  // Selection mode for moving or archiving several items at once (B5, G14).
+  // Selection mode for moving or archiving several items at once.
   const [picked, setPicked] = useState<string[] | undefined>();
   const [moving, setMoving] = useState(false);
   const writable = new Set(writableVaults(vaults).map((v) => v.id));

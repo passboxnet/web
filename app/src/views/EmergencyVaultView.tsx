@@ -13,7 +13,7 @@ import { Page } from "./PageHeader";
 
 /**
  * The vaults someone shared through emergency access, after the waiting
- * period (C3). Read only; decrypted on this device and kept in memory only.
+ * period. Read only; decrypted on this device and kept in memory only.
  */
 export function EmergencyVaultView({ grantId }: { grantId: string }) {
   const client = useClient();

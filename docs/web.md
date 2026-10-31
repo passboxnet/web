@@ -1,14 +1,14 @@
 # Web app
 
-The web vault lives in [`apps/web`](../app) (React, Vite, Tailwind 4, hash routing). The desktop app shows the same build, so everything here applies to [desktop](https://github.com/passboxnet/desktop/blob/main/docs/desktop.md) as well; desktop-only parts sit behind `isDesktop` in `apps/web/src/desktop.ts`. Shared components and design tokens come from [`packages/ui`](https://github.com/passboxnet/core/tree/main/packages/ui), all cryptography from the WebAssembly core through [`@passbox/client`](https://github.com/passboxnet/core/tree/main/packages/client).
+The web vault is in [`app`](../app) (React, Vite, Tailwind 4, hash routing). The desktop app shows the same build, so everything here applies to [desktop](https://github.com/passboxnet/desktop/blob/main/docs/desktop.md) as well; desktop-only parts sit behind `isDesktop` in `app/src/desktop.ts`. Shared components and design tokens come from passboxnet/core: [`packages/ui`](https://github.com/passboxnet/core/tree/main/packages/ui), all cryptography from the WebAssembly core through [`@passbox/client`](https://github.com/passboxnet/core/tree/main/packages/client).
 
 ## Languages
 
-- Messages come from [`packages/i18n`](https://github.com/passboxnet/core/tree/main/packages/i18n): `messages/<locale>/common.json` (shared with the extension) and `messages/<locale>/web.json` (this app). English and German exist; German uses "Sie" and the terms in [GLOSSARY.md](https://github.com/passboxnet/core/blob/main/packages/i18n/GLOSSARY.md).
-- `apps/web/src/lib/i18n.ts` picks the locale from Settings → Language, or from `navigator.languages` when it is set to "System" (the default), so German browsers get German. `<html lang>` follows the choice.
+- Messages come from [`packages/i18n`] in passboxnet/core(https://github.com/passboxnet/core/tree/main/packages/i18n): `messages/<locale>/common.json` (shared with the extension) and `messages/<locale>/web.json` (this app). English and German exist; German uses "Sie" and the terms in [GLOSSARY.md](https://github.com/passboxnet/core/blob/main/packages/i18n/GLOSSARY.md).
+- `app/src/lib/i18n.ts` picks the locale from Settings → Language, or from `navigator.languages` when it is set to "System" (the default), so German browsers get German. `<html lang>` follows the choice.
 - Components call `const { t } = useI18n()`; code outside React (toasts, errors) calls `i18n().t`. Dates, relative times and sorting use the translator (`relativeTime`, `date`, `dateTime`, `compare`). Shortcuts show ⌘ on Apple devices and Ctrl/Strg elsewhere (`shortcut(t, "K")`); keyboard hints are hidden on touch screens.
 - Labels the shared components render themselves (Close, Cancel, Show password, Caps Lock) are passed in with `UiStringsProvider` from `@passbox/ui`.
-- `apps/web/src/i18n.test.ts` fails on text in JSX that is not translated (text nodes and visible attributes such as `label`, `placeholder`, `aria-label`) and on `t("…")` keys that are missing in English or German. The catalog test in `packages/i18n` checks that both languages have the same keys and placeholders.
+- `app/src/i18n.test.ts` fails on text in JSX that is not translated (text nodes and visible attributes such as `label`, `placeholder`, `aria-label`) and on `t("…")` keys that are missing in English or German. The catalog test in passboxnet/core (`packages/i18n`) checks that both languages have the same keys and placeholders.
 
 ## Accounts and the Emergency Kit
 
@@ -40,7 +40,7 @@ The web vault lives in [`apps/web`](../app) (React, Vite, Tailwind 4, hash routi
 
 ## Families, teams and sharing
 
-The UI for [organizations and shared vaults](https://github.com/passboxnet/core/blob/main/docs/architecture/sharing.md) lives in `apps/web/src/sharing/`; pure helpers (roles, audience, invitation links, warning order) are in `lib/sharing.ts`. All signing, sealing and verification stays in the core; the UI only calls `@passbox/client`.
+The UI for [organizations and shared vaults](https://github.com/passboxnet/core/blob/main/docs/architecture/sharing.md) lives in `app/src/sharing/`; pure helpers (roles, audience, invitation links, warning order) are in `lib/sharing.ts`. All signing, sealing and verification stays in the core; the UI only calls `@passbox/client`.
 
 | Topic | Behavior |
 | --- | --- |
@@ -56,14 +56,14 @@ The UI for [organizations and shared vaults](https://github.com/passboxnet/core/
 | Organization settings | Rename (admins), leave (non-owners), delete (owner, after typing the name). |
 | Sidebar and items | Personal vaults under "Vaults", shared vaults under each organization's name with a people icon. Item rows in shared vaults carry the icon; the item detail shows "Visible to: …" (opens the access dialog) or "Only visible to you". New items default to the personal vault; the vault picker lists only writable vaults, shared ones as "Family vault · The Millers", with the audience below. |
 | View only | Items in View vaults have no Edit, favorite, trash, password restore or "Change now"; a note says what is possible and who can grant edit rights. The trash does not offer restore/delete for them. |
-| Share… | The item menu's **Share…** opens the access dialog for shared items. For personal items it explains that Passbox shares whole vaults, previews who will see the item, and moves it: a copy without earlier passwords goes to the chosen shared vault and the original to the trash (restorable for 30 days). Proper moving with the same item ID (B5) needs client support and is not implemented. Without an organization it leads to "Family & team". |
+| Share… | The item menu's **Share…** opens the access dialog for shared items. For personal items it explains that Passbox shares whole vaults, previews who will see the item, and moves it into the chosen shared vault (`client.moveItems`: the same item with its history and attachments, re-encrypted for that vault). The toast offers to move it back. Without an organization it leads to "Family & team". |
 | Warnings | `sharingWarnings` show a calm yellow banner under the header ("A member's security code changed…", "Passbox couldn't verify some shared data…") with **Details**: per warning what it means and what to do; for changed keys both codes side by side and **Code matches – trust the new key** (`acceptKeyChange`). Technical details are behind a disclosure. |
 | Security code | Settings → **Your security code**: the own fingerprint in 12 groups, when it is needed, and **Check with the key directory** (`verifyOwnKey`). |
 | Key rotation | After unlocking (and whenever sync reports it), vaults marked `rotationPending` that this account manages are rotated automatically with a progress toast (`usePendingRotations`); removals started in the UI hold a lock so the same vault is never rotated twice at once. A vault the account lost access to falls back to all items. |
 
 ## Security check
 
-The former Watchtower. It shows "X of Y logins are secure" with a bar instead of a score, then the problems in priority order (used more than once, found in breaches, easy to guess, unsecured connection) with plain labels. Logins without 2FA are under "More tips". Each problem row has **Change now**, a three-step dialog: open the website and copy the current password, copy a new generated one, then "Did it work?" → save or keep the old one. The new password is kept as an in-memory draft per item until it is saved or discarded and is forgotten on lock.
+The security check shows "X of Y logins are secure" with a bar instead of a score, then the problems in priority order (used more than once, found in breaches, easy to guess, unsecured connection) with plain labels. Logins without 2FA are under "More tips". Each problem row has **Change now**, a three-step dialog: open the website and copy the current password, copy a new generated one, then "Did it work?" → save or keep the old one. The new password is kept as an in-memory draft per item until it is saved or discarded and is forgotten on lock.
 
 **Your plan** above the findings orders the work: up to five steps (breached, reused, easy to guess, unsecured connection, two-factor sign-in for email, finance, developer and government accounts) with a priority and the first three websites, built by rules on the device with translated texts. With the AI feature "Security check: explain and prioritise" switched on, **Explain with AI** lets the configured model write the titles and explanations from finding kinds, counts and domains only (see [architecture/ai-gateway.md](https://github.com/passboxnet/core/blob/main/docs/architecture/ai-gateway.md)).
 
@@ -73,7 +73,7 @@ The former Watchtower. It shows "X of Y logins are secure" with a bar instead of
 
 Account (Emergency Kit, masked Secret Key `P1-•••••-…`, change master password, forgot password), **Devices** (`client.sessions()`, this device marked, sign out one or all others, with confirmations), **Activity** (last 50 events; failed attempts are called sign-in attempts, with the note that wrong master passwords are detected on the device and may not appear), security on this device, language and theme, About (audit status, server, license) and **Technical details** (account ID, algorithms, KDF parameters, server version). The web app names its device "Chrome on Windows" and so on from the user agent; the desktop app reports "Passbox Desktop on …".
 
-**AI features (optional)** (`apps/web/src/ai`): off by default, per account and browser. Where the model runs (the browser's built-in model or a model server on this computer, your own server, a cloud provider with an API key from a vault item), one switch per feature that says what it sends, a confirmation before data goes to a cloud provider, and the local AI log. For cloud providers a **Provider** picker fills in endpoint, API and region (Mistral, IONOS, STACKIT, Scaleway, Langdock, OpenAI, Anthropic) and says where the data goes; the API key is always a vault item. Details: [architecture/ai-gateway.md](https://github.com/passboxnet/core/blob/main/docs/architecture/ai-gateway.md).
+**AI features (optional)** (`app/src/ai`): off by default, per account and browser. Where the model runs (the browser's built-in model or a model server on this computer, your own server, a cloud provider with an API key from a vault item), one switch per feature that says what it sends, a confirmation before data goes to a cloud provider, and the local AI log. For cloud providers a **Provider** picker fills in endpoint, API and region (Mistral, IONOS, STACKIT, Scaleway, Langdock, OpenAI, Anthropic) and says where the data goes; the API key is always a vault item. Details: [architecture/ai-gateway.md](https://github.com/passboxnet/core/blob/main/docs/architecture/ai-gateway.md).
 
 ## Account recovery and emergency access
 
@@ -138,7 +138,7 @@ An empty vault shows a checklist instead of a bare empty state, also reachable a
 
 ## Accessibility
 
-- Touch screens (`pointer: coarse`) get targets of at least 44 px: the `coarse:` Tailwind variant from `packages/ui/src/tokens.css` enlarges buttons, inputs, menu items, nav items and segmented controls, and keeps per-row and per-field copy buttons visible.
+- Touch screens (`pointer: coarse`) get targets of at least 44 px: the `coarse:` Tailwind variant from `packages/ui/src/tokens.css` (passboxnet/core) enlarges buttons, inputs, menu items, nav items and segmented controls, and keeps per-row and per-field copy buttons visible.
 - `--pb-text-subtle` is darker in light mode (oklch 0.5) and lighter in dark mode (0.68); badges and meters use `--pb-warning-text` and `--pb-success-text` so their text reaches 4.5:1. Font sizes are in rem and `text-2xs` is 0.75 rem.
 - The logo's gradient ID comes from `useId`, so the mark stays visible when another copy is hidden.
 - Toasts appear bottom center for 4 seconds and are cleared when switching screens.

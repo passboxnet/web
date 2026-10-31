@@ -20,7 +20,7 @@ export function daysUntil(at: number, now = Date.now()): number {
 }
 
 /**
- * Settings → Emergency access (C3): trusted people who can read chosen
+ * Settings → Emergency access: trusted people who can read chosen
  * vaults after a waiting period, and people who trust this account.
  */
 export function EmergencyPanel() {

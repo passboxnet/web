@@ -7,8 +7,8 @@ import { ServiceAccountsSection } from "./ServiceAccountsSection";
 export type DeveloperSection = "agents" | "service-accounts";
 
 /**
- * Developer tools (wave F): AI agent requests and activity (F7), and
- * service accounts for CI, servers and agents (F2).
+ * Developer tools: AI agent requests and activity, and service accounts
+ * for CI, servers and agents.
  */
 export function DeveloperView({
   section,

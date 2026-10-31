@@ -38,7 +38,7 @@ const SECTIONS = [
 ] as const;
 const SECTION_IDS = SECTIONS.map((section) => section.id);
 
-/** Instance administration for self-hosters (A7, D1). Only instance admins see it. */
+/** Instance administration for self-hosters. Only instance admins see it. */
 export function AdminView() {
   const client = useClient();
   const { t } = useI18n();

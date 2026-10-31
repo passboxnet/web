@@ -12,7 +12,7 @@ import { useClient, useSnapshot } from "../useClient";
 import { Page } from "../views/PageHeader";
 
 /**
- * Archived items (G14): out of the way of lists, search and autofill, but
+ * Archived items: out of the way of lists, search and autofill, but
  * kept, with their history, until they are taken out again or deleted.
  */
 export function ArchiveView() {

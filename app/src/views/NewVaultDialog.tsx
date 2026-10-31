@@ -15,7 +15,7 @@ export function NewVaultDialog({ open, onOpenChange, onCreated }: NewVaultDialog
   const { t } = useI18n();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  // Policy D2: an organization can turn personal vaults off.
+  // Organization policy: an organization can turn personal vaults off.
   const blocked = !useSnapshot().effectivePolicy.allowPersonalVault;
 
   async function submit(event: FormEvent) {

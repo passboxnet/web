@@ -7,12 +7,12 @@ import { OrgRecoveryRow } from "../views/settings/RecoveryPanel";
 import { Meter, Section } from "./common";
 import type { ReportState } from "./OrgAdminView";
 
-/** Recovery through the organization (C1) from the admin's side: set-up, approvers, enrollment and requests. */
+/** Recovery through the organization from the admin's side: set-up, approvers, enrollment and requests. */
 export function RecoverySection({ org, data }: { org: Org; data: ReportState }) {
   const { t } = useI18n();
   const { policies } = useSnapshot();
   const required = policies.find((p) => p.orgId === org.id)?.rules.requireRecoveryEnrollment ?? false;
-  // Guests are never recovered by the organization (B8).
+  // Guests are never recovered by the organization.
   const active = data.report?.members.filter((m) => m.status === "confirmed" && m.role !== "guest") ?? [];
   const missing = active.filter((m) => !m.recoveryEnrolled);
 

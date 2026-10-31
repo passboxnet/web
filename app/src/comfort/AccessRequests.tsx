@@ -30,7 +30,7 @@ type VaultState =
   | { status: "ready"; orgId: string; hasAccess: boolean; request: AccessRequestRecord | null };
 
 /**
- * Shown for a vault link this account cannot open (B9): ask the vault's
+ * Shown for a vault link this account cannot open: ask the vault's
  * managers for access, see the answer, or withdraw the request. Only
  * members of the vault's organization learn that the vault exists.
  */

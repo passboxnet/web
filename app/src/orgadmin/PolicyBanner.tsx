@@ -10,7 +10,7 @@ import { useClient, useSnapshot } from "../useClient";
 import { activeRules } from "./policyText";
 
 /**
- * What an organization's policy asks of this account (D2): turn on
+ * What an organization's policy asks of this account: turn on
  * two-factor sign-in, choose a stronger master password, enroll in
  * recovery, or update the app for rules it does not know.
  */

@@ -10,7 +10,7 @@ import { localizedDeviceName } from "./settings/DevicesPanel";
 
 /**
  * Pending account recovery requests for the organizations where this
- * account holds the recovery key (C1). Approving needs an out-of-band
+ * account holds the recovery key. Approving needs an out-of-band
  * identity check and the comparison of the request code.
  */
 export function RecoveryRequestsView() {

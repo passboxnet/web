@@ -32,7 +32,7 @@ export function unknownColumns(detected: ColumnMapping): number[] {
 export type Suggested = ReadonlyMap<number, MappingProposal["source"]>;
 
 /**
- * K6: suggests targets for unrecognized columns, with the AI model when the
+ * Suggests targets for unrecognized columns, with the AI model when the
  * feature is on (only headers and value patterns are sent), from value
  * patterns on this device otherwise. The user confirms in the table.
  */

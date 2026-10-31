@@ -60,7 +60,7 @@ export function OverviewSection({
   if (!report) return <Loading error={data.error} onRetry={data.reload} />;
 
   const active = report.members.filter((m) => m.status === "confirmed");
-  // Guests are free and view-only (B8): counted separately, never as members.
+  // Guests are free and view-only: counted separately, never as members.
   const members = active.filter((m) => m.role !== "guest");
   const guests = report.guestCount ?? active.length - members.length;
   const withTwoFactor = active.filter((m) => m.twoFactor).length;

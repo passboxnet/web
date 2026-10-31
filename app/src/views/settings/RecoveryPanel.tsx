@@ -19,8 +19,8 @@ function isAdmin(org: Org): boolean {
 }
 
 /**
- * Settings → Recovery: the account recovery code (C2), recovery through each
- * organization (C1, opt-in per member) and adding a device by code (C4).
+ * Settings → Recovery: the account recovery code, recovery through each
+ * organization (opt-in per member) and adding a device by code.
  */
 export function RecoveryPanel() {
   const client = useClient();

@@ -288,7 +288,7 @@ function SignUpForm({
   const [suggestion, setSuggestion] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  // Opt-in: a recovery code for the Emergency Kit (C2).
+  // Opt-in: a recovery code for the Emergency Kit.
   const [withRecoveryCode, setWithRecoveryCode] = useState(false);
 
   async function suggest() {

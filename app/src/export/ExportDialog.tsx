@@ -32,7 +32,7 @@ export function ExportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   useEffect(() => {
     if (!open) return;
     setKind("encrypted");
-    // Policy D2: organizations can forbid exporting their vaults.
+    // Organization policy: organizations can forbid exporting their vaults.
     setVaultIds(snapshot.vaults.filter((v) => canExportVault(snapshot.effectivePolicy, v)).map((v) => v.id));
     setIncludeTrash(false);
     setPassword("");

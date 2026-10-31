@@ -81,7 +81,7 @@ export function VaultSharingDialog({ vaultId, onOpenChange }: VaultSharingDialog
       })),
   ];
   const waiting = org.members.filter((m) => m.status === "accepted");
-  // Guests are view-only (B8): they can only be given `view`.
+  // Guests are view-only: they can only be given `view`.
   const guests = new Set(org.members.filter((m) => m.role === "guest").map((m) => m.accountId));
   const isGuestKey = (key: string) => key.startsWith("account:") && guests.has(key.slice("account:".length));
   const addingGuest = isGuestKey(adding);

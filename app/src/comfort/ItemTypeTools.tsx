@@ -7,7 +7,7 @@ import { useI18n } from "../lib/i18n";
 import { QrCode } from "../views/settings/TwoFactorPanel";
 
 /**
- * "Join Wi-Fi" for Wi-Fi items (G3): a QR code that phone cameras offer
+ * "Join Wi-Fi" for Wi-Fi items: a QR code that phone cameras offer
  * to join. It contains the password, so it is shown on request only.
  */
 export function WifiJoinCard({ item }: { item: Item }) {

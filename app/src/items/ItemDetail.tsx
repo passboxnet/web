@@ -123,11 +123,11 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   const itemVault = vaults.find((v) => v.id === item?.vaultId);
   const audience = useAudience(item?.vaultId);
   // View-only members of a shared vault can read, copy and fill, not change.
-  // Guests are view-only, whatever the vault grants (B8).
+  // Guests are view-only, whatever the vault grants.
   const guest = isGuestVault(itemVault, orgs);
   const canEdit = !guest && (!itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage");
 
-  // Item usage for organizations whose policy asks for it (D3).
+  // Item usage for organizations whose policy asks for it.
   const itemId = item?.id;
   const reportUsage = useCallback<ReportUsage>(
     (action, field = "") => {

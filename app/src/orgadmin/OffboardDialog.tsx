@@ -13,7 +13,7 @@ import { useClient, useSnapshot } from "../useClient";
 import { useNames } from "./common";
 
 /**
- * Offboarding (D4): hand over vaults only the member manages, sign the
+ * Offboarding: hand over vaults only the member manages, sign the
  * member out everywhere, then remove them, which ends their access on the
  * server at once and rotates the keys of every vault this device manages.
  */

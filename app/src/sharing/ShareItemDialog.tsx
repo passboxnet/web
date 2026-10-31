@@ -60,7 +60,7 @@ export function ShareItemDialog({
     setBusy(true);
     setError(undefined);
     try {
-      // A real move (B5): same entry, history and attachments, now encrypted for the shared vault.
+      // A real move: same entry, history and attachments, now encrypted for the shared vault.
       const from = item.vaultId;
       await client.moveItems([item.id], target);
       toast.success(t("sharing.shareItem.done", { name: itemTitle(item, t), vault: targetName }), {

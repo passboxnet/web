@@ -14,7 +14,7 @@ import { comfortError } from "./errors";
 const selectClass = cn(fieldClassName, "h-10 px-2.5 coarse:h-12");
 
 /**
- * "Move to another vault" (B5) for one or more items: pick the target,
+ * "Move to another vault" for one or more items: pick the target,
  * see who gains and who loses access, then move. Moving re-encrypts the
  * items for the target vault on this device; they keep their history and
  * attachments. The toast offers to move them back.

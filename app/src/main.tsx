@@ -16,7 +16,7 @@ applyLocale();
 captureOrgInvite();
 subscribePreferences(() => applyLocale());
 
-// A share link (`/s/{id}#{key}`) opens the public viewer, without an account (B7).
+// A share link (`/s/{id}#{key}`) opens the public viewer, without an account.
 const shareLink = shareLinkFromLocation();
 
 const root = document.getElementById("root");

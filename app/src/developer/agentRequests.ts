@@ -1,5 +1,5 @@
 /**
- * Pending AI agent requests (F7), shared by the approval dialog and the
+ * Pending AI agent requests, shared by the approval dialog and the
  * sidebar. Polls the server while the vault is unlocked: every few seconds
  * while the page is visible, less often in the background (the desktop app
  * keeps polling while its window is hidden).

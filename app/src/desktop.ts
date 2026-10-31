@@ -1,12 +1,12 @@
 /**
- * Bridge to the Passbox desktop app (apps/desktop, Tauri). Everything here is
+ * Bridge to the Passbox desktop app (passboxnet/desktop, Tauri). Everything here is
  * a no-op in browsers, and the Tauri API is only loaded inside the desktop app.
  */
 
 /** True when the web client runs inside the desktop app. */
 export const isDesktop = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-/** Events sent by the desktop shell. Keep in sync with apps/desktop/src-tauri/src/main.rs. */
+/** Events sent by the desktop shell. Keep in sync with src-tauri/src/main.rs in passboxnet/desktop. */
 const LOCK_EVENT = "passbox://lock";
 const PALETTE_EVENT = "passbox://command-palette";
 
@@ -112,7 +112,7 @@ interface UaData {
 
 /**
  * Windows 11 draws the Mica material behind the desktop window
- * (apps/desktop/src-tauri/tauri.windows.conf.json); the page then lets it
+ * (src-tauri/tauri.windows.conf.json in passboxnet/desktop); the page then lets it
  * show through the canvas (`data-window-material` in styles.css). Windows
  * 10 has no Mica, macOS and Linux get a solid surface: nothing changes there.
  */

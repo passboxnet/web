@@ -37,7 +37,7 @@ function toQuery(filters: Filters): AuditQuery {
   return query;
 }
 
-/** The organization's audit log (D3): filters, details, the hash chain check and exports. */
+/** The organization's audit log: filters, details, the hash chain check and exports. */
 export function ActivitySection({ org }: { org: Org }) {
   const client = useClient();
   const { t } = useI18n();

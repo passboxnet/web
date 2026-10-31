@@ -21,7 +21,7 @@ const SIEMS = [
   { id: "wazuh", name: "Wazuh" },
 ] as const;
 
-/** SIEM integration (D5): tokens for the events API (pull) and webhooks (push). */
+/** SIEM integration: tokens for the events API (pull) and webhooks (push). */
 export function IntegrationsSection({ org }: { org: Org }) {
   const client = useClient();
   const i18n = useI18n();

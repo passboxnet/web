@@ -13,7 +13,7 @@ import { getPreferences } from "./preferences";
  *
  * In the desktop app the shell copies and clears natively instead, which also
  * works while the window is hidden and keeps the secret out of clipboard
- * history (see apps/desktop/src-tauri/src/clipboard.rs).
+ * history (see src-tauri/src/clipboard.rs in passboxnet/desktop).
  */
 
 /** The secret this page copied and has not cleared yet. */

@@ -55,7 +55,7 @@ export function App() {
         client.refreshRecoveryOptions().catch((e: unknown) => console.warn("Could not load recovery options", e));
         client.resealEmergencyAccess().catch((e: unknown) => console.warn("Could not update emergency access", e));
         // Organizations receive security aggregates (numbers only) at most daily
-        // (D6), once the first sync has brought the organizations in.
+        // for their reports, once the first sync has brought the organizations in.
         setTimeout(() => {
           if (client.getSnapshot().status !== "unlocked") return;
           client.reportSecurityAggregates().catch((e: unknown) => console.warn("Could not report security", e));
@@ -67,7 +67,7 @@ export function App() {
 
   // The desktop shell applies these while the window is hidden.
   const { lockOnClose, autoLockMinutes: preferred } = usePreferences();
-  // An organization policy can cap the auto-lock time (D2).
+  // An organization policy can cap the auto-lock time.
   const limit = useSyncExternalStore(
     client?.subscribe ?? noSubscribe,
     () => client?.getSnapshot().effectivePolicy.maxAutoLockMinutes ?? null,

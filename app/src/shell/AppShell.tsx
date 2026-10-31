@@ -50,7 +50,7 @@ export function AppShell() {
 
   // A stable callback: a new one on every render would restart the inactivity timer.
   const lock = useCallback(() => client.lock(), [client]);
-  // Organization policies can cap the auto-lock time (D2).
+  // Organization policies can cap the auto-lock time.
   useAutoLock(lock, clampAutoLock(snapshot.effectivePolicy, preferences.autoLockMinutes));
   usePendingRotations();
   // Breached websites: a newer catalogue, matched on this device.

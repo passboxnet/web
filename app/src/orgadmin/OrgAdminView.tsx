@@ -74,7 +74,7 @@ interface OrgAdminViewProps {
 }
 
 /**
- * The admin console of an organization (D1): a separate area for owners and
+ * The admin console of an organization: a separate area for owners and
  * admins with members, groups, vaults and their access, policies, the audit
  * log, reports, recovery, integrations and settings.
  */

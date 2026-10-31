@@ -12,7 +12,7 @@ import type { ReportState } from "./OrgAdminView";
 
 type Tab = "security" | "access" | "vaults";
 
-/** Reports (D6): security per member, access per person and vault, unused vaults. */
+/** Reports: security per member, access per person and vault, unused vaults. */
 export function ReportsSection({ org, data }: { org: Org; data: ReportState }) {
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("security");

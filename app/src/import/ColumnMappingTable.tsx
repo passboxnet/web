@@ -21,7 +21,7 @@ export function ColumnMappingTable({
   table: CsvTable;
   mapping: ColumnMapping;
   onChange: (mapping: ColumnMapping) => void;
-  /** Columns whose target was suggested (K6), by source. */
+  /** Columns whose target was suggested, by source. */
   suggested?: ReadonlyMap<number, "ai" | "patterns">;
 }) {
   return (

@@ -17,7 +17,7 @@ export function dotenv(vars: [string, string][]): string {
 }
 
 /**
- * Shown on environment items (F8): what the item is for, how to use it
+ * Shown on environment items: what the item is for, how to use it
  * from the command line, and copying it as `.env` content.
  */
 export function EnvironmentPanel({ item }: { item: Item }) {

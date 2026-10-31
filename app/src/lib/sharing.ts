@@ -24,7 +24,7 @@ export function isOrgAdmin(org: Org): boolean {
 }
 
 /**
- * Whether this account is a guest of the vault's organization (B8): guests
+ * Whether this account is a guest of the vault's organization: guests
  * open, copy and fill items of the vaults shared with them and change
  * nothing (no items, vaults, share links, attachments or invitations). The
  * server enforces it (403 `guest_view_only`); the UI hides what it refuses.

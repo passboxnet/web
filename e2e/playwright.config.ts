@@ -6,12 +6,14 @@ import { createDatabaseCommand, databaseEnv, databaseName } from "./database";
 import { adminPort, port } from "./ports";
 
 const dataDir = mkdtempSync(join(tmpdir(), "passbox-e2e-"));
+const serverBin = process.env.PASSBOX_SERVER_BIN ?? "passbox-server";
 
 function server(listen: number, label: string) {
   const database = databaseName(label, listen);
   return {
     // A fresh database per run; the server migrates it on start.
-    command: `${createDatabaseCommand(database)} && cargo run --quiet --package passbox-server`,
+    // The server binary from passbox-server, e.g. ../passbox-server/target/debug/passbox-server.
+    command: `${createDatabaseCommand(database)} && ${serverBin}`,
     cwd: "..",
     url: `http://127.0.0.1:${listen}/health`,
     timeout: 300_000,
@@ -22,7 +24,7 @@ function server(listen: number, label: string) {
       RUST_LOG: "info,tower_http=debug",
       PASSBOX_BIND: `127.0.0.1:${listen}`,
       ...databaseEnv(database),
-      PASSBOX_WEB_DIR: "apps/web/dist",
+      PASSBOX_WEB_DIR: "app/dist",
       PASSBOX_BLOB_DIR: join(dataDir, `${database}.blobs`),
       // Every test signs in from 127.0.0.1; the default of 60 per minute
       // is meant for real clients, not a whole test suite.

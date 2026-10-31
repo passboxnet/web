@@ -2,11 +2,11 @@
 
 ## Status
 
-Passbox is in early development. The cryptographic design in [docs/architecture/cryptography.md](docs/architecture/cryptography.md) is a draft and has not been independently reviewed or audited. Do not use Passbox for real secrets yet.
+Passbox is in early development. The cryptographic design in [docs/architecture/cryptography.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/cryptography.md) is a draft and has not been independently reviewed or audited. Do not use Passbox for real secrets yet.
 
 ## Reporting a vulnerability
 
-Please do **not** open a public issue for security problems. Report them privately through [GitHub Security Advisories](https://github.com/passboxnet/passbox/security/advisories/new).
+Please do **not** open a public issue for security problems. Report them privately through [GitHub Security Advisories](https://github.com/passboxnet/passbox-web/security/advisories/new).
 
 Include:
 

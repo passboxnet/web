@@ -1,10 +1,10 @@
 # Web app
 
-The web vault lives in [`apps/web`](../apps/web) (React, Vite, Tailwind 4, hash routing). The desktop app shows the same build, so everything here applies to [desktop](desktop.md) as well; desktop-only parts sit behind `isDesktop` in `apps/web/src/desktop.ts`. Shared components and design tokens come from [`packages/ui`](../packages/ui), all cryptography from the WebAssembly core through [`@passbox/client`](../packages/client).
+The web vault lives in [`apps/web`](../app) (React, Vite, Tailwind 4, hash routing). The desktop app shows the same build, so everything here applies to [desktop](https://github.com/passboxnet/passbox-desktop/blob/main/docs/desktop.md) as well; desktop-only parts sit behind `isDesktop` in `apps/web/src/desktop.ts`. Shared components and design tokens come from [`packages/ui`](https://github.com/passboxnet/passbox-core/tree/main/packages/ui), all cryptography from the WebAssembly core through [`@passbox/client`](https://github.com/passboxnet/passbox-core/tree/main/packages/client).
 
 ## Languages
 
-- Messages come from [`packages/i18n`](../packages/i18n): `messages/<locale>/common.json` (shared with the extension) and `messages/<locale>/web.json` (this app). English and German exist; German uses "Sie" and the terms in [GLOSSARY.md](../packages/i18n/GLOSSARY.md).
+- Messages come from [`packages/i18n`](https://github.com/passboxnet/passbox-core/tree/main/packages/i18n): `messages/<locale>/common.json` (shared with the extension) and `messages/<locale>/web.json` (this app). English and German exist; German uses "Sie" and the terms in [GLOSSARY.md](https://github.com/passboxnet/passbox-core/blob/main/packages/i18n/GLOSSARY.md).
 - `apps/web/src/lib/i18n.ts` picks the locale from Settings → Language, or from `navigator.languages` when it is set to "System" (the default), so German browsers get German. `<html lang>` follows the choice.
 - Components call `const { t } = useI18n()`; code outside React (toasts, errors) calls `i18n().t`. Dates, relative times and sorting use the translator (`relativeTime`, `date`, `dateTime`, `compare`). Shortcuts show ⌘ on Apple devices and Ctrl/Strg elsewhere (`shortcut(t, "K")`); keyboard hints are hidden on touch screens.
 - Labels the shared components render themselves (Close, Cancel, Show password, Caps Lock) are passed in with `UiStringsProvider` from `@passbox/ui`.
@@ -40,7 +40,7 @@ The web vault lives in [`apps/web`](../apps/web) (React, Vite, Tailwind 4, hash 
 
 ## Families, teams and sharing
 
-The UI for [organizations and shared vaults](architecture/sharing.md) lives in `apps/web/src/sharing/`; pure helpers (roles, audience, invitation links, warning order) are in `lib/sharing.ts`. All signing, sealing and verification stays in the core; the UI only calls `@passbox/client`.
+The UI for [organizations and shared vaults](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/sharing.md) lives in `apps/web/src/sharing/`; pure helpers (roles, audience, invitation links, warning order) are in `lib/sharing.ts`. All signing, sealing and verification stays in the core; the UI only calls `@passbox/client`.
 
 | Topic | Behavior |
 | --- | --- |
@@ -65,7 +65,7 @@ The UI for [organizations and shared vaults](architecture/sharing.md) lives in `
 
 The former Watchtower. It shows "X of Y logins are secure" with a bar instead of a score, then the problems in priority order (used more than once, found in breaches, easy to guess, unsecured connection) with plain labels. Logins without 2FA are under "More tips". Each problem row has **Change now**, a three-step dialog: open the website and copy the current password, copy a new generated one, then "Did it work?" → save or keep the old one. The new password is kept as an in-memory draft per item until it is saved or discarded and is forgotten on lock.
 
-**Your plan** above the findings orders the work: up to five steps (breached, reused, easy to guess, unsecured connection, two-factor sign-in for email, finance, developer and government accounts) with a priority and the first three websites, built by rules on the device with translated texts. With the AI feature "Security check: explain and prioritise" switched on, **Explain with AI** lets the configured model write the titles and explanations from finding kinds, counts and domains only (see [architecture/ai-gateway.md](architecture/ai-gateway.md)).
+**Your plan** above the findings orders the work: up to five steps (breached, reused, easy to guess, unsecured connection, two-factor sign-in for email, finance, developer and government accounts) with a priority and the first three websites, built by rules on the device with translated texts. With the AI feature "Security check: explain and prioritise" switched on, **Explain with AI** lets the configured model write the titles and explanations from finding kinds, counts and domains only (see [architecture/ai-gateway.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/ai-gateway.md)).
 
 "Check for leaked passwords" is opt-in per session: it explains k-anonymity and then calls `breachCount` (Have I Been Pwned range API; only the first 5 characters of the SHA-1 hash leave the device). Results stay in memory.
 
@@ -73,11 +73,11 @@ The former Watchtower. It shows "X of Y logins are secure" with a bar instead of
 
 Account (Emergency Kit, masked Secret Key `P1-•••••-…`, change master password, forgot password), **Devices** (`client.sessions()`, this device marked, sign out one or all others, with confirmations), **Activity** (last 50 events; failed attempts are called sign-in attempts, with the note that wrong master passwords are detected on the device and may not appear), security on this device, language and theme, About (audit status, server, license) and **Technical details** (account ID, algorithms, KDF parameters, server version). The web app names its device "Chrome on Windows" and so on from the user agent; the desktop app reports "Passbox Desktop on …".
 
-**AI features (optional)** (`apps/web/src/ai`): off by default, per account and browser. Where the model runs (the browser's built-in model or a model server on this computer, your own server, a cloud provider with an API key from a vault item), one switch per feature that says what it sends, a confirmation before data goes to a cloud provider, and the local AI log. For cloud providers a **Provider** picker fills in endpoint, API and region (Mistral, IONOS, STACKIT, Scaleway, Langdock, OpenAI, Anthropic) and says where the data goes; the API key is always a vault item. Details: [architecture/ai-gateway.md](architecture/ai-gateway.md).
+**AI features (optional)** (`apps/web/src/ai`): off by default, per account and browser. Where the model runs (the browser's built-in model or a model server on this computer, your own server, a cloud provider with an API key from a vault item), one switch per feature that says what it sends, a confirmation before data goes to a cloud provider, and the local AI log. For cloud providers a **Provider** picker fills in endpoint, API and region (Mistral, IONOS, STACKIT, Scaleway, Langdock, OpenAI, Anthropic) and says where the data goes; the API key is always a vault item. Details: [architecture/ai-gateway.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/ai-gateway.md).
 
 ## Account recovery and emergency access
 
-The design is in [recovery.md](architecture/recovery.md). The screens:
+The design is in [recovery.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/recovery.md). The screens:
 
 | Screen | Behavior |
 | --- | --- |
@@ -111,14 +111,14 @@ The activity log names all two-factor events (turned on/off, method added/remove
 
 **Developer** in the sidebar (with a counter while agents wait) has two parts:
 
-- **AI agents**: requests from agents connected with `pbx mcp` wait here for your decision. Wherever you are in the app, a dialog opens for a new request (the desktop app also comes to the front and asks for attention; in the browser you can turn on notifications). The dialog shows the request code the agent also shows, the items (looked up in your own vault; unknown items block approval), the exact command lines or files, the agent's reason (marked as its own words) and how long the access lasts. Approving signs the decision with your account key. A request to reveal a value (`passbox_reveal`) has a red section with a warning and an unticked "Allow revealing the value to the agent"; organizations can forbid it. Service accounts show the fair-use limit ("n of m used"). Below are recent requests (revoke active ones), the agent activity log and setup instructions. See [architecture/ai-agents.md](architecture/ai-agents.md).
-- **Service accounts**: create one per pipeline, server or agent (name, vaults with read or read and write access, expiry 30/90/365 days or never), copy the token once (the dialog closes only after you confirm you stored it), change vault access or renew it after a key rotation, see its activity, revoke or delete it (both confirmed). See [architecture/service-accounts.md](architecture/service-accounts.md).
+- **AI agents**: requests from agents connected with `pbx mcp` wait here for your decision. Wherever you are in the app, a dialog opens for a new request (the desktop app also comes to the front and asks for attention; in the browser you can turn on notifications). The dialog shows the request code the agent also shows, the items (looked up in your own vault; unknown items block approval), the exact command lines or files, the agent's reason (marked as its own words) and how long the access lasts. Approving signs the decision with your account key. A request to reveal a value (`passbox_reveal`) has a red section with a warning and an unticked "Allow revealing the value to the agent"; organizations can forbid it. Service accounts show the fair-use limit ("n of m used"). Below are recent requests (revoke active ones), the agent activity log and setup instructions. See [architecture/ai-agents.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/ai-agents.md).
+- **Service accounts**: create one per pipeline, server or agent (name, vaults with read or read and write access, expiry 30/90/365 days or never), copy the token once (the dialog closes only after you confirm you stored it), change vault access or renew it after a key rotation, see its activity, revoke or delete it (both confirmed). See [architecture/service-accounts.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/service-accounts.md).
 
 Items of the category **Environment** hold the variables of an app (each field is a variable; the label is the name). Their detail view shows how to run a program with them (`pbx env "<title>" -- <command>`) and copies them as `.env` content.
 
 ## Administration
 
-Instance admins (the first account on a server, and `PASSBOX_ADMIN_EMAILS`, see [self-hosting](self-hosting.md#administration)) see **Administration** in the sidebar under Tools and in Settings (`#/admin`); `client.accountInfo().instanceAdmin` decides, checked once per unlock. Other accounts never see it, and the server refuses its endpoints with `forbidden`.
+Instance admins (the first account on a server, and `PASSBOX_ADMIN_EMAILS`, see [self-hosting](https://github.com/passboxnet/passbox-server/blob/main/docs/self-hosting.md#administration)) see **Administration** in the sidebar under Tools and in Settings (`#/admin`); `client.accountInfo().instanceAdmin` decides, checked once per unlock. Other accounts never see it, and the server refuses its endpoints with `forbidden`.
 
 | Panel | Behavior |
 | --- | --- |

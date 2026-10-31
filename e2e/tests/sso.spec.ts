@@ -28,7 +28,7 @@ test.beforeAll(async () => {
   const dataDir = mkdtempSync(join(tmpdir(), "passbox-e2e-sso-"));
   const database = databaseName("sso", SSO_PORT);
   createDatabase(database);
-  server = spawn("cargo", ["run", "--quiet", "--package", "passbox-server"], {
+  server = spawn(process.env.PASSBOX_SERVER_BIN ?? "passbox-server", [], {
     cwd: resolve(import.meta.dirname, "../.."),
     // Server logs show up in CI output, as for the other servers.
     stdio: process.env.CI ? "inherit" : "ignore",
@@ -37,7 +37,7 @@ test.beforeAll(async () => {
       PASSBOX_BIND: `127.0.0.1:${SSO_PORT}`,
       ...databaseEnv(database),
       PASSBOX_BLOB_DIR: join(dataDir, "blobs"),
-      PASSBOX_WEB_DIR: "apps/web/dist",
+      PASSBOX_WEB_DIR: "app/dist",
       PASSBOX_PUBLIC_URL: BASE,
       PASSBOX_SSO_ALLOW_HTTP_LOOPBACK: "1",
       PASSBOX_AUTH_RATE_LIMIT: "1000",

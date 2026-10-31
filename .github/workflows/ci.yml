@@ -77,11 +77,11 @@ jobs:
       # The server and the CLI the web vault is tested against.
       - uses: actions/checkout@v5
         with:
-          repository: passboxnet/passbox-server
+          repository: passboxnet/server
           path: server
       - uses: actions/checkout@v5
         with:
-          repository: passboxnet/passbox-cli
+          repository: passboxnet/cli
           path: cli
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2

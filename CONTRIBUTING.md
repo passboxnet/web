@@ -8,7 +8,7 @@ Thanks for your interest in Passbox! This document explains how the repository i
 - **Monorepo:** everything lives in this repository for now. Keep package boundaries clean so we can split it later: apps never import from each other, and shared code goes into `packages/` or `crates/`.
 - **Cryptography lives only in `crates/core`.** Clients call it natively or through WebAssembly. Do not add cryptographic code in TypeScript.
 - **No secrets in logs, errors or `Debug` output.** Secret types redact themselves; keep it that way.
-- **PostgreSQL only** ([ADR 0007](https://github.com/passboxnet/passbox-core/blob/main/docs/adr/0007-postgresql-only.md)). Every table with tenant data has row level security; follow the checklist in [database-security.md](https://github.com/passboxnet/passbox-core/blob/main/docs/architecture/database-security.md#checklist-adding-a-table) when you add one. Queries go through a `Db` context (`as_account`, `public`, `as_org`, `system`) and use the checked `sqlx::query!` macros.
+- **PostgreSQL only** ([ADR 0007](https://github.com/passboxnet/core/blob/main/docs/adr/0007-postgresql-only.md)). Every table with tenant data has row level security; follow the checklist in [database-security.md](https://github.com/passboxnet/core/blob/main/docs/architecture/database-security.md#checklist-adding-a-table) when you add one. Queries go through a `Db` context (`as_account`, `public`, `as_org`, `system`) and use the checked `sqlx::query!` macros.
 
 ## Database for development and tests
 
@@ -47,7 +47,7 @@ pnpm e2e
 
 The Rust tests need `PASSBOX_TEST_DATABASE_URL` and `pnpm e2e` needs `PASSBOX_E2E_DATABASE_URL` (above). See the README for the client tests against a live server.
 
-Significant design decisions are recorded as ADRs in [`docs/adr`](https://github.com/passboxnet/passbox-core/tree/main/docs/adr). Add one when you change the architecture, the cryptography or a public interface.
+Significant design decisions are recorded as ADRs in [`docs/adr`](https://github.com/passboxnet/core/tree/main/docs/adr). Add one when you change the architecture, the cryptography or a public interface.
 
 ## License
 

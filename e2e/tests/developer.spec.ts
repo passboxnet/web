@@ -7,7 +7,7 @@ import { port } from "../ports";
 
 const PASSWORD = "correct horse battery staple";
 const SERVER = `http://127.0.0.1:${port}`;
-/** The `pbx` binary from passbox-cli (PBX_BIN, or `pbx` on the PATH). */
+/** The `pbx` binary from passboxnet/cli (PBX_BIN, or `pbx` on the PATH). */
 const PBX = process.env.PBX_BIN ?? "pbx";
 /** Set to a directory to save screenshots of the developer screens. */
 const SHOTS = process.env.PASSBOX_SCREENSHOTS;

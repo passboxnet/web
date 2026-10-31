@@ -2,17 +2,17 @@ packages:
   - "app"
   - "e2e"
 
-# The shared packages come from the passbox-core release until they are on
+# The shared packages come from the passboxnet/core release until they are on
 # npm. Raise the tag here (and in app/package.json) to update them.
 overrides:
-  "@passbox/ai": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-ai-0.1.0.tgz"
-  "@passbox/api-client": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-api-client-0.1.0.tgz"
-  "@passbox/brand-icons": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-brand-icons-0.1.0.tgz"
-  "@passbox/client": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-client-0.1.0.tgz"
-  "@passbox/core-wasm": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-core-wasm-0.1.0.tgz"
-  "@passbox/i18n": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-i18n-0.1.0.tgz"
-  "@passbox/site-icons": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-site-icons-0.1.0.tgz"
-  "@passbox/ui": "https://github.com/passboxnet/passbox-core/releases/download/v0.1.0/passbox-ui-0.1.0.tgz"
+  "@passbox/ai": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-ai-0.1.0.tgz"
+  "@passbox/api-client": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-api-client-0.1.0.tgz"
+  "@passbox/brand-icons": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-brand-icons-0.1.0.tgz"
+  "@passbox/client": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-client-0.1.0.tgz"
+  "@passbox/core-wasm": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-core-wasm-0.1.0.tgz"
+  "@passbox/i18n": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-i18n-0.1.0.tgz"
+  "@passbox/site-icons": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-site-icons-0.1.0.tgz"
+  "@passbox/ui": "https://github.com/passboxnet/core/releases/download/v0.1.0/passbox-ui-0.1.0.tgz"
 
 onlyBuiltDependencies:
   - esbuild

@@ -1,6 +1,6 @@
 # Passbox web vault
 
-The web vault of [Passbox](https://passbox.net), an open-source password manager with passkeys, a built-in authenticator and single sign-on. React and Vite; all cryptography runs in the browser through the WebAssembly build of [passbox-core](https://github.com/passboxnet/passbox-core).
+The web vault of [Passbox](https://passbox.net), an open-source password manager with passkeys, a built-in authenticator and single sign-on. React and Vite; all cryptography runs in the browser through the WebAssembly build of [passboxnet/core](https://github.com/passboxnet/core).
 
 > **Status: early development.** The cryptographic design is a draft and has not been audited. Do not store real secrets in Passbox yet.
 
@@ -12,7 +12,7 @@ The web vault of [Passbox](https://passbox.net), an open-source password manager
 
 ## Development
 
-Requirements: Node.js 22+ and pnpm 10 (`corepack enable`). The shared packages (`@passbox/client`, `@passbox/ui`, `@passbox/core-wasm`, ...) come from the [passbox-core release](https://github.com/passboxnet/passbox-core/releases) set in `pnpm-workspace.yaml`.
+Requirements: Node.js 22+ and pnpm 10 (`corepack enable`). The shared packages (`@passbox/client`, `@passbox/ui`, `@passbox/core-wasm`, ...) come from the [passboxnet/core release](https://github.com/passboxnet/core/releases) set in `pnpm-workspace.yaml`.
 
 ```sh
 pnpm install
@@ -20,11 +20,11 @@ pnpm dev        # http://localhost:5173, proxies /api to PASSBOX_SERVER_URL (def
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-Run a server from [passbox-server](https://github.com/passboxnet/passbox-server) next to it. The end-to-end tests start their own servers and need the binaries:
+Run a server from [passboxnet/server](https://github.com/passboxnet/server) next to it. The end-to-end tests start their own servers and need the binaries:
 
 ```sh
-PASSBOX_SERVER_BIN=../passbox-server/target/debug/passbox-server \
-PBX_BIN=../passbox-cli/target/debug/pbx \
+PASSBOX_SERVER_BIN=../server/target/debug/passbox-server \
+PBX_BIN=../cli/target/debug/pbx \
 PASSBOX_E2E_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
   pnpm e2e
 ```
@@ -37,14 +37,14 @@ A tag `vX.Y.Z` publishes `passbox-web-X.Y.Z.tar.gz` (the built vault) with `SHA2
 
 | Repository | Contents |
 | --- | --- |
-| [passbox-core](https://github.com/passboxnet/passbox-core) | Cryptographic core (Rust), WebAssembly build, Rust client, Swift/Kotlin bindings, AI gateway, shared TypeScript packages (`@passbox/*`) |
-| [passbox-server](https://github.com/passboxnet/passbox-server) | Server (API, sync, web vault hosting), container image, Docker Compose for self-hosting |
-| [passbox-web](https://github.com/passboxnet/passbox-web) | Web vault (React, Vite) and browser end-to-end tests |
-| [passbox-extension](https://github.com/passboxnet/passbox-extension) | Browser extension with autofill and passkeys |
-| [passbox-desktop](https://github.com/passboxnet/passbox-desktop) | Desktop app for Windows, macOS and Linux (Tauri) |
-| [passbox-ios](https://github.com/passboxnet/passbox-ios) | iOS and iPadOS app |
-| [passbox-android](https://github.com/passboxnet/passbox-android) | Android app |
-| [passbox-cli](https://github.com/passboxnet/passbox-cli) | `pbx` command-line client and MCP server |
+| [passboxnet/core](https://github.com/passboxnet/core) | Cryptographic core (Rust), WebAssembly build, Rust client, Swift/Kotlin bindings, AI gateway, shared TypeScript packages (`@passbox/*`) |
+| [passboxnet/server](https://github.com/passboxnet/server) | Server (API, sync, web vault hosting), container image, Docker Compose for self-hosting |
+| [passboxnet/web](https://github.com/passboxnet/web) | Web vault (React, Vite) and browser end-to-end tests |
+| [passboxnet/browser-extension](https://github.com/passboxnet/browser-extension) | Browser extension with autofill and passkeys |
+| [passboxnet/desktop](https://github.com/passboxnet/desktop) | Desktop app for Windows, macOS and Linux (Tauri) |
+| [passboxnet/ios](https://github.com/passboxnet/ios) | iOS and iPadOS app |
+| [passboxnet/android](https://github.com/passboxnet/android) | Android app |
+| [passboxnet/cli](https://github.com/passboxnet/cli) | `pbx` command-line client and MCP server |
 
 ## License
 

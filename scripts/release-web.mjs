@@ -1,5 +1,5 @@
 // Packs the built web vault (app/dist) as dist/passbox-web-<version>.tar.gz
-// with a SHA256SUMS file. passbox-server's Dockerfile downloads this archive
+// with a SHA256SUMS file. passboxnet/server's Dockerfile downloads this archive
 // at a fixed version and checks the checksum.
 //
 //   pnpm build && node scripts/release-web.mjs v0.1.0

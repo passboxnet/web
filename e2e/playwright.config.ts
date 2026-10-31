@@ -12,7 +12,7 @@ function server(listen: number, label: string) {
   const database = databaseName(label, listen);
   return {
     // A fresh database per run; the server migrates it on start.
-    // The server binary from passbox-server, e.g. ../passbox-server/target/debug/passbox-server.
+    // The server binary from passboxnet/server, e.g. ../server/target/debug/passbox-server.
     command: `${createDatabaseCommand(database)} && ${serverBin}`,
     cwd: "..",
     url: `http://127.0.0.1:${listen}/health`,

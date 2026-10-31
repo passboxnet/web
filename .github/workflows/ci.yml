@@ -93,6 +93,8 @@ jobs:
         env:
           SQLX_OFFLINE: "true"
       - run: cargo build --locked --manifest-path cli/Cargo.toml
+        env:
+          SQLX_OFFLINE: "true"
       - uses: actions/download-artifact@v4
         with:
           name: web-dist

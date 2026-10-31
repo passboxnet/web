@@ -1,5 +1,5 @@
 /** Public pages the app links to. */
-const REPOSITORY = "https://github.com/relationsoftware/passbox";
+const REPOSITORY = "https://github.com/passboxnet/passbox";
 
 export const LINKS = {
   repository: REPOSITORY,

@@ -69,6 +69,7 @@ jobs:
     env:
       # A superuser; e2e/database.sh creates a database per test server.
       PASSBOX_E2E_DATABASE_URL: postgres://passbox:passbox@localhost:5432/passbox
+      PASSBOX_SERVER_DIR: ${{ github.workspace }}/server
       PASSBOX_SERVER_BIN: ${{ github.workspace }}/server/target/debug/passbox-server
       PBX_BIN: ${{ github.workspace }}/cli/target/debug/pbx
     steps:

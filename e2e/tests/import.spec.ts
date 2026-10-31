@@ -4,11 +4,14 @@ import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
 
 const PASSWORD = "correct horse battery staple";
+// The import fixtures of the installed @passbox/client release.
 const FIXTURES = join(
   dirname(fileURLToPath(import.meta.url)),
   "..",
   "..",
-  "packages",
+  "app",
+  "node_modules",
+  "@passbox",
   "client",
   "src",
   "import",

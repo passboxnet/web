@@ -11,7 +11,8 @@ import { describe, expect, it } from "vitest";
 // page would keep the light colors.
 
 const here = dirname(fileURLToPath(import.meta.url));
-const tokensPath = resolve(here, "../../../packages/ui/src/tokens.css");
+// The tokens of the installed @passbox/ui release.
+const tokensPath = resolve(here, "../node_modules/@passbox/ui/src/tokens.css");
 const tailwindIndex = resolve(here, "../node_modules/tailwindcss/index.css");
 
 async function build(candidates: string[]): Promise<string> {

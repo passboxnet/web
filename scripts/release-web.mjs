@@ -18,6 +18,8 @@ mkdirSync(dist);
 
 const name = `passbox-web-${version}.tar.gz`;
 execFileSync("tar", ["-czf", join(dist, name), "-C", join(root, "app/dist"), "."], { stdio: "inherit" });
-const sum = createHash("sha256").update(readFileSync(join(dist, name))).digest("hex");
+const sum = createHash("sha256")
+  .update(readFileSync(join(dist, name)))
+  .digest("hex");
 writeFileSync(join(dist, "SHA256SUMS"), `${sum}  ${name}\n`);
 console.log(`${sum}  ${name}`);

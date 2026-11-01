@@ -3,7 +3,7 @@ import { GridFrame, Logo, Panel } from "@passbox/ui";
 import { EyeOff, Laptop, ServerCog, ShieldAlert, Sparkles } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useI18n } from "../lib/i18n";
-import { LINKS } from "../lib/links";
+import { sitePage } from "../lib/links";
 import { isInsecurePage, serverApi, serverLabel, serverUrl } from "../lib/server";
 
 const POINTS = [
@@ -19,7 +19,7 @@ const POINTS = [
  * the form; the form half follows the theme.
  */
 export function AuthLayout({ children }: { children: ReactNode }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <div className="relative isolate flex min-h-full flex-col overflow-x-hidden bg-backdrop">
       <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 -z-10" />
@@ -27,7 +27,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <header className="flex items-center justify-between px-5 pt-5 sm:px-10 sm:pt-7">
         <Logo className="text-white" />
         <a
-          href={LINKS.design}
+          href={sitePage("security", locale)}
           target="_blank"
           rel="noreferrer noopener"
           className="hidden rounded-full px-3 py-1.5 text-label text-white/80 ring-1 ring-white/20 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"

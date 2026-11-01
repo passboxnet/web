@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, ExternalLink, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useKit } from "../auth/KitProvider";
 import { useI18n } from "../lib/i18n";
-import { IMPORT_HASH, LINKS } from "../lib/links";
+import { IMPORT_HASH, sitePage } from "../lib/links";
 import { setChecklist, usePreferences } from "../lib/preferences";
 import type { Route } from "../lib/route";
 import { useSnapshot } from "../useClient";
@@ -29,7 +29,7 @@ export function useChecklist() {
 }
 
 function useSteps(navigate: (route: Route) => void): Step[] {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const kit = useKit();
   const { items, trash } = useSnapshot();
   const { checklist } = usePreferences();
@@ -73,7 +73,7 @@ function useSteps(navigate: (route: Route) => void): Step[] {
       ],
       action: (
         <>
-          {link(LINKS.extension, t("start.extension.action"), true)}
+          {link(sitePage("download", locale), t("start.extension.action"), true)}
           {markDone("extension")}
         </>
       ),

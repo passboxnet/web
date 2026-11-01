@@ -23,7 +23,7 @@ import { isDesktop } from "../desktop";
 import { ImportExportPanel } from "../export/ImportExportPanel";
 import { useI18n } from "../lib/i18n";
 import { useIsInstanceAdmin } from "../lib/instance";
-import { LINKS } from "../lib/links";
+import { sitePage } from "../lib/links";
 import { type LanguagePreference, setPreferences, type Theme, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
 import { serverApi, serverLabel } from "../lib/server";
@@ -283,8 +283,10 @@ export function SettingsView() {
           <Panel id="about" title={t("settings.about")} icon={<Info />}>
             <Row label={t("settings.transparency")} description={t("settings.transparencyDescription")}>
               <span className="flex flex-wrap gap-x-4 gap-y-1">
-                <ExternalTextLink href={LINKS.design}>{t("settings.readDesign")}</ExternalTextLink>
-                <ExternalTextLink href={LINKS.security}>{t("settings.reportVulnerability")}</ExternalTextLink>
+                <ExternalTextLink href={sitePage("design", i18n.locale)}>{t("settings.readDesign")}</ExternalTextLink>
+                <ExternalTextLink href={sitePage("vulnerability", i18n.locale)}>
+                  {t("settings.reportVulnerability")}
+                </ExternalTextLink>
               </span>
             </Row>
             {meta?.supportUrl && (
@@ -306,7 +308,7 @@ export function SettingsView() {
               </span>
             </Row>
             <Row label={t("settings.license")}>
-              <ExternalTextLink href={LINKS.repository}>{t("settings.licenseValue")}</ExternalTextLink>
+              <ExternalTextLink href={sitePage("license", i18n.locale)}>{t("settings.licenseValue")}</ExternalTextLink>
             </Row>
             <details className="group">
               <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-4 text-[0.8125rem] font-medium coarse:py-5">

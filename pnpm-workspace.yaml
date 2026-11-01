@@ -5,14 +5,14 @@ packages:
 # The shared packages come from the passboxnet/core release until they are on
 # npm. Raise the tag here (and in app/package.json) to update them.
 overrides:
-  "@passbox/ai": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-ai-0.1.3.tgz"
-  "@passbox/api-client": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-api-client-0.1.3.tgz"
-  "@passbox/brand-icons": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-brand-icons-0.1.3.tgz"
-  "@passbox/client": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-client-0.1.3.tgz"
-  "@passbox/core-wasm": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-core-wasm-0.1.3.tgz"
-  "@passbox/i18n": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-i18n-0.1.3.tgz"
-  "@passbox/site-icons": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-site-icons-0.1.3.tgz"
-  "@passbox/ui": "https://github.com/passboxnet/core/releases/download/v0.1.3/passbox-ui-0.1.3.tgz"
+  "@passbox/ai": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz"
+  "@passbox/api-client": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz"
+  "@passbox/brand-icons": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-brand-icons-0.1.4.tgz"
+  "@passbox/client": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz"
+  "@passbox/core-wasm": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz"
+  "@passbox/i18n": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz"
+  "@passbox/site-icons": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-site-icons-0.1.4.tgz"
+  "@passbox/ui": "https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz"
 
 onlyBuiltDependencies:
   - esbuild

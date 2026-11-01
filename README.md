@@ -2,8 +2,6 @@
 
 The web vault of [Passbox](https://passbox.net), an open-source password manager with passkeys, a built-in authenticator and single sign-on. React and Vite; all cryptography runs in the browser through the WebAssembly build of [passboxnet/core](https://github.com/passboxnet/core).
 
-> **Status: early development.** The cryptographic design is a draft and has not been audited. Do not store real secrets in Passbox yet.
-
 | Path | Description |
 | --- | --- |
 | [`app`](app) | The web vault (`@passbox/web`) |

@@ -5,14 +5,14 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@passbox/ai': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz
-  '@passbox/api-client': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz
-  '@passbox/brand-icons': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-brand-icons-0.1.4.tgz
-  '@passbox/client': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz
-  '@passbox/core-wasm': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz
-  '@passbox/i18n': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz
-  '@passbox/site-icons': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-site-icons-0.1.4.tgz
-  '@passbox/ui': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz
+  '@passbox/ai': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ai-0.1.5.tgz
+  '@passbox/api-client': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz
+  '@passbox/brand-icons': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-brand-icons-0.1.5.tgz
+  '@passbox/client': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-client-0.1.5.tgz
+  '@passbox/core-wasm': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz
+  '@passbox/i18n': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-i18n-0.1.5.tgz
+  '@passbox/site-icons': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-site-icons-0.1.5.tgz
+  '@passbox/ui': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ui-0.1.5.tgz
 
 importers:
 
@@ -28,23 +28,23 @@ importers:
   app:
     dependencies:
       '@passbox/ai':
-        specifier: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz
-        version: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz
+        specifier: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ai-0.1.5.tgz
+        version: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ai-0.1.5.tgz
       '@passbox/api-client':
-        specifier: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz
-        version: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz
+        specifier: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz
+        version: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz
       '@passbox/client':
-        specifier: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz
-        version: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz
+        specifier: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-client-0.1.5.tgz
+        version: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-client-0.1.5.tgz
       '@passbox/core-wasm':
-        specifier: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz
-        version: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz
+        specifier: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz
+        version: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz
       '@passbox/i18n':
-        specifier: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz
-        version: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz
+        specifier: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-i18n-0.1.5.tgz
+        version: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-i18n-0.1.5.tgz
       '@passbox/ui':
-        specifier: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz
-        version: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ui-0.1.5.tgz
+        version: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ui-0.1.5.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@radix-ui/react-dialog':
         specifier: 1.3.1
         version: 1.3.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -277,37 +277,37 @@ packages:
   '@oxc-project/types@0.155.0':
     resolution: {integrity: sha512-SeE8JPwW1xs1tHeNycjUtUBdhorRa8o4jlvjwk49R7/Z291i+4DQa7JJIgOm/TaYQZx+QrPQbVJ/9c8dMIZN8Q==}
 
-  '@passbox/ai@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz':
-    resolution: {integrity: sha512-M92/WrLlYVM4WCDsNobXRSnAp/if0rTCJeOxiT+605hA4zig2MZzCHswfuCKzAwhveeGYvK4pwqnzWLUfhIesQ==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/ai@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ai-0.1.5.tgz':
+    resolution: {integrity: sha512-XnFWntpgd5po6+EMcEFndkIm1vgqrbteOl/90jhoL0EfI1YP+0pE/iPRwKAi6h38E+naRd2MouVPjaeIHZtzWw==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ai-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/api-client@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz':
-    resolution: {integrity: sha512-FcOdaoVmMnXMITegUafSscyyaQS7ybbIrhwItM3zHVLI37mtTriY2VoDEkcoJfpyfJzIeae5V8FxRrkX7bHzmg==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/api-client@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz':
+    resolution: {integrity: sha512-CVAa7u27x9Pw/7cpkH7e5TjbMXchw5AuWpEoqNNfog3ZK3M7yYjO8jYp4xKG4FRmGscALpnamvsTUy4IVJtQdA==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/brand-icons@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-brand-icons-0.1.4.tgz':
-    resolution: {integrity: sha512-ZDidku0E+bwqFeUH7ABOD1GEM4a2issLD4EpWuLp0nKJXzP8hFXo3wsdFMn8tDbowCqbxcdXCvZAklLNEJAkVw==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-brand-icons-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/brand-icons@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-brand-icons-0.1.5.tgz':
+    resolution: {tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-brand-icons-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/client@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz':
-    resolution: {integrity: sha512-CC/ckVcyxRQo6XvEzIqA6eL/WDqgXhJv3Aiq8ZU6usJ1+F+0QNd2pS+CglvF/Ip7dvX9aQUgBBjeYU9iighsjw==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/client@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-client-0.1.5.tgz':
+    resolution: {integrity: sha512-pLNRa7TOPCM1wJrb86GV8QYhmkdNAvp2WYU/XLr/f6sfIkW4MD5+6FjqBqa1MLmXLjK8xoRXZH4jr4al0zw5/A==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-client-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/core-wasm@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz':
-    resolution: {integrity: sha512-IzYZccLGRiP1JfU6oCQG96yGDZNpGWs3G3OJTtvsbzL0EXSWM3YDT2vb4vDJma2SSBXGuy+ljnduUGxNiDWJVg==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/core-wasm@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz':
+    resolution: {integrity: sha512-fFQ5C7d7hRW3+8UHa6XuH9nvyqhDdB3Y/Y5IcjL26iPO6Z/SyeEDMfrXGDXpgDjU6VYMf7yZe6nwgECcq/bQ8Q==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/i18n@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz':
-    resolution: {integrity: sha512-/gL8sBFlKgFOIQV6wmEv70neSTFQPfzKI1ZDo5yVvnwresNjgXZfPmOTFEYSGz9mcnqnf3WtpZWBobgEbrLoog==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/i18n@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-i18n-0.1.5.tgz':
+    resolution: {integrity: sha512-smNWI4qaEuUDUyjfbX0Z7N0GfIzkLTuqmCnH9uWrJJUEvjUyQQGRDfULoYWlcnrL3gkdQqyBILyLd9w3os8pbA==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-i18n-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/site-icons@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-site-icons-0.1.4.tgz':
-    resolution: {integrity: sha512-XPmyrRpF+yr65cd40uDoJM8+QylT8KPxM/zp4/WegeF0pTyoDTVJPIuinDgejapM45iR0kBU8+T5+U8EGxOACA==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-site-icons-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/site-icons@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-site-icons-0.1.5.tgz':
+    resolution: {tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-site-icons-0.1.5.tgz}
+    version: 0.1.5
 
-  '@passbox/ui@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz':
-    resolution: {integrity: sha512-eLVbMc0ErNEnOnwbUK3h494D/FQ6jEZJQZx7f2aIXpEsay/zyyIS1+M4HLt6PZu7OIWxoTF4KUum5HuCoOz+gA==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz}
-    version: 0.1.4
+  '@passbox/ui@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ui-0.1.5.tgz':
+    resolution: {integrity: sha512-ixe8RHZi4PBIdkaOYBQdRmRm1KfCz4uDJnYmju+BkUg+SR3FKE4mtuApYMCPbBPINzgOsYLaIaYLDiw7RKu2KQ==, tarball: https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ui-0.1.5.tgz}
+    version: 0.1.5
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -1586,30 +1586,30 @@ snapshots:
 
   '@oxc-project/types@0.155.0': {}
 
-  '@passbox/ai@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ai-0.1.4.tgz': {}
+  '@passbox/ai@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ai-0.1.5.tgz': {}
 
-  '@passbox/api-client@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz': {}
+  '@passbox/api-client@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz': {}
 
-  '@passbox/brand-icons@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-brand-icons-0.1.4.tgz': {}
+  '@passbox/brand-icons@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-brand-icons-0.1.5.tgz': {}
 
-  '@passbox/client@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-client-0.1.4.tgz':
+  '@passbox/client@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-client-0.1.5.tgz':
     dependencies:
-      '@passbox/api-client': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-api-client-0.1.4.tgz
-      '@passbox/core-wasm': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz
-      '@passbox/site-icons': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-site-icons-0.1.4.tgz
+      '@passbox/api-client': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-api-client-0.1.5.tgz
+      '@passbox/core-wasm': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz
+      '@passbox/site-icons': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-site-icons-0.1.5.tgz
       fflate: 0.8.2
 
-  '@passbox/core-wasm@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-core-wasm-0.1.4.tgz': {}
+  '@passbox/core-wasm@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-core-wasm-0.1.5.tgz': {}
 
-  '@passbox/i18n@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-i18n-0.1.4.tgz': {}
+  '@passbox/i18n@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-i18n-0.1.5.tgz': {}
 
-  '@passbox/site-icons@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-site-icons-0.1.4.tgz': {}
+  '@passbox/site-icons@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-site-icons-0.1.5.tgz': {}
 
-  '@passbox/ui@https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-ui-0.1.4.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@passbox/ui@https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-ui-0.1.5.tgz(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@fontsource-variable/jetbrains-mono': 5.3.0
       '@fontsource-variable/plus-jakarta-sans': 5.3.0
-      '@passbox/brand-icons': https://github.com/passboxnet/core/releases/download/v0.1.4/passbox-brand-icons-0.1.4.tgz
+      '@passbox/brand-icons': https://github.com/passboxnet/core/releases/download/v0.1.5/passbox-brand-icons-0.1.5.tgz
       '@radix-ui/react-dialog': 1.3.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@radix-ui/react-dropdown-menu': 2.2.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@radix-ui/react-popover': 1.3.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)

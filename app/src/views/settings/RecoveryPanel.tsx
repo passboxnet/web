@@ -1,5 +1,5 @@
 import type { RecoveryStatus } from "@passbox/api-client";
-import { InvalidDeviceCodeError, type Org, type OrgRecoveryInfo } from "@passbox/client";
+import { DEFAULT_POLICY_RULES, InvalidDeviceCodeError, type Org, type OrgRecoveryInfo } from "@passbox/client";
 import { Badge, Button, ConfirmDialog, Dialog, Spinner, Switch, toast } from "@passbox/ui";
 import { Building2, KeyRound, ShieldCheck, Smartphone } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
@@ -170,6 +170,13 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
   const guest = org.role === "guest";
   const { policies } = useSnapshot();
   const required = policies.find((p) => p.orgId === org.id)?.rules.requireRecoveryEnrollment ?? false;
+  // Families have no policies section: turning recovery off lifts the rule first.
+  const lockedByPolicy = required && org.kind === "team";
+
+  async function turnOff() {
+    if (required && org.kind !== "team") await client.setOrgPolicy(org.id, DEFAULT_POLICY_RULES);
+    await client.turnOffOrgRecovery(org.id);
+  }
 
   const load = useCallback(() => {
     client
@@ -279,12 +286,12 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
             size="sm"
             variant="ghost"
             onClick={() => setDialog("off")}
-            disabled={busy || required}
+            disabled={busy || lockedByPolicy}
             data-testid="recovery-turn-off"
           >
             {t("recovery.org.turnOff")}
           </Button>
-          {required && <p className="mt-1 text-xs text-text-muted">{t("recovery.org.turnOffRequired")}</p>}
+          {lockedByPolicy && <p className="mt-1 text-xs text-text-muted">{t("recovery.org.turnOffRequired")}</p>}
         </div>
       )}
       <ConfirmDialog
@@ -294,7 +301,7 @@ export function OrgRecoveryRow({ org, onChange }: { org: Org; onChange: () => vo
         description={t("recovery.org.turnOffBody")}
         confirmLabel={t("recovery.org.turnOff")}
         tone="danger"
-        onConfirm={() => void run(() => client.turnOffOrgRecovery(org.id), t("recovery.org.turnOffDone"))}
+        onConfirm={() => void run(turnOff, t("recovery.org.turnOffDone"))}
       />
       <ConfirmDialog
         open={dialog === "setup"}

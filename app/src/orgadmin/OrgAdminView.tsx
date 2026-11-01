@@ -35,22 +35,8 @@ import { PoliciesSection } from "./PoliciesSection";
 import { RecoverySection } from "./RecoverySection";
 import { ReportsSection } from "./ReportsSection";
 import { GroupsSection, SettingsSection } from "./SettingsSection";
+import { type AdminSection, sectionsFor } from "./sections";
 import { VaultsSection } from "./VaultsSection";
-
-export const ADMIN_SECTIONS = [
-  "overview",
-  "members",
-  "groups",
-  "vaults",
-  "policies",
-  "activity",
-  "reports",
-  "recovery",
-  "integrations",
-  "billing",
-  "settings",
-] as const;
-export type AdminSection = (typeof ADMIN_SECTIONS)[number];
 
 const ICONS: Record<AdminSection, LucideIcon> = {
   overview: LayoutDashboard,
@@ -65,15 +51,6 @@ const ICONS: Record<AdminSection, LucideIcon> = {
   billing: CreditCard,
   settings: Settings,
 };
-
-/**
- * Sections a family's organizer sees; groups and SIEM integrations are for
- * teams. Billing only exists for Business (teams) on the hosted service.
- */
-function sectionsFor(org: Org, business: boolean): AdminSection[] {
-  const sections = ADMIN_SECTIONS.filter((s) => s !== "billing" || business);
-  return org.kind === "team" ? sections : sections.filter((s) => s !== "groups" && s !== "integrations");
-}
 
 interface OrgAdminViewProps {
   orgId: string;

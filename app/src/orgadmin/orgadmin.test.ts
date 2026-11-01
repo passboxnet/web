@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { translatorFor } from "../lib/i18n";
 import { describeAuditEntry } from "./auditText";
 import { activeRules, describeRules } from "./policyText";
+import { sectionsFor, TEAM_SECTIONS } from "./sections";
 
 const en: Record<string, string> = enOrgAdmin;
 const de: Record<string, string> = deOrgAdmin;
@@ -110,5 +111,17 @@ describe("policy text", () => {
       "Apps lock after at most 15 minutes without activity.",
       "Share links last at most 7 days and open at most 3 times.",
     ]);
+  });
+});
+
+describe("console sections", () => {
+  it("leave groups, policies, the activity log and integrations to teams", () => {
+    const family = sectionsFor({ kind: "family" }, false);
+    for (const section of TEAM_SECTIONS) expect(family).not.toContain(section);
+    expect(family).toEqual(["overview", "members", "vaults", "reports", "recovery", "settings"]);
+    const team = sectionsFor({ kind: "team" }, false);
+    for (const section of TEAM_SECTIONS) expect(team).toContain(section);
+    expect(team).not.toContain("billing");
+    expect(sectionsFor({ kind: "team" }, true)).toContain("billing");
   });
 });

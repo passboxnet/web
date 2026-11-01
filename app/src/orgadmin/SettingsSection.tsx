@@ -23,7 +23,7 @@ export function GroupsSection({ org }: { org: Org }) {
   );
 }
 
-/** Organization settings: name, audit log retention, leaving and deleting. */
+/** Organization settings: name, audit log retention (teams), leaving and deleting. */
 export function SettingsSection({ org, navigate }: { org: Org; navigate: (route: Route) => void }) {
   const client = useClient();
   const { t } = useI18n();
@@ -32,7 +32,11 @@ export function SettingsSection({ org, navigate }: { org: Org; navigate: (route:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
+  // The activity log is for teams: families have no retention to set.
+  const team = org.kind === "team";
+
   useEffect(() => {
+    if (!team) return;
     client.orgAdmin
       .settings(org.id)
       .then((settings) => {
@@ -40,7 +44,7 @@ export function SettingsSection({ org, navigate }: { org: Org; navigate: (route:
         setSaved(settings.auditRetentionDays);
       })
       .catch((e: unknown) => setError(errorMessage(e)));
-  }, [client, org.id]);
+  }, [client, org.id, team]);
 
   async function save() {
     if (days === undefined) return;
@@ -59,43 +63,45 @@ export function SettingsSection({ org, navigate }: { org: Org; navigate: (route:
 
   return (
     <Section title={t("orgAdmin.section.settings")} description={t("orgAdmin.settings.description")}>
-      <Panel
-        id="audit-retention"
-        title={t("orgAdmin.settings.retention")}
-        description={t("orgAdmin.settings.retentionText")}
-      >
-        <div className="flex flex-wrap items-end gap-3 px-5 py-4">
-          <label className="flex flex-col gap-1.5 text-[0.8125rem] font-medium">
-            {t("orgAdmin.settings.keep")}
-            <select
-              className={cn(fieldClassName, "h-10 px-2.5 font-normal coarse:h-12")}
-              value={days ?? 0}
-              disabled={days === undefined}
-              onChange={(e) => setDays(Number(e.target.value))}
-            >
-              {RETENTION.map((value) => (
-                <option key={value} value={value}>
-                  {value === 0 ? t("orgAdmin.settings.forever") : t("orgAdmin.settings.days", { count: value })}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Button onClick={() => void save()} loading={busy} disabled={days === undefined || days === saved}>
-            <Save />
-            {t("orgAdmin.settings.save")}
-          </Button>
-        </div>
-        {days !== undefined && days !== 0 && (
-          <p className="px-5 py-3 text-xs text-text-muted">
-            {t("orgAdmin.settings.retentionWarning", { count: days })}
-          </p>
-        )}
-        {error && (
-          <div className="px-5 py-3">
-            <FormError message={error} />
+      {team && (
+        <Panel
+          id="audit-retention"
+          title={t("orgAdmin.settings.retention")}
+          description={t("orgAdmin.settings.retentionText")}
+        >
+          <div className="flex flex-wrap items-end gap-3 px-5 py-4">
+            <label className="flex flex-col gap-1.5 text-[0.8125rem] font-medium">
+              {t("orgAdmin.settings.keep")}
+              <select
+                className={cn(fieldClassName, "h-10 px-2.5 font-normal coarse:h-12")}
+                value={days ?? 0}
+                disabled={days === undefined}
+                onChange={(e) => setDays(Number(e.target.value))}
+              >
+                {RETENTION.map((value) => (
+                  <option key={value} value={value}>
+                    {value === 0 ? t("orgAdmin.settings.forever") : t("orgAdmin.settings.days", { count: value })}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button onClick={() => void save()} loading={busy} disabled={days === undefined || days === saved}>
+              <Save />
+              {t("orgAdmin.settings.save")}
+            </Button>
           </div>
-        )}
-      </Panel>
+          {days !== undefined && days !== 0 && (
+            <p className="px-5 py-3 text-xs text-text-muted">
+              {t("orgAdmin.settings.retentionWarning", { count: days })}
+            </p>
+          )}
+          {error && (
+            <div className="px-5 py-3">
+              <FormError message={error} />
+            </div>
+          )}
+        </Panel>
+      )}
       <OrgSettingsPanel org={org} navigate={navigate} />
     </Section>
   );

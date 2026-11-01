@@ -24,7 +24,8 @@ import { awaitingConfirmation } from "../lib/sharing";
 import { useClient, useSnapshot } from "../useClient";
 import { ConsolePanel } from "../views/admin/console";
 import { Loading, Meter, Section, Stat } from "./common";
-import type { AdminSection, ReportState } from "./OrgAdminView";
+import type { ReportState } from "./OrgAdminView";
+import type { AdminSection } from "./sections";
 
 interface Attention {
   id: string;
@@ -47,14 +48,17 @@ export function OverviewSection({
   const { t } = useI18n();
   const { sharedVaults, policies } = useSnapshot();
   const [chain, setChain] = useState<ChainCheck>();
-  const policy = policies.find((p) => p.orgId === org.id);
+  // Policies and the activity log are for teams; a family keeps only the recovery rule.
+  const team = org.kind === "team";
+  const policy = team ? policies.find((p) => p.orgId === org.id) : undefined;
 
   useEffect(() => {
+    if (!team) return;
     client.orgAdmin
       .verifyAudit(org.id)
       .then(setChain)
       .catch(() => setChain(undefined));
-  }, [client, org.id]);
+  }, [client, org.id, team]);
 
   const { report } = data;
   if (!report) return <Loading error={data.error} onRetry={data.reload} />;
@@ -128,7 +132,7 @@ export function OverviewSection({
       section: "reports",
     });
   }
-  if (!policy) {
+  if (team && !policy) {
     attention.push({
       id: "policy",
       tone: "info",
@@ -225,38 +229,42 @@ export function OverviewSection({
           hint={t("orgAdmin.overview.vaultsHint", { pending: pendingRotation })}
           onClick={() => go("vaults")}
         />
-        <Stat
-          label={t("orgAdmin.overview.policy")}
-          icon={<ScrollText />}
-          value={policy ? t("orgAdmin.overview.policyVersion", { version: policy.version }) : "–"}
-          hint={
-            policy ? (
-              policy.source === "verified" && !policy.needsResign ? (
-                <Badge tone="success">{t("orgAdmin.policy.verified")}</Badge>
-              ) : (
-                <Badge tone="warning">{t("orgAdmin.policy.pinned")}</Badge>
-              )
-            ) : (
-              t("orgAdmin.overview.noPolicyShort")
-            )
-          }
-          onClick={() => go("policies")}
-        />
-        <Stat
-          label={t("orgAdmin.overview.audit")}
-          icon={<Activity />}
-          value={chain ? chain.length : "–"}
-          hint={
-            chain ? (
-              chain.valid ? (
-                <Badge tone="success">{t("orgAdmin.audit.chainValid")}</Badge>
-              ) : (
-                <Badge tone="danger">{t("orgAdmin.audit.chainBroken", { seq: chain.brokenAt ?? 0 })}</Badge>
-              )
-            ) : undefined
-          }
-          onClick={() => go("activity")}
-        />
+        {team && (
+          <>
+            <Stat
+              label={t("orgAdmin.overview.policy")}
+              icon={<ScrollText />}
+              value={policy ? t("orgAdmin.overview.policyVersion", { version: policy.version }) : "–"}
+              hint={
+                policy ? (
+                  policy.source === "verified" && !policy.needsResign ? (
+                    <Badge tone="success">{t("orgAdmin.policy.verified")}</Badge>
+                  ) : (
+                    <Badge tone="warning">{t("orgAdmin.policy.pinned")}</Badge>
+                  )
+                ) : (
+                  t("orgAdmin.overview.noPolicyShort")
+                )
+              }
+              onClick={() => go("policies")}
+            />
+            <Stat
+              label={t("orgAdmin.overview.audit")}
+              icon={<Activity />}
+              value={chain ? chain.length : "–"}
+              hint={
+                chain ? (
+                  chain.valid ? (
+                    <Badge tone="success">{t("orgAdmin.audit.chainValid")}</Badge>
+                  ) : (
+                    <Badge tone="danger">{t("orgAdmin.audit.chainBroken", { seq: chain.brokenAt ?? 0 })}</Badge>
+                  )
+                ) : undefined
+              }
+              onClick={() => go("activity")}
+            />
+          </>
+        )}
       </div>
 
       <ConsolePanel id="attention" icon={<ListChecks />} title={t("orgAdmin.overview.attention")}>

@@ -32,6 +32,7 @@ import { TrustedDevicesPanel } from "../sso/TrustedDevicesPanel";
 import { useClient, useSnapshot } from "../useClient";
 import { Page, Panel } from "./PageHeader";
 import { ActivityPanel } from "./settings/ActivityPanel";
+import { ChangeEmailDialog } from "./settings/ChangeEmailDialog";
 import { ChangeMasterPasswordDialog } from "./settings/ChangeMasterPasswordDialog";
 import { DevicesPanel } from "./settings/DevicesPanel";
 import { EmergencyPanel } from "./settings/EmergencyPanel";
@@ -57,6 +58,7 @@ export function SettingsView() {
   const [meta, setMeta] = useState<ServerMeta>();
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [changeOpen, setChangeOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const account = client.deviceAccount;
   const isAdmin = useIsInstanceAdmin(client);
@@ -110,7 +112,12 @@ export function SettingsView() {
 
           <Panel id="account" title={t("settings.account")} icon={<UserRound />}>
             <Row label={t("settings.signedInAs")}>
-              <span className="text-body font-medium break-all">{email}</span>
+              <span className="flex flex-wrap items-center justify-end gap-2">
+                <span className="text-body font-medium break-all">{email}</span>
+                <Button variant="secondary" size="sm" onClick={() => setEmailOpen(true)}>
+                  {t("changeEmail.action")}
+                </Button>
+              </span>
             </Row>
             <Row label={t("term.emergencyKit")} description={t("settings.kitDescription")}>
               <span className="flex flex-wrap items-center gap-2">
@@ -347,6 +354,7 @@ export function SettingsView() {
 
       <SignOutDialog open={signOutOpen} onOpenChange={setSignOutOpen} />
       <ChangeMasterPasswordDialog open={changeOpen} onOpenChange={setChangeOpen} />
+      <ChangeEmailDialog open={emailOpen} onOpenChange={setEmailOpen} />
       <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
     </Page>
   );

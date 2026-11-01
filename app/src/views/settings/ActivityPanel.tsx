@@ -16,6 +16,7 @@ const KNOWN = new Set([
   "session_revoked",
   "other_sessions_revoked",
   "password_changed",
+  "email_changed",
   "login_two_factor",
   "two_factor_failed",
   "two_factor_enabled",

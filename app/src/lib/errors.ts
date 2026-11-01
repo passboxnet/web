@@ -55,6 +55,12 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("errors.reauthenticate");
       case "invalid_two_factor_code":
         return t("error.invalidTwoFactorCode");
+      case "code_expired":
+        return t("changeEmail.expired");
+      case "email_taken":
+        return t("changeEmail.taken");
+      case "email_managed":
+        return t("changeEmail.managed");
       case "two_factor_expired":
         return t("error.twoFactorExpired");
       case "guest_view_only":

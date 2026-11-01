@@ -43,6 +43,9 @@ describe("error messages", () => {
       "bad_request",
       "internal",
       "something_new",
+      "org_read_only",
+      "business_activation_required",
+      "family_limit_reached",
     ]) {
       const message = describeError(api(400, code), en);
       expect(message, code).not.toContain("raw server text");
@@ -50,6 +53,14 @@ describe("error messages", () => {
     }
     expect(describeError(api(409, "conflict"), en, "signUp")).toContain("already exists");
     expect(describeError(api(401, "invalid_two_factor_code"), de)).toContain("30 Sekunden");
+  });
+
+  it("explains the hosted service's billing errors", () => {
+    expect(describeError(api(403, "org_read_only"), en)).toContain("read-only");
+    expect(describeError(api(403, "business_activation_required"), de)).toContain("Business");
+    expect(describeError(api(403, "family_limit_reached", { limit: 6 }), en)).toContain("at most 6 members");
+    expect(describeError(api(403, "family_limit_reached", { limit: 6 }), de)).toContain("höchstens 6 Mitglieder");
+    expect(describeError(api(403, "family_limit_reached"), en)).not.toContain("{limit}");
   });
 
   it("explains network failures and Secret Key typos", () => {

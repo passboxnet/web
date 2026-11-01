@@ -14,8 +14,8 @@ import { Page } from "./PageHeader";
 /** Items moved to the trash, restorable for 30 days. Only "Delete permanently" is final. */
 export function TrashView() {
   const client = useClient();
-  const { trash, vaults } = useSnapshot();
-  const writable = new Set(writableVaults(vaults).map((v) => v.id));
+  const { trash, vaults, orgs } = useSnapshot();
+  const writable = new Set(writableVaults(vaults, orgs).map((v) => v.id));
   const i18n = useI18n();
   const { t } = i18n;
   const [deleting, setDeleting] = useState<Item>();

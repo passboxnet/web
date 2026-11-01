@@ -1,11 +1,14 @@
+import type { CloudBilling } from "@passbox/api-client";
 import type { Invitation, Org } from "@passbox/client";
 import { Button, Dialog, Input } from "@passbox/ui";
-import { Check, Copy, Send } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import { Check, Copy, CreditCard, Info, LockKeyhole, Send, Users } from "lucide-react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
+import { cloudBilling, familyMemberCount, formatPrice, isActiveStatus, isBusinessOrg, planFor } from "../lib/billing";
 import { copyToClipboard } from "../lib/clipboard";
 import { useI18n } from "../lib/i18n";
-import { useIsInstanceAdmin } from "../lib/instance";
+import { useIsInstanceAdmin, useServerMeta } from "../lib/instance";
+import { formatRoute } from "../lib/route";
 import { serverUrl } from "../lib/server";
 import { type AssignableOrgRole, assignableRoles } from "../lib/sharing";
 import { useClient } from "../useClient";
@@ -31,6 +34,35 @@ function useMailConfigured(): boolean | undefined {
   return configured;
 }
 
+/** The subscription of a Business organization on the hosted service; `undefined` elsewhere or while loading. */
+function useBusinessBilling(org: Org, enabled: boolean): CloudBilling | undefined {
+  const client = useClient();
+  const [billing, setBilling] = useState<CloudBilling>();
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    client
+      .cloudBilling(org.id)
+      .then((next) => !cancelled && setBilling(next))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [client, org.id, enabled]);
+  return enabled ? billing : undefined;
+}
+
+function Hint({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-[0.8125rem]">
+      <span className="mt-0.5 shrink-0 text-accent [&>svg]:size-4" aria-hidden="true">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
 interface InviteDialogProps {
   org: Org;
   open: boolean;
@@ -43,6 +75,10 @@ export function InviteDialog({ org, open, onOpenChange, onInvited }: InviteDialo
   const i18n = useI18n();
   const { t } = i18n;
   const mailConfigured = useMailConfigured();
+  const meta = useServerMeta();
+  const cloud = cloudBilling(meta);
+  const business = isBusinessOrg(org, cloud);
+  const billing = useBusinessBilling(org, open && business);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AssignableOrgRole>("member");
   const [busy, setBusy] = useState(false);
@@ -87,6 +123,50 @@ export function InviteDialog({ org, open, onOpenChange, onInvited }: InviteDialo
   }
 
   const name = orgName(org, t);
+
+  // What adding someone means here: the hosted service bills Business
+  // members (not guests), and families have a member limit.
+  const guest = role === "guest";
+  const locked = !!org.lock;
+  const needsActivation = business && billing !== undefined && !isActiveStatus(billing.status);
+  const interval = billing?.interval ?? "month";
+  const plan = planFor(cloud, interval);
+  const familyLimit = org.kind === "family" ? meta?.familyMemberLimit : undefined;
+  const familyCount = familyMemberCount(org);
+  const familyFull = familyLimit !== undefined && familyCount >= familyLimit;
+  const blocked = locked || (!guest && (needsActivation || familyFull));
+  const hint = locked ? (
+    <Hint icon={<LockKeyhole />}>{t("errors.orgReadOnly")}</Hint>
+  ) : needsActivation && !guest ? (
+    <Hint icon={<Info />}>
+      <p>{t("sharing.invite.activateFirst")}</p>
+      <Button
+        className="mt-2"
+        size="sm"
+        onClick={() => {
+          onOpenChange(false);
+          window.location.hash = formatRoute({ view: "org-admin", orgId: org.id, section: "billing" });
+        }}
+      >
+        {t("sharing.invite.activateAction")}
+      </Button>
+    </Hint>
+  ) : business && !guest && plan ? (
+    <Hint icon={<CreditCard />}>
+      {t(`sharing.invite.businessCost.${interval}`, {
+        price: formatPrice(plan.amountCents, plan.currency, i18n.locale),
+      })}
+    </Hint>
+  ) : familyLimit !== undefined ? (
+    <Hint icon={<Users />}>
+      <p data-testid="family-member-count">
+        {t("sharing.invite.familyCount", { count: familyCount, limit: familyLimit })}
+      </p>
+      {familyFull && !guest && (
+        <p className="mt-1 text-text-muted">{t("sharing.invite.familyFull", { limit: familyLimit })}</p>
+      )}
+    </Hint>
+  ) : undefined;
 
   return (
     <Dialog
@@ -167,12 +247,13 @@ export function InviteDialog({ org, open, onOpenChange, onInvited }: InviteDialo
             onChange={(e) => setEmail(e.target.value)}
           />
           <OrgRoleChoice org={org} roles={assignableRoles(org)} value={role} onChange={setRole} />
+          {hint}
           <FormError message={error} />
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
               {t("action.cancel")}
             </Button>
-            <Button type="submit" loading={busy} disabled={!email.trim()}>
+            <Button type="submit" loading={busy} disabled={!email.trim() || blocked}>
               <Send />
               {t("sharing.invite.action")}
             </Button>

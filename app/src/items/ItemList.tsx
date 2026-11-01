@@ -93,13 +93,13 @@ export function ItemList({
 }: ItemListProps) {
   const { t } = useI18n();
   const client = useClient();
-  const { vaults } = useSnapshot();
+  const { vaults, orgs } = useSnapshot();
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   // Selection mode for moving or archiving several items at once.
   const [picked, setPicked] = useState<string[] | undefined>();
   const [moving, setMoving] = useState(false);
-  const writable = new Set(writableVaults(vaults).map((v) => v.id));
+  const writable = new Set(writableVaults(vaults, orgs).map((v) => v.id));
   const pickable = items.filter((i) => writable.has(i.vaultId));
   const toggle = (id: string) =>
     setPicked((list) => (list?.includes(id) ? list.filter((x) => x !== id) : [...(list ?? []), id]));

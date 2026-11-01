@@ -59,7 +59,7 @@ import { copyToClipboard } from "../lib/clipboard";
 import { shortcut, type Translator, useI18n } from "../lib/i18n";
 import { CATEGORY_META, fieldLabel, hostname, itemTitle, safeHref } from "../lib/items";
 import type { Route } from "../lib/route";
-import { isGuestVault, vaultAudience as vaultAudienceIds } from "../lib/sharing";
+import { isGuestVault, vaultAudience as vaultAudienceIds, vaultLock } from "../lib/sharing";
 import { vaultColor } from "../lib/vaultColor";
 import { AudienceIcon, orgName, useAudience, useMyAccountId } from "../sharing/common";
 import { ShareItemDialog } from "../sharing/ShareItemDialog";
@@ -125,7 +125,10 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
   // View-only members of a shared vault can read, copy and fill, not change.
   // Guests are view-only, whatever the vault grants.
   const guest = isGuestVault(itemVault, orgs);
-  const canEdit = !guest && (!itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage");
+  // A locked organization (for example a payment is overdue) is read-only for everyone.
+  const lockedOrg = vaultLock(itemVault, orgs);
+  const canEdit =
+    !guest && !lockedOrg && (!itemVault?.orgId || itemVault.role === "edit" || itemVault.role === "manage");
 
   // Item usage for organizations whose policy asks for it.
   const itemId = item?.id;
@@ -373,12 +376,20 @@ export function ItemDetail({ item, health, onEdit, onBack, onDeleted, navigate }
                 className="mt-6 flex items-start gap-3 rounded-control bg-surface-raised px-4 py-3 text-body ring-1 ring-hairline ring-inset"
               >
                 <Eye className="mt-0.5 size-4 shrink-0 text-text-muted" aria-hidden="true" />
-                <p data-testid={guest ? "guest-view-only" : undefined}>
+                <p data-testid={guest ? "guest-view-only" : lockedOrg ? "org-read-only" : undefined}>
                   <strong className="font-semibold">
-                    {guest ? t("sharing.guest.title") : t("sharing.viewOnly.title")}
+                    {guest
+                      ? t("sharing.guest.title")
+                      : lockedOrg
+                        ? t("sharing.locked.title")
+                        : t("sharing.viewOnly.title")}
                   </strong>{" "}
                   <span className="text-text-muted">
-                    {guest ? t("sharing.guest.text") : t("sharing.viewOnly.text")}
+                    {guest
+                      ? t("sharing.guest.text")
+                      : lockedOrg
+                        ? t("sharing.locked.text", { org: orgName(lockedOrg, t) })
+                        : t("sharing.viewOnly.text")}
                   </span>
                 </p>
               </div>

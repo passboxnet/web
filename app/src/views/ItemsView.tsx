@@ -79,9 +79,11 @@ export function ItemsView({ route, navigate, health }: ItemsViewProps) {
 
   const selected = route.create ? undefined : (snapshot.items.find((item) => item.id === route.itemId) ?? items[0]);
   // New items go to the vault shown, unless it is view-only; then to the personal vault.
-  const writable = writableVaults(snapshot.vaults);
+  const writable = writableVaults(snapshot.vaults, snapshot.orgs);
   const filterVault = route.filter.kind === "vault" ? route.filter.vaultId : undefined;
-  const defaultVaultId = writable.some((v) => v.id === filterVault) ? filterVault : defaultVault(snapshot.vaults)?.id;
+  const defaultVaultId = writable.some((v) => v.id === filterVault)
+    ? filterVault
+    : defaultVault(snapshot.vaults, snapshot.orgs)?.id;
   const canEdit = (item: Item) => writable.some((v) => v.id === item.vaultId);
 
   const select = (itemId: string | undefined) =>

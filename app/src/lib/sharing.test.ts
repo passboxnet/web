@@ -11,6 +11,7 @@ import {
   defaultVault,
   fingerprintGroups,
   isGuestVault,
+  isLockedVault,
   isOrgAdmin,
   orgInviteFromLocation,
   orgRoleKey,
@@ -121,9 +122,18 @@ describe("vaults", () => {
   ];
 
   it("offers only writable vaults and prefers the personal one", () => {
-    expect(writableVaults(vaults).map((v) => v.id)).toEqual(["w", "p"]);
-    expect(defaultVault(vaults)?.id).toBe("p");
-    expect(defaultVault(vaults.slice(0, 2))?.id).toBe("w");
+    expect(writableVaults(vaults, []).map((v) => v.id)).toEqual(["w", "p"]);
+    expect(defaultVault(vaults, [])?.id).toBe("p");
+    expect(defaultVault(vaults.slice(0, 2), [])?.id).toBe("w");
+  });
+
+  it("makes the vaults of a locked organization read-only", () => {
+    const locked = [{ id: "org", lock: { reason: "billing:payment_overdue", source: "billing" } }];
+    expect(writableVaults(vaults, locked).map((v) => v.id)).toEqual(["p"]);
+    expect(defaultVault(vaults.slice(0, 2), locked)).toBeUndefined();
+    expect(isLockedVault(vaults[1], locked)).toBe(true);
+    expect(isLockedVault(vaults[2], locked)).toBe(false);
+    expect(isLockedVault(vaults[1], [{ id: "org", lock: null }])).toBe(false);
   });
 });
 

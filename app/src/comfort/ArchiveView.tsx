@@ -17,8 +17,8 @@ import { Page } from "../views/PageHeader";
  */
 export function ArchiveView() {
   const client = useClient();
-  const { archive, vaults } = useSnapshot();
-  const writable = new Set(writableVaults(vaults).map((v) => v.id));
+  const { archive, vaults, orgs } = useSnapshot();
+  const writable = new Set(writableVaults(vaults, orgs).map((v) => v.id));
   const i18n = useI18n();
   const { t } = i18n;
 

@@ -42,7 +42,7 @@ export function MoveItemsDialog({
   const { vaults, items, orgs, effectivePolicy } = useSnapshot();
   const chosen = items.filter((i) => itemIds.includes(i.id));
   const sources = new Set(chosen.map((i) => i.vaultId));
-  const targets = writableVaults(vaults).filter(
+  const targets = writableVaults(vaults, orgs).filter(
     (v) => !(sources.size === 1 && sources.has(v.id)) && (!sharedOnly || v.orgId),
   );
   const [target, setTarget] = useState("");

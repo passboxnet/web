@@ -2,7 +2,9 @@ import { Badge, Button, Input } from "@passbox/ui";
 import { Building2, ChevronRight, House, Link2, ShieldCheck } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { FormError } from "../auth/AuthLayout";
+import { cloudBilling, planFor, planPrice } from "../lib/billing";
 import { useI18n } from "../lib/i18n";
+import { useServerMeta } from "../lib/instance";
 import type { Route } from "../lib/route";
 import { awaitingConfirmation, isOrgAdmin, parseOrgInvite, setPendingOrgInvite } from "../lib/sharing";
 import { useSnapshot } from "../useClient";
@@ -12,10 +14,24 @@ import { OrgIcon, orgName, RoleBadge } from "./common";
 
 /** "Family & team": start a family or team, or open one you belong to. */
 export function SharingView({ navigate }: { navigate: (route: Route) => void }) {
-  const { t } = useI18n();
+  const i18n = useI18n();
+  const { t } = i18n;
   const { orgs, vaults } = useSnapshot();
   const [creating, setCreating] = useState<"family" | "team">();
   const open = (orgId: string) => navigate({ view: "org", orgId });
+  // On the hosted service, families are free (up to a limit) and teams are Business.
+  const meta = useServerMeta();
+  const cloud = cloudBilling(meta);
+  const monthly = planFor(cloud, "month");
+  const yearly = planFor(cloud, "year");
+  const prices = [monthly, yearly].filter((plan) => plan !== undefined).map((plan) => planPrice(plan, t, i18n.locale));
+  const businessPrice =
+    prices.length === 2 ? t("billing.price.either", { monthly: prices[0] ?? "", yearly: prices[1] ?? "" }) : prices[0];
+  const familyNote = cloud
+    ? meta?.familyMemberLimit
+      ? t("sharing.startFamily.free", { limit: meta.familyMemberLimit })
+      : t("sharing.startFamily.freeUnlimited")
+    : undefined;
 
   return (
     <Page title={t("sharing.title")} description={t("sharing.description")}>
@@ -68,16 +84,28 @@ export function SharingView({ navigate }: { navigate: (route: Route) => void }) 
               icon={<House className="size-5" />}
               title={t("sharing.startFamily.title")}
               text={t("sharing.startFamily.text")}
+              note={familyNote}
               action={t("sharing.startFamily.action")}
               onClick={() => setCreating("family")}
             />
-            <StartCard
-              icon={<Building2 className="size-5" />}
-              title={t("sharing.startTeam.title")}
-              text={t("sharing.startTeam.text")}
-              action={t("sharing.startTeam.action")}
-              onClick={() => setCreating("team")}
-            />
+            {cloud ? (
+              <StartCard
+                icon={<Building2 className="size-5" />}
+                title={t("sharing.startBusiness.title")}
+                text={t("sharing.startBusiness.text")}
+                note={businessPrice}
+                action={t("sharing.startBusiness.action")}
+                onClick={() => setCreating("team")}
+              />
+            ) : (
+              <StartCard
+                icon={<Building2 className="size-5" />}
+                title={t("sharing.startTeam.title")}
+                text={t("sharing.startTeam.text")}
+                action={t("sharing.startTeam.action")}
+                onClick={() => setCreating("team")}
+              />
+            )}
           </div>
         </section>
 
@@ -98,7 +126,11 @@ export function SharingView({ navigate }: { navigate: (route: Route) => void }) 
       <CreateOrgDialog
         kind={creating}
         onOpenChange={(open) => !open && setCreating(undefined)}
-        onCreated={(orgId) => open(orgId)}
+        onCreated={(orgId, business) =>
+          business
+            ? navigate({ view: "org-admin", orgId, section: "billing", interval: business.interval })
+            : open(orgId)
+        }
       />
     </Page>
   );
@@ -108,12 +140,15 @@ function StartCard({
   icon,
   title,
   text,
+  note,
   action,
   onClick,
 }: {
   icon: ReactNode;
   title: string;
   text: string;
+  /** Plan and price on the hosted service. */
+  note?: string | undefined;
   action: string;
   onClick: () => void;
 }) {
@@ -123,6 +158,7 @@ function StartCard({
       <div>
         <h3 className="text-[0.9375rem] font-semibold">{title}</h3>
         <p className="mt-1 text-[0.8125rem] text-text-muted">{text}</p>
+        {note && <p className="mt-2 text-[0.8125rem] font-medium">{note}</p>}
       </div>
       <Button className="mt-auto self-start" onClick={onClick}>
         {action}

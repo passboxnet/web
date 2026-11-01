@@ -87,15 +87,37 @@ export function sharedWithEveryone(audience: Set<string>, org: Org | undefined):
   return confirmed.length > 0 && confirmed.every((m) => audience.has(m.accountId));
 }
 
-/** Vaults this account may write to (personal ones and shared ones with edit or manage). */
-export function writableVaults(vaults: Vault[]): Vault[] {
-  return vaults.filter((v) => !v.orgId || v.role === "edit" || v.role === "manage");
+/**
+ * The locked organization a vault belongs to, if any. A locked organization
+ * is read-only for everyone (for example when a payment is overdue on the
+ * hosted service); the server refuses changes with 403 `org_read_only`.
+ */
+export function vaultLock<O extends Pick<Org, "id" | "lock">>(
+  vault: Pick<Vault, "orgId"> | undefined,
+  orgs: O[],
+): O | undefined {
+  if (!vault?.orgId) return undefined;
+  const org = orgs.find((o) => o.id === vault.orgId);
+  return org?.lock ? org : undefined;
+}
+
+/** Whether the vault belongs to an organization that is read-only right now. */
+export function isLockedVault(vault: Pick<Vault, "orgId"> | undefined, orgs: Pick<Org, "id" | "lock">[]): boolean {
+  return vaultLock(vault, orgs) !== undefined;
+}
+
+/**
+ * Vaults this account may write to: personal ones, and shared ones with edit
+ * or manage whose organization is not locked.
+ */
+export function writableVaults(vaults: Vault[], orgs: Pick<Org, "id" | "lock">[]): Vault[] {
+  return vaults.filter((v) => !v.orgId || ((v.role === "edit" || v.role === "manage") && !isLockedVault(v, orgs)));
 }
 
 /** The vault new items go to by default: the personal "Private" vault, else the first writable one. */
-export function defaultVault(vaults: Vault[]): Vault | undefined {
+export function defaultVault(vaults: Vault[], orgs: Pick<Org, "id" | "lock">[]): Vault | undefined {
   const personal = vaults.filter((v) => !v.orgId);
-  return personal.find((v) => v.name === "Private") ?? personal[0] ?? writableVaults(vaults)[0];
+  return personal.find((v) => v.name === "Private") ?? personal[0] ?? writableVaults(vaults, orgs)[0];
 }
 
 /** Splits a fingerprint ("12345 67890 …") into its groups of digits. */

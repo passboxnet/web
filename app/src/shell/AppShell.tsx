@@ -12,6 +12,7 @@ import { ImportView } from "../import/ImportView";
 import { useI18n } from "../lib/i18n";
 import { setChecklist, usePreferences } from "../lib/preferences";
 import { useRoute } from "../lib/route";
+import { LockBanner } from "../orgadmin/LockBanner";
 import { OrgAdminView } from "../orgadmin/OrgAdminView";
 import { PolicyBanner } from "../orgadmin/PolicyBanner";
 import { InvitationPrompt } from "../sharing/InvitationPrompt";
@@ -94,6 +95,7 @@ export function AppShell() {
       <KitReminder />
       <SharingWarningsBanner />
       <PolicyBanner navigate={navigate} />
+      <LockBanner navigate={navigate} />
       <BreachAlertBanner navigate={navigate} />
       <div className="flex min-h-0 flex-1">
         <div className="hidden w-[16.5rem] shrink-0 lg:block">{sidebar}</div>
@@ -142,7 +144,14 @@ export function AppShell() {
             {route.view === "org" && <OrgView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
             {route.view === "org-sso" && <SsoSettingsView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
             {route.view === "org-admin" && (
-              <OrgAdminView key={route.orgId} orgId={route.orgId} section={route.section} navigate={navigate} />
+              <OrgAdminView
+                key={route.orgId}
+                orgId={route.orgId}
+                section={route.section}
+                checkout={route.checkout}
+                interval={route.interval}
+                navigate={navigate}
+              />
             )}
             {route.view === "developer" && (
               <DeveloperView

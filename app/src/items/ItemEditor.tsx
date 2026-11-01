@@ -87,7 +87,7 @@ export function ItemEditor({ item, category, defaultVaultId, onDone }: ItemEdito
   const { t } = useI18n();
   const { vaults: allVaults, items, orgs } = useSnapshot();
   // Only vaults this account may write to; shared ones carry their organization's name.
-  const vaults = writableVaults(allVaults);
+  const vaults = writableVaults(allVaults, orgs);
   const optionLabel = (vault: (typeof vaults)[number]) => {
     const org = orgs.find((o) => o.id === vault.orgId);
     return org

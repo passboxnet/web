@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowLeft,
   BarChart3,
+  CreditCard,
   KeyRound,
   LayoutDashboard,
   type LucideIcon,
@@ -15,7 +16,9 @@ import {
   UsersRound,
   Vault as VaultIcon,
 } from "lucide-react";
+import { cloudBilling, isBusinessOrg } from "../lib/billing";
 import { useI18n } from "../lib/i18n";
+import { useServerMeta } from "../lib/instance";
 import type { Route } from "../lib/route";
 import { isOrgAdmin } from "../lib/sharing";
 import { OrgIcon, orgName } from "../sharing/common";
@@ -23,6 +26,7 @@ import { useSnapshot } from "../useClient";
 import { ConsoleFrame, ConsoleIdentity, ConsoleNav } from "../views/admin/console";
 import { Page } from "../views/PageHeader";
 import { ActivitySection } from "./ActivitySection";
+import { BillingSection } from "./BillingSection";
 import { useOrgReport } from "./common";
 import { IntegrationsSection } from "./IntegrationsSection";
 import { MembersSection } from "./MembersSection";
@@ -43,6 +47,7 @@ export const ADMIN_SECTIONS = [
   "reports",
   "recovery",
   "integrations",
+  "billing",
   "settings",
 ] as const;
 export type AdminSection = (typeof ADMIN_SECTIONS)[number];
@@ -57,19 +62,26 @@ const ICONS: Record<AdminSection, LucideIcon> = {
   reports: BarChart3,
   recovery: KeyRound,
   integrations: Plug,
+  billing: CreditCard,
   settings: Settings,
 };
 
-/** Sections a family's organizer sees; groups and SIEM integrations are for teams. */
-function sectionsFor(org: Org): AdminSection[] {
-  return org.kind === "team"
-    ? [...ADMIN_SECTIONS]
-    : ADMIN_SECTIONS.filter((s) => s !== "groups" && s !== "integrations");
+/**
+ * Sections a family's organizer sees; groups and SIEM integrations are for
+ * teams. Billing only exists for Business (teams) on the hosted service.
+ */
+function sectionsFor(org: Org, business: boolean): AdminSection[] {
+  const sections = ADMIN_SECTIONS.filter((s) => s !== "billing" || business);
+  return org.kind === "team" ? sections : sections.filter((s) => s !== "groups" && s !== "integrations");
 }
 
 interface OrgAdminViewProps {
   orgId: string;
   section: string | undefined;
+  /** Back from the hosted checkout (Billing). */
+  checkout?: "return" | "cancel" | undefined;
+  /** Interval chosen when the Business organization was created. */
+  interval?: "month" | "year" | undefined;
   navigate: (route: Route) => void;
 }
 
@@ -78,7 +90,7 @@ interface OrgAdminViewProps {
  * admins with members, groups, vaults and their access, policies, the audit
  * log, reports, recovery, integrations and settings.
  */
-export function OrgAdminView({ orgId, section, navigate }: OrgAdminViewProps) {
+export function OrgAdminView({ orgId, section, checkout, interval, navigate }: OrgAdminViewProps) {
   const { t } = useI18n();
   const { orgs } = useSnapshot();
   const org = orgs.find((o) => o.id === orgId);
@@ -99,20 +111,29 @@ export function OrgAdminView({ orgId, section, navigate }: OrgAdminViewProps) {
       </Page>
     );
   }
-  return <Console org={org} section={section} navigate={navigate} />;
+  return <Console org={org} section={section} checkout={checkout} interval={interval} navigate={navigate} />;
 }
 
 function Console({
   org,
   section,
+  checkout,
+  interval,
   navigate,
 }: {
   org: Org;
   section: string | undefined;
+  checkout: "return" | "cancel" | undefined;
+  interval: "month" | "year" | undefined;
   navigate: (route: Route) => void;
 }) {
   const { t } = useI18n();
-  const sections = sectionsFor(org);
+  const meta = useServerMeta();
+  // While the server's meta loads, a link to Billing (back from the checkout) stays on Billing.
+  const sections = sectionsFor(
+    org,
+    isBusinessOrg(org, cloudBilling(meta)) || (meta === undefined && section === "billing" && org.kind === "team"),
+  );
   const current: AdminSection = sections.includes(section as AdminSection) ? (section as AdminSection) : "overview";
   const go = (next: AdminSection) => navigate({ view: "org-admin", orgId: org.id, section: next });
   const report = useOrgReport(org);
@@ -201,6 +222,9 @@ function Console({
       {current === "reports" && <ReportsSection org={org} data={report} />}
       {current === "recovery" && <RecoverySection org={org} data={report} />}
       {current === "integrations" && <IntegrationsSection org={org} />}
+      {current === "billing" && (
+        <BillingSection org={org} checkout={checkout} interval={interval} navigate={navigate} />
+      )}
       {current === "settings" && <SettingsSection org={org} navigate={navigate} />}
     </ConsoleFrame>
   );

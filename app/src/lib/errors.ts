@@ -65,6 +65,16 @@ export function describeError(error: unknown, t: Translate, context: ErrorContex
         return t("error.twoFactorExpired");
       case "guest_view_only":
         return t("sharing.error.guestViewOnly");
+      case "org_read_only":
+        return t("errors.orgReadOnly");
+      case "business_activation_required":
+        return t("errors.businessActivationRequired");
+      case "family_limit_reached": {
+        const limit = Number(error.body?.details?.limit);
+        return Number.isFinite(limit) && limit > 0
+          ? t("errors.familyLimitReached", { limit })
+          : t("errors.familyLimitReachedGeneric");
+      }
       case "agent_limit_reached":
         return t("developer.limit.reached");
       case "recovery_required":

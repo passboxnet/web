@@ -73,7 +73,7 @@ export function AliasPanel() {
       </div>
       {services.length === 0 || setup ? (
         <AliasSetup
-          vaultId={defaultVault(snapshot.vaults)?.id}
+          vaultId={defaultVault(snapshot.vaults, snapshot.orgs)?.id}
           onDone={(id) => {
             setSetup(false);
             if (id) setServiceId(id);

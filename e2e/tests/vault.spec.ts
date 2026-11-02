@@ -234,7 +234,7 @@ test("German is the default for German browsers", async ({ browser }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
   await expect(page.getByRole("heading", { name: "Konto erstellen" })).toBeVisible();
-  await expect(page.getByText("Passwörter, die Ihnen gehören.")).toBeVisible();
+  await expect(page.getByText("Der Passwortmanager, der Freude macht.")).toBeVisible();
   await page.getByLabel("E-Mail").fill(uniqueEmail());
   await page.getByLabel("Master-Passwort", { exact: true }).fill(PASSWORD);
   await page.getByLabel("Master-Passwort wiederholen").fill(PASSWORD);

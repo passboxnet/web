@@ -45,6 +45,14 @@ function notify() {
 }
 
 /**
+ * A link can only have one `#`. Browsers and `open` on macOS escape the
+ * second one, the mark before the secret, as `%23`. Undo that before parsing.
+ */
+export function unescapeSecretMark(hash: string): string {
+  return hash.replace(/^(#\/cli-login\/[^#/?%]+)%23/i, "$1#");
+}
+
+/**
  * Keeps a sign-in link from the address bar and replaces the address with
  * `#/cli-login/{id}`. Call before rendering and on every hash change.
  */
@@ -53,7 +61,7 @@ export function captureCliLogin(
   history: Pick<History, "replaceState"> = window.history,
   now: number = Date.now(),
 ): boolean {
-  const link = parseCliLoginLink(location.hash);
+  const link = parseCliLoginLink(unescapeSecretMark(location.hash));
   if (!link) return false;
   storage()?.setItem(KEY, JSON.stringify({ ...link, savedAt: now } satisfies Stored));
   history.replaceState(null, "", `${location.pathname}${location.search}#/cli-login/${link.id}`);

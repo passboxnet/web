@@ -29,6 +29,16 @@ describe("sign-in links from pbx", () => {
     expect(pendingCliLogin(ID, 1_000_000)).toBeUndefined();
   });
 
+  it("accepts the mark before the secret escaped as %23", () => {
+    for (const mark of ["%23"]) {
+      const { captured, calls } = capture(`#/cli-login/${ID}${mark}${SECRET}`);
+      expect(captured).toBe(true);
+      expect(calls).toEqual([`/#/cli-login/${ID}`]);
+      expect(pendingCliLogin(ID, 1_000_000)).toBe(SECRET);
+      clearPendingCliLogin();
+    }
+  });
+
   it("ignores other and incomplete links", () => {
     for (const hash of ["#/items", `#/cli-login/${ID}`, `#/cli-login/${ID}#short`, `#/cli-login/NOTANID#${SECRET}`]) {
       expect(capture(hash)).toEqual({ captured: false, calls: [] });
@@ -38,5 +48,6 @@ describe("sign-in links from pbx", () => {
   it("routes to the request, with or without the secret still in the hash", () => {
     expect(parseRoute(`#/cli-login/${ID}`)).toEqual({ view: "cli-login", requestId: ID });
     expect(parseRoute(`#/cli-login/${ID}#${SECRET}`)).toEqual({ view: "cli-login", requestId: ID });
+    expect(parseRoute(`#/cli-login/${ID}%23${SECRET}`)).toEqual({ view: "cli-login", requestId: ID });
   });
 });

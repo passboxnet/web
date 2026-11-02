@@ -65,7 +65,7 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === "org" && parts[1]) return { view: "org", orgId: parts[1] };
   if (parts[0] === "org-sso" && parts[1]) return { view: "org-sso", orgId: parts[1] };
-  if (parts[0] === "cli-login" && parts[1]) return { view: "cli-login", requestId: parts[1].split("#")[0] ?? "" };
+  if (parts[0] === "cli-login" && parts[1]) return { view: "cli-login", requestId: parts[1].split(/#|%23/i)[0] ?? "" };
   if (parts[0] === "developer")
     return parts[1] === "service-accounts" ? { view: "developer", section: "service-accounts" } : { view: "developer" };
 

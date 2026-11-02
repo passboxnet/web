@@ -34,7 +34,9 @@ export type Route =
       /** Interval chosen when creating a Business organization (`?interval=year`). */
       interval?: "month" | "year";
     }
-  | { view: "developer"; section?: "agents" | "service-accounts" };
+  | { view: "developer"; section?: "agents" | "service-accounts" }
+  /** A sign-in request from `pbx login`; its secret is kept outside the route (cliLogin/pending.ts). */
+  | { view: "cli-login"; requestId: string };
 
 export function parseRoute(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#\/?/, "").split("?");
@@ -63,6 +65,7 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === "org" && parts[1]) return { view: "org", orgId: parts[1] };
   if (parts[0] === "org-sso" && parts[1]) return { view: "org-sso", orgId: parts[1] };
+  if (parts[0] === "cli-login" && parts[1]) return { view: "cli-login", requestId: parts[1].split("#")[0] ?? "" };
   if (parts[0] === "developer")
     return parts[1] === "service-accounts" ? { view: "developer", section: "service-accounts" } : { view: "developer" };
 
@@ -92,6 +95,7 @@ export function formatRoute(route: Route): string {
     const query = params.toString();
     return `#/org/${route.orgId}/admin${route.section ? `/${route.section}` : ""}${query ? `?${query}` : ""}`;
   }
+  if (route.view === "cli-login") return `#/cli-login/${encodeURIComponent(route.requestId)}`;
   if (route.view === "developer" && route.section === "service-accounts") return "#/developer/service-accounts";
   if (route.view !== "items") return `#/${route.view}`;
   const { filter } = route;

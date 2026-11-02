@@ -2,6 +2,7 @@ import { Toaster, TooltipProvider, UiStringsProvider } from "@passbox/ui";
 import { type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { captureCliLogin } from "./cliLogin/pending";
 import { ShareLinkViewer, shareLinkFromLocation } from "./comfort/ShareLinkViewer";
 import { applyWindowMaterial } from "./desktop";
 import { applyLocale, useI18n } from "./lib/i18n";
@@ -14,6 +15,11 @@ void applyWindowMaterial();
 applyLocale();
 // An invitation link (`/invite/{token}#org=…`) is kept for this tab before routing starts.
 captureOrgInvite();
+// A sign-in link from `pbx login` (`#/cli-login/{id}#{secret}`): the secret
+// leaves the address bar before anything renders, also for links opened in
+// a tab that is already open.
+captureCliLogin();
+window.addEventListener("hashchange", () => captureCliLogin());
 subscribePreferences(() => applyLocale());
 
 // A share link (`/s/{id}#{key}`) opens the public viewer, without an account.

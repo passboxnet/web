@@ -1,7 +1,8 @@
 import type { ServerMeta } from "@passbox/api-client";
-import { GridFrame, Logo, Panel } from "@passbox/ui";
-import { EyeOff, Laptop, ServerCog, ShieldAlert, Sparkles } from "lucide-react";
+import { AlertCard, GridFrame, Logo, Panel } from "@passbox/ui";
+import { EyeOff, Laptop, ServerCog, ShieldAlert, Sparkles, Terminal } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { useHasPendingCliLogin } from "../cliLogin/pending";
 import { useI18n } from "../lib/i18n";
 import { sitePage } from "../lib/links";
 import { isInsecurePage, serverApi, serverLabel, serverUrl } from "../lib/server";
@@ -76,6 +77,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             </aside>
             <div className="flex flex-col bg-surface px-5 py-8 sm:px-10 sm:py-10">
               <div className="mx-auto w-full max-w-[25rem]">
+                <CliLoginNotice />
                 {children}
                 <ServerStatus />
               </div>
@@ -143,4 +145,11 @@ export function FormError({ message }: { message: string | undefined }) {
       {message}
     </p>
   );
+}
+
+/** Signing in first, on the way to a sign-in request of pbx (cliLogin/pending.ts). */
+function CliLoginNotice() {
+  const { t } = useI18n();
+  if (!useHasPendingCliLogin()) return null;
+  return <AlertCard tone="info" icon={<Terminal />} title={t("cliLogin.signInFirst")} className="mb-6" />;
 }

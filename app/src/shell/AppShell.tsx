@@ -4,6 +4,7 @@ import { KeyRound, Menu as MenuIcon, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InsecurePageBanner } from "../auth/AuthLayout";
 import { useKit } from "../auth/KitProvider";
+import { CliLoginView } from "../cliLogin/CliLoginView";
 import { ArchiveView } from "../comfort/ArchiveView";
 import { onCommandPaletteRequest } from "../desktop";
 import { AgentApprovalWatcher } from "../developer/AgentApproval";
@@ -139,6 +140,9 @@ export function AppShell() {
             {route.view === "settings" && <SettingsView />}
             {route.view === "admin" && <AdminView />}
             {route.view === "recovery-requests" && <RecoveryRequestsView />}
+            {route.view === "cli-login" && (
+              <CliLoginView key={route.requestId} requestId={route.requestId} navigate={navigate} />
+            )}
             {route.view === "emergency" && <EmergencyVaultView key={route.grantId} grantId={route.grantId} />}
             {route.view === "sharing" && <SharingView navigate={navigate} />}
             {route.view === "org" && <OrgView key={route.orgId} orgId={route.orgId} navigate={navigate} />}
